@@ -24,28 +24,34 @@ export default function Register() {
     setIsLoading(true);
 
     try {
-      // TODO: Replace with actual API call
-      // Mock registration for now
-      const mockUser = {
-        id: "1",
-        email,
-        name,
-        password: "",
-        role: (isWorker ? "worker" : "user") as const,
-        avatar: null,
-        createdAt: new Date(),
-      };
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          password,
+          name,
+          role: isWorker ? "worker" : "user",
+        }),
+      });
 
-      login(mockUser);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Registration failed");
+      }
+
+      const data = await response.json();
+      login(data.user);
+      
       toast({
         title: "Account created!",
         description: "Welcome to gigifypro.",
       });
       setLocation(isWorker ? "/dashboard" : "/feed");
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Registration failed",
-        description: "Something went wrong. Please try again.",
+        description: error.message || "Something went wrong. Please try again.",
         variant: "destructive",
       });
     } finally {

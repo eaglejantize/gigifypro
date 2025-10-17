@@ -1,41 +1,26 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { WorkerCard } from "@/components/WorkerCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal, Loader2 } from "lucide-react";
+import type { ServiceListing, WorkerProfile } from "@shared/schema";
 
-// Mock data - will be replaced with real data
-const mockWorkers = [
-  {
-    id: "1",
-    name: "John Smith",
-    bio: "Professional handyman with 10 years of experience",
-    hourlyRate: "50",
-    likeCount: 45,
-    avgRating: 4.8,
-    reviewCount: 32,
-    responseTime: 15,
-    verified: true,
-    badge: "Top Rated",
-  },
-  {
-    id: "2",
-    name: "Sarah Johnson",
-    bio: "Personal chef specializing in healthy meal prep",
-    hourlyRate: "60",
-    likeCount: 38,
-    avgRating: 4.9,
-    reviewCount: 28,
-    responseTime: 20,
-    verified: true,
-    badge: "Excellent",
-  },
-];
+type ListingWithWorker = ServiceListing & {
+  worker?: WorkerProfile & { user?: { name: string; avatar: string | null } };
+  likeCount?: number;
+  avgRating?: number;
+  reviewCount?: number;
+};
 
 export default function Feed() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("ranked");
+
+  const { data: listings, isLoading } = useQuery<ListingWithWorker[]>({
+    queryKey: ["/api/listings"],
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -84,14 +69,29 @@ export default function Feed() {
         </div>
 
         {/* Workers Grid */}
-        <div className="grid gap-6">
-          {mockWorkers.map((worker) => (
-            <WorkerCard key={worker.id} {...worker} />
-          ))}
-        </div>
-
-        {/* Empty State */}
-        {mockWorkers.length === 0 && (
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : listings && listings.length > 0 ? (
+          <div className="grid gap-6">
+            {listings.map((listing) => (
+              <WorkerCard
+                key={listing.id}
+                id={listing.workerId}
+                name={listing.worker?.user?.name || "Unknown"}
+                bio={listing.description}
+                hourlyRate={listing.customRate || "25"}
+                likeCount={listing.likeCount || 0}
+                avgRating={listing.avgRating || 5}
+                reviewCount={listing.reviewCount || 0}
+                responseTime={listing.worker?.responseTimeMinutes || 30}
+                verified={listing.worker?.verified || false}
+                badge={listing.avgRating && listing.avgRating >= 4.8 ? "Top Rated" : undefined}
+              />
+            ))}
+          </div>
+        ) : (
           <div className="text-center py-12">
             <p className="text-muted-foreground">No services found. Try adjusting your filters.</p>
           </div>

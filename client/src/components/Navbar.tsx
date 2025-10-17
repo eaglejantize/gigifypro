@@ -100,7 +100,10 @@ export function Navbar() {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       className="cursor-pointer text-destructive"
-                      onClick={logout}
+                      onClick={() => {
+                        logout();
+                        window.location.href = "/";
+                      }}
                       data-testid="button-logout"
                     >
                       <LogOut className="w-4 h-4 mr-2" />
@@ -172,6 +175,7 @@ export function Navbar() {
                   onClick={() => {
                     logout();
                     setMobileMenuOpen(false);
+                    window.location.href = "/";
                   }}
                   data-testid="button-logout-mobile"
                 >

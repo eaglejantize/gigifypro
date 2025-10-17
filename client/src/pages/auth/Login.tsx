@@ -21,28 +21,29 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      // TODO: Replace with actual API call
-      // Mock login for now
-      const mockUser = {
-        id: "1",
-        email,
-        name: "Demo User",
-        password: "",
-        role: "user" as const,
-        avatar: null,
-        createdAt: new Date(),
-      };
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-      login(mockUser);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Login failed");
+      }
+
+      const data = await response.json();
+      login(data.user);
+      
       toast({
         title: "Welcome back!",
         description: "You have successfully logged in.",
       });
-      setLocation("/feed");
-    } catch (error) {
+      setLocation(data.user.role === "worker" ? "/dashboard" : "/feed");
+    } catch (error: any) {
       toast({
         title: "Login failed",
-        description: "Invalid credentials. Please try again.",
+        description: error.message || "Invalid credentials. Please try again.",
         variant: "destructive",
       });
     } finally {

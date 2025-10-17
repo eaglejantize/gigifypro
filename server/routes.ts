@@ -199,7 +199,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/listings", async (req, res) => {
     try {
       const listings = await storage.getAllListings();
-      res.json(listings);
+      
+      // Enrich listings with worker data
+      const enrichedListings = await Promise.all(
+        listings.map(async (listing) => {
+          const workerProfile = await storage.getWorkerProfileById(listing.workerId);
+          const reviews = await storage.getReviewsByWorker(listing.workerId);
+          
+          let user = null;
+          if (workerProfile) {
+            user = await storage.getUser(workerProfile.userId);
+          }
+          
+          const likeCount = reviews.filter(r => !r.rating || r.rating === 5).length;
+          const ratings = reviews.filter(r => r.rating).map(r => r.rating as number);
+          const avgRating = ratings.length > 0 
+            ? ratings.reduce((a, b) => a + b, 0) / ratings.length 
+            : 0;
+          
+          return {
+            ...listing,
+            worker: workerProfile ? {
+              ...workerProfile,
+              user: user ? { name: user.name, avatar: user.avatar } : null
+            } : null,
+            likeCount,
+            avgRating,
+            reviewCount: ratings.length,
+          };
+        })
+      );
+      
+      res.json(enrichedListings);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
