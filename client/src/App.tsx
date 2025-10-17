@@ -3,14 +3,33 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { Navbar } from "@/components/Navbar";
 import NotFound from "@/pages/not-found";
+import Landing from "@/pages/Landing";
+import Feed from "@/pages/Feed";
+import Login from "@/pages/auth/Login";
+import Register from "@/pages/auth/Register";
+import PostTask from "@/pages/PostTask";
+import ListingDetail from "@/pages/ListingDetail";
+import Profile from "@/pages/Profile";
+import Inbox from "@/pages/Inbox";
+import Dashboard from "@/pages/Dashboard";
+import Settings from "@/pages/Settings";
 
 function Router() {
   return (
     <Switch>
-      {/* Add pages below */}
-      {/* <Route path="/" component={Home}/> */}
-      {/* Fallback to 404 */}
+      <Route path="/" component={Landing} />
+      <Route path="/feed" component={Feed} />
+      <Route path="/auth/login" component={Login} />
+      <Route path="/auth/register" component={Register} />
+      <Route path="/post" component={PostTask} />
+      <Route path="/listing/:id" component={ListingDetail} />
+      <Route path="/profile/:id" component={Profile} />
+      <Route path="/inbox" component={Inbox} />
+      <Route path="/dashboard" component={Dashboard} />
+      <Route path="/settings" component={Settings} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -19,10 +38,17 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <div className="min-h-screen flex flex-col">
+            <Navbar />
+            <main className="flex-1">
+              <Router />
+            </main>
+          </div>
+          <Toaster />
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
