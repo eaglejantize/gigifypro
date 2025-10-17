@@ -1,0 +1,99 @@
+You are an expert full-stack engineer and product builder. Create a production-ready MVP repository named "gigifypro" for a gig-economy + social hybrid platform. Tech stack: 
+- Frontend: Next.js 15 (App Router, TypeScript), TailwindCSS, shadcn/ui, React Query, NextAuth (credentials now; OAuth-ready later). 
+- Backend: FastAPI (Python 3.11), SQLModel + Alembic for Postgres migrations, JWT auth (python-jose), Pydantic v2, httpx.
+- DB: PostgreSQL. 
+- Dev: Docker Compose (web, api, db), .env.example, Makefile, pre-commit hooks (black, isort, ruff), CI (GitHub Actions) that runs lint/test on PRs.
+- Payments: Stripe test-mode placeholders + dependency inversion so we can switch later.
+- Messaging: basic in-app chat (API endpoints + simple UI).
+- Notifications: table + API; real-time later (WebSocket placeholder).
+- “Likes = reviews” model: each “like” on a completed job or on a worker’s listing counts as a positive review signal (with optional text review). Ranking weights: LIKE_WEIGHT=1.0, RATING_WEIGHT=2.5, RECENCY_DECAY=0.85^(weeks_since), RESPONSE_BONUS for fast responders. Provide a reusable ranker function.
+
+Repository structure:
+- /api  (FastAPI app)
+  - main.py
+  - core/ (config, security)
+  - models/ (sqlmodel tables)
+  - schemas/ (pydantic models)
+  - routers/ (auth, users, services, listings, jobs, bookings, reviews_likes, chat, payments, notifications)
+  - services/ (ranking.py, payments.py, search.py)
+  - migrations/ (alembic)
+  - tests/
+- /web  (Next.js app)
+  - app/ (routes: landing, feed, explore, post, listing/[id], profile/[id], inbox, dashboard, auth, settings)
+  - components/, lib/, hooks/, styles/
+- /shared  (types/ contracts shared between web and api)
+- /ops (docker-compose.yml, Makefile, scripts/)
+- /.github/workflows (ci.yml)
+- README.md, LICENSE (MIT), .pre-commit-config.yaml, .editorconfig
+
+Core entities (minimum viable):
+- User (both sides; worker has WorkerProfile)
+- WorkerProfile (skills, bio, hourly_rate; default pricing logic uses $25 per 30 min anchor)
+- ServiceCategory (e.g., lawn care, meal prep, childcare, chefs, trainers, handymen, massage, personal shopper, laundry+fold, maid service, event planner, gift buyer, transportation/errands, light senior care)
+- ServiceListing (worker publishes offerings)
+- JobRequest (client posts the task request)
+- Booking (the contract; state: requested → accepted → in_progress → completed → cancelled)
+- ReviewLike (a “like” that may include optional comment + 1–5 star rating)
+- Message (simple threaded chat under a booking)
+- Notification (generic)
+- Payout (stub for Stripe Connect later)
+- Dispute (stub)
+
+Pricing logic:
+- Default anchor: $25 per 30 minutes. Implement helper `pricing.quote(duration_minutes, base_anchor=25)` that calculates cost in half-hour blocks with a simple tier:
+  - 0–30 min = $25
+  - 31–60 min = $50
+  - Thereafter ceil(n/30)*$25 (service can override via WorkerProfile.hourly_rate or ServiceListing.custom_rate).
+- Store “quoted_total” on Booking at creation.
+
+Ranking:
+- Implement services/ranking.py with function `rank_workers(worker_metrics)` that returns a score per worker using:
+  score = LIKE_WEIGHT*like_count + RATING_WEIGHT*avg_rating*reviews_count^0.5
+  Then multiply by recency decay for last 8 weeks activity and add small response-time bonus.
+- Expose GET /services/search?query=…&sort=ranked to use the ranker.
+
+Auth flows:
+- NextAuth credentials (email+password) now; social OAuth later.
+- API JWT bearer for mobile/third parties.
+- Basic RBAC: user, worker, admin.
+
+Key endpoints (create routers with stubs + minimal logic):
+- POST /auth/register, POST /auth/login
+- GET/PUT /users/me
+- POST /workers/profile (create/update)
+- GET /services/categories
+- CRUD /listings
+- POST /jobs (client posts a task request)
+- POST /bookings (creates booking from a listing or job request)
+- PATCH /bookings/{id}/accept | /start | /complete | /cancel
+- POST /reviews-likes (like with optional comment & rating 1..5)
+- GET /workers/{id}/rank
+- Chat: POST /chat/threads (by booking), POST /chat/messages
+- Payments: POST /payments/intent (stub), POST /payouts (stub)
+- Notifications: GET /notifications (stub)
+
+Frontend pages (simple but shippable):
+- Landing: clear CTA “Post a task” or “Offer your services”.
+- Feed (ranked): shows top local listings by ranking score; each card shows like count, star rating, price anchor.
+- Post a Task wizard: category → details → time window → address → budget (shows computed quote).
+- Listing page: “Like” (review-lite), book button, chat after booking.
+- Profile page: shows likes, ratings, badges, response time.
+- Inbox (chat), Dashboard (jobs, earnings), Settings.
+
+Developer ergonomics:
+- One command to run all: `make dev` (starts docker compose web+api+db).
+- Seed script to create categories and a few demo users/listings.
+- .env.example with WEB_URL, API_URL, POSTGRES settings, NEXTAUTH_SECRET, JWT_SECRET, STRIPE_TEST_KEYS.
+
+Deliverables & acceptance:
+1) Full repo with working docker compose: `docker compose up` yields web at http://localhost:3000, api at http://localhost:8000, db on 5432. First boot auto-runs migrations, seeds categories.
+2) Minimal e2e: Register → create worker profile → publish listing → client posts job → create booking → complete → leave “like+rating” → listing shows updated rank/score in Feed.
+3) Unit tests for ranking, pricing, and bookings state machine.
+4) README with step-by-step run + deploy notes.
+
+After creating the repo, output:
+- Exact tree
+- All generated .env.example values
+- The local URLs
+- The first admin credentials (seed)
+- The Makefile targets
