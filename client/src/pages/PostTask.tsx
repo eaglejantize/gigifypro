@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,15 +8,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { calculatePrice, durationOptions, formatPrice } from "@/lib/pricing";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Loader2 } from "lucide-react";
 import { format } from "date-fns";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import type { ServiceCategory } from "@shared/schema";
 
 export default function PostTask() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [category, setCategory] = useState("");
   const [title, setTitle] = useState("");
@@ -23,28 +28,53 @@ export default function PostTask() {
   const [duration, setDuration] = useState(60);
   const [date, setDate] = useState<Date>();
   const [location, setLocationValue] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { data: categories, isLoading: categoriesLoading } = useQuery<ServiceCategory[]>({
+    queryKey: ["/api/categories"],
+  });
 
   const quote = calculatePrice(duration);
 
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
-    try {
-      // TODO: Replace with actual API call
+  const createJobMutation = useMutation({
+    mutationFn: async (data: any) => apiRequest("/api/jobs", "POST", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users", user?.id, "jobs"] });
       toast({
         title: "Task posted successfully!",
         description: "Workers will start responding soon.",
       });
       setLocation("/dashboard");
-    } catch (error) {
+    },
+    onError: (error: any) => {
       toast({
         title: "Failed to post task",
-        description: "Please try again.",
+        description: error.message || "Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
+    },
+  });
+
+  const handleSubmit = async () => {
+    if (!user) {
+      toast({
+        title: "Please login",
+        description: "You must be logged in to post a task.",
+        variant: "destructive",
+      });
+      setLocation("/auth/login");
+      return;
     }
+
+    createJobMutation.mutate({
+      clientId: user.id,
+      categoryId: category,
+      title,
+      description,
+      budget: quote.total.toString(),
+      duration,
+      location,
+      scheduledFor: date?.toISOString(),
+    });
   };
 
   return (
@@ -106,10 +136,21 @@ export default function PostTask() {
                           <SelectValue placeholder="Select a category" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="home-repair">Home Repair</SelectItem>
-                          <SelectItem value="cleaning">Cleaning</SelectItem>
-                          <SelectItem value="chef">Personal Chef</SelectItem>
-                          <SelectItem value="fitness">Fitness Training</SelectItem>
+                          {categoriesLoading ? (
+                            <div className="flex justify-center py-2">
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            </div>
+                          ) : categories && categories.length > 0 ? (
+                            categories.map((cat) => (
+                              <SelectItem key={cat.id} value={cat.id}>
+                                {cat.name}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="none" disabled>
+                              No categories available
+                            </SelectItem>
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
@@ -255,11 +296,11 @@ export default function PostTask() {
                   ) : (
                     <Button
                       onClick={handleSubmit}
-                      disabled={isSubmitting}
+                      disabled={createJobMutation.isPending}
                       className="flex-1"
                       data-testid="button-post-task"
                     >
-                      {isSubmitting ? "Posting..." : "Post Task"}
+                      {createJobMutation.isPending ? "Posting..." : "Post Task"}
                     </Button>
                   )}
                 </div>
