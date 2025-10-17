@@ -1,12 +1,15 @@
+import { useState } from "react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Star, Heart, Clock } from "lucide-react";
 import { Link } from "wouter";
+import { BookingDialog } from "./BookingDialog";
 
 interface WorkerCardProps {
   id: string;
+  listingId?: string;
   name: string;
   avatar?: string;
   bio?: string;
@@ -21,6 +24,7 @@ interface WorkerCardProps {
 
 export function WorkerCard({
   id,
+  listingId,
   name,
   avatar,
   bio,
@@ -32,8 +36,11 @@ export function WorkerCard({
   verified,
   badge,
 }: WorkerCardProps) {
+  const [showBookingDialog, setShowBookingDialog] = useState(false);
+
   return (
-    <Card className="overflow-hidden hover-elevate transition-all" data-testid={`card-worker-${id}`}>
+    <>
+      <Card className="overflow-hidden hover-elevate transition-all" data-testid={`card-worker-${id}`}>
       <CardContent className="p-6">
         <div className="flex items-start gap-4">
           <Avatar className="w-16 h-16">
@@ -97,15 +104,29 @@ export function WorkerCard({
       </CardContent>
 
       <CardFooter className="p-6 pt-0 flex gap-2">
-        <Link href={`/listing/${id}`} className="flex-1" data-testid={`link-view-profile-${id}`}>
+        <Link href={`/profile/${id}`} className="flex-1" data-testid={`link-view-profile-${id}`}>
           <Button variant="outline" className="w-full">
             View Profile
           </Button>
         </Link>
-        <Button className="flex-1" data-testid={`button-book-${id}`}>
+        <Button
+          className="flex-1"
+          onClick={() => setShowBookingDialog(true)}
+          data-testid={`button-book-${id}`}
+        >
           Book Now
         </Button>
       </CardFooter>
-    </Card>
+      </Card>
+
+      <BookingDialog
+        open={showBookingDialog}
+        onOpenChange={setShowBookingDialog}
+        workerId={id}
+        workerName={name}
+        listingId={listingId || id}
+        defaultRate={hourlyRate}
+      />
+    </>
   );
 }

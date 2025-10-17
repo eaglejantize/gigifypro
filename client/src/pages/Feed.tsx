@@ -79,6 +79,7 @@ export default function Feed() {
               <WorkerCard
                 key={listing.id}
                 id={listing.workerId}
+                listingId={listing.id}
                 name={listing.worker?.user?.name || "Unknown"}
                 bio={listing.description}
                 hourlyRate={listing.customRate || "25"}
