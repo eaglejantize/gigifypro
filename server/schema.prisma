@@ -1,0 +1,239 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  GIGER
+  ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  ACCEPTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  DISPUTED
+  REFUNDED
+  PAID_OUT
+}
+
+enum DisputeStatus {
+  OPEN
+  RESOLVED_REFUND_NONE
+  RESOLVED_REFUND_PARTIAL
+  RESOLVED_REFUND_FULL
+}
+
+enum PayoutStatus {
+  PENDING
+  PAID
+}
+
+enum JobStatus {
+  QUEUED
+  RUN
+  DONE
+  ERROR
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(CUSTOMER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  profile   Profile?
+  gigs      Gig[]       @relation("UserGigs")
+  bookingsAsCustomer Booking[] @relation("BookingsCustomer")
+  bookingsAsGiger    Booking[] @relation("BookingsGiger")
+  messages  Message[]  @relation("UserMessages")
+  reviews   Review[]   @relation("UserReviewsGiven")
+  notifications Notification[]
+  payouts   Payout[]
+
+  @@index([role])
+  @@map("users")
+}
+
+model Profile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  displayName String?
+  phone       String?
+  city        String?
+  state       String?
+  bio         String?
+  avatarUrl   String?
+  ratingAvg   Float     @default(0)
+  ratingCount Int       @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+model Gig {
+  id             String   @id @default(cuid())
+  gigerId        String
+  title          String
+  slug           String   @unique
+  description    String
+  basePriceCents Int
+  category       String
+  imagesJson     Json?    // store array of image URLs here
+  serviceAreaZip String?
+  radiusMiles    Int?     // service radius in miles
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  giger     User     @relation("UserGigs", fields: [gigerId], references: [id], onDelete: Cascade)
+  addons    GigAddon[]
+  bookings  Booking[]
+
+  @@index([gigerId, isActive])
+  @@map("gigs")
+}
+
+model GigAddon {
+  id          String @id @default(cuid())
+  gigId       String
+  name        String
+  priceCents  Int
+  description String?
+
+  gig Gig @relation(fields: [gigId], references: [id], onDelete: Cascade)
+
+  @@index([gigId])
+  @@map("gig_addons")
+}
+
+model Booking {
+  id                     String         @id @default(cuid())
+  customerId             String
+  gigerId                String
+  gigId                  String
+  status                 BookingStatus  @default(PENDING)
+  scheduledAt            DateTime?
+  notes                  String?
+  amountAuthCents        Int
+  amountCaptureCents     Int?
+  stripePaymentIntentId  String         @unique
+  stripePaymentMethodId  String?
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+
+  customer User @relation("BookingsCustomer", fields: [customerId], references: [id], onDelete: Cascade)
+  giger    User @relation("BookingsGiger", fields: [gigerId], references: [id], onDelete: Cascade)
+  gig      Gig  @relation(fields: [gigId], references: [id], onDelete: Cascade)
+
+  messages Message[]
+  review   Review?
+  dispute  Dispute?
+  payout   Payout?
+
+  @@index([customerId, status])
+  @@index([gigerId, status])
+  @@index([gigId])
+  @@map("bookings")
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  bookingId  String
+  senderId   String
+  body       String
+  createdAt  DateTime @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  sender  User    @relation("UserMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId, createdAt])
+  @@map("messages")
+}
+
+model Review {
+  id           String   @id @default(cuid())
+  bookingId    String   @unique
+  reviewerId   String
+  targetUserId String
+  rating       Int
+  comment      String?
+  createdAt    DateTime @default(now())
+
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  reviewer  User    @relation("UserReviewsGiven", fields: [reviewerId], references: [id], onDelete: Cascade)
+  target    User    @relation(fields: [targetUserId], references: [id], onDelete: Cascade)
+
+  @@index([targetUserId])
+  @@map("reviews")
+}
+
+model Dispute {
+  id         String        @id @default(cuid())
+  bookingId  String        @unique
+  openedById String
+  reason     String
+  details    String?
+  status     DisputeStatus @default(OPEN)
+  adminNotes String?
+  createdAt  DateTime      @default(now())
+  resolvedAt DateTime?
+
+  booking  Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  openedBy User    @relation(fields: [openedById], references: [id], onDelete: Cascade)
+
+  @@map("disputes")
+}
+
+model Payout {
+  id         String       @id @default(cuid())
+  gigerId    String
+  bookingId  String       @unique
+  amountCents Int
+  status     PayoutStatus @default(PENDING)
+  createdAt  DateTime     @default(now())
+  paidAt     DateTime?
+
+  giger   User    @relation(fields: [gigerId], references: [id], onDelete: Cascade)
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([gigerId, status])
+  @@map("payouts")
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String
+  payloadJson Json
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+model Job {
+  id          String    @id @default(cuid())
+  type        String
+  payloadJson Json
+  runAt       DateTime?
+  lastRunAt   DateTime?
+  status      JobStatus @default(QUEUED)
+  error       String?
+
+  @@index([status, runAt])
+  @@map("jobs")
+}

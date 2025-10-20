@@ -1,0 +1,29 @@
+node - <<'JS'
+import fs from "fs";
+const dir = ".";
+
+// Primary blue + white base64 SVG
+const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="12" fill="#2563EB"/>
+  <rect x="10" y="10" width="44" height="44" rx="10" fill="#FFFFFF"/>
+  <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle"
+        font-family="sans-serif" font-weight="700" font-size="34" fill="#2563EB">G</text>
+</svg>`;
+
+fs.writeFileSync(`${dir}/favicon.svg`, svg);
+fs.writeFileSync(`${dir}/logo.svg`, svg);
+fs.writeFileSync(`${dir}/favicon.ico`, "");          // placeholder
+fs.writeFileSync(`${dir}/apple-touch-icon.png`, ""); // placeholder
+fs.writeFileSync(`${dir}/logo.png`, "");             // placeholder
+
+// simple OG cover
+const og = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630">
+  <rect width="1200" height="630" fill="#2563EB"/>
+  <text x="60" y="200" font-size="80" fill="white" font-family="sans-serif" font-weight="700">GigifyPro</text>
+  <text x="60" y="280" font-size="36" fill="white" font-family="sans-serif">Find Trusted Local Services — $25 per 30 minutes</text>
+  <rect x="860" y="80" width="260" height="120" rx="20" fill="white"/>
+  <text x="920" y="150" font-size="36" fill="#2563EB" font-family="sans-serif" font-weight="600">Verified Pros</text>
+</svg>`;
+fs.writeFileSync(`${dir}/og-cover.svg`, og);
+console.log("✅ SVG logo + og-cover created in client/public/");
+JS
