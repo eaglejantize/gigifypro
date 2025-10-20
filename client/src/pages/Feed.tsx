@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { WorkerCard } from "@/components/WorkerCard";
+import { CategoryDropdown } from "@/components/CategoryDropdown";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,10 +18,64 @@ type ListingWithWorker = ServiceListing & {
 export default function Feed() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("ranked");
+  const [selectedCategory, setSelectedCategory] = useState("");
 
-  const { data: listings, isLoading } = useQuery<ListingWithWorker[]>({
+  const { data: allListings, isLoading } = useQuery<ListingWithWorker[]>({
     queryKey: ["/api/listings"],
   });
+
+  // Filter and sort listings
+  const listings = useMemo(() => {
+    let filtered = allListings || [];
+
+    // Filter by category
+    if (selectedCategory) {
+      filtered = filtered.filter((listing) => listing.categoryId === selectedCategory);
+    }
+
+    // Filter by search query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (listing) =>
+          listing.title.toLowerCase().includes(query) ||
+          listing.description.toLowerCase().includes(query) ||
+          listing.worker?.user?.name.toLowerCase().includes(query)
+      );
+    }
+
+    // Sort listings
+    const sorted = [...filtered];
+    switch (sortBy) {
+      case "rating":
+        sorted.sort((a, b) => (b.avgRating || 0) - (a.avgRating || 0));
+        break;
+      case "price-low":
+        sorted.sort(
+          (a, b) =>
+            parseFloat(a.customRate || "25") - parseFloat(b.customRate || "25")
+        );
+        break;
+      case "price-high":
+        sorted.sort(
+          (a, b) =>
+            parseFloat(b.customRate || "25") - parseFloat(a.customRate || "25")
+        );
+        break;
+      case "recent":
+        sorted.sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        break;
+      case "ranked":
+      default:
+        // Keep default ranking from backend
+        break;
+    }
+
+    return sorted;
+  }, [allListings, selectedCategory, searchQuery, sortBy]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -36,35 +91,42 @@ export default function Feed() {
         </div>
 
         {/* Search and Filters */}
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <Input
-              placeholder="Search for services..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-              data-testid="input-search"
-            />
+        <div className="flex flex-col gap-4 mb-8">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                placeholder="Search for services..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+                data-testid="input-search"
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-[180px]" data-testid="select-sort">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ranked">Top Ranked</SelectItem>
+                  <SelectItem value="rating">Highest Rating</SelectItem>
+                  <SelectItem value="price-low">Price: Low to High</SelectItem>
+                  <SelectItem value="price-high">Price: High to Low</SelectItem>
+                  <SelectItem value="recent">Most Recent</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <div className="flex gap-2">
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-[180px]" data-testid="select-sort">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ranked">Top Ranked</SelectItem>
-                <SelectItem value="rating">Highest Rating</SelectItem>
-                <SelectItem value="price-low">Price: Low to High</SelectItem>
-                <SelectItem value="price-high">Price: High to Low</SelectItem>
-                <SelectItem value="recent">Most Recent</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Button variant="outline" size="icon" data-testid="button-filters">
-              <SlidersHorizontal className="w-5 h-5" />
-            </Button>
+          <div className="w-full md:w-[400px]">
+            <CategoryDropdown
+              value={selectedCategory}
+              onChange={setSelectedCategory}
+              placeholder="Filter by category..."
+              showAllOption={true}
+            />
           </div>
         </div>
 

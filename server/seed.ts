@@ -94,7 +94,14 @@ async function seed() {
     ];
 
     for (const category of categories) {
-      await storage.createCategory(category);
+      try {
+        await storage.createCategory(category);
+      } catch (error: any) {
+        // Skip if category already exists (duplicate key error)
+        if (error.code !== "23505") {
+          throw error;
+        }
+      }
     }
 
     // Create demo client user

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CategoryDropdown } from "@/components/CategoryDropdown";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { calculatePrice, durationOptions, formatPrice } from "@/lib/pricing";
@@ -28,10 +29,6 @@ export default function PostTask() {
   const [duration, setDuration] = useState(60);
   const [date, setDate] = useState<Date>();
   const [location, setLocationValue] = useState("");
-
-  const { data: categories, isLoading: categoriesLoading } = useQuery<ServiceCategory[]>({
-    queryKey: ["/api/categories"],
-  });
 
   const quote = calculatePrice(duration);
 
@@ -131,28 +128,12 @@ export default function PostTask() {
                   <>
                     <div className="space-y-2">
                       <Label htmlFor="category">Service Category</Label>
-                      <Select value={category} onValueChange={setCategory}>
-                        <SelectTrigger data-testid="select-category">
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categoriesLoading ? (
-                            <div className="flex justify-center py-2">
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            </div>
-                          ) : categories && categories.length > 0 ? (
-                            categories.map((cat) => (
-                              <SelectItem key={cat.id} value={cat.id}>
-                                {cat.name}
-                              </SelectItem>
-                            ))
-                          ) : (
-                            <SelectItem value="none" disabled>
-                              No categories available
-                            </SelectItem>
-                          )}
-                        </SelectContent>
-                      </Select>
+                      <CategoryDropdown
+                        value={category}
+                        onChange={setCategory}
+                        placeholder="Select a service category..."
+                        showAllOption={false}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="title">Task Title</Label>
