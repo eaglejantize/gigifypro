@@ -1,0 +1,151 @@
+Perfect — you want to expand your Explore page’s service selector into a scrollable + searchable dropdown list that covers every major category of services while keeping your “Popular” ones (Home Repair, Personal Chef, Fitness Training, House Cleaning).
+
+Here’s exactly what to give your Replit Agent to build this feature:
+
+⸻
+
+🧠 Replit Agent Prompt — Step 1 of 4
+
+Task: Add a scrollable, searchable service-category dropdown to the Explore page, plus extend the category list used on the Post-a-Gig page.
+
+⸻
+
+🧩 Feature Spec
+
+Goal:
+Visitors can pick from a comprehensive list of service categories when posting or browsing gigs.
+The dropdown must be:
+	•	Scrollable (max height ≈ 400 px, overflow auto)
+	•	Searchable (type-ahead filter)
+	•	Reusable (shared between /explore and /dashboard/giger/gigs/new)
+	•	Styled with shadcn/ui + Tailwind (rounded, shadowed, consistent with site theme)
+
+⸻
+
+🗂️ Category List
+
+✅ Popular (already shown)
+	1.	Home Repair – Expert handymen
+	2.	Personal Chef – Meal preparation
+	3.	Fitness Training – Get in shape
+	4.	House Cleaning – Spotless homes
+
+💡 Expanded List
+
+Home & Property
+	•	Appliance Repair
+	•	Electrical Services
+	•	Plumbing
+	•	HVAC / Heating & Cooling
+	•	Painting & Decor
+	•	Roofing & Gutters
+	•	Flooring & Tiling
+	•	Landscaping & Yard Work
+	•	Pest Control
+	•	Pool Maintenance
+	•	Moving Help
+	•	Furniture Assembly
+	•	Smart Home Installation
+	•	Carpet & Upholstery Cleaning
+	•	Interior Design
+
+Personal & Wellness
+	•	Massage Therapy
+	•	Hair Styling / Barber
+	•	Makeup Artist
+	•	Nail Technician
+	•	Yoga Instruction
+	•	Nutrition Coaching
+	•	Life Coaching
+
+Automotive
+	•	Car Detailing
+	•	Mobile Mechanic
+	•	Tire Service
+	•	Car Wash / Wax
+
+Business & Technology
+	•	Web Design
+	•	Graphic Design
+	•	Copywriting
+	•	Virtual Assistant
+	•	Bookkeeping & Taxes
+	•	Social Media Management
+	•	Photography / Videography
+	•	Computer Repair
+	•	IT Support
+
+Education & Training
+	•	Tutoring (K-12 / College)
+	•	Language Lessons
+	•	Music Lessons
+	•	Test Prep (SAT, GED, etc.)
+	•	Professional Development
+
+Events & Entertainment
+	•	DJ Services
+	•	Event Planner
+	•	Catering
+	•	Bartending
+	•	Party Rentals
+	•	Live Musicians
+	•	Balloon & Decor
+
+Pet Services
+	•	Dog Walking
+	•	Pet Grooming
+	•	Pet Sitting
+	•	Pet Training
+
+Transportation
+	•	Rideshare / Driver
+	•	Courier Delivery
+	•	Moving Truck Rental
+
+Other
+	•	Errand Runner
+	•	Senior Care / Companionship
+	•	Child Care / Babysitting
+	•	Laundry Service
+	•	Custom Requests
+
+⸻
+
+⚙️ Implementation Tasks
+	1.	Create components/CategoryDropdown.tsx
+	•	Props: value, onChange
+	•	Uses shadcn/ui Popover + Command (for search/filter)
+	•	Scrollable list of all categories above
+	•	Returns selected category slug/text
+	2.	Integrate into Explore page
+	•	File: app/explore/page.tsx
+	•	Add a “Select Category” dropdown at top of filter bar
+	•	When user selects a category → filters visible gigs by that category (/api/gigs?category=<slug>)
+	3.	Integrate into Post-a-Gig form
+	•	File: app/dashboard/giger/gigs/new/page.tsx
+	•	Replace plain text input with the same dropdown
+	4.	Seed popular categories
+	•	Update /dev/seed to insert these base categories if not existing
+	5.	Style
+	•	Limit height ≈ 400 px (max-h-[400px] overflow-y-auto)
+	•	Rounded corners, soft shadow, large clickable rows
+	•	Search input placeholder: “Search services…”
+	6.	Optional
+	•	Persist last-selected category in localStorage
+	•	Highlight “Popular Categories” at top with divider
+
+⸻
+
+✅ Acceptance Criteria
+	•	Dropdown opens smoothly and is scrollable.
+	•	Typing filters the list in real time.
+	•	Selecting a category updates Explore filter and Gig-creation form.
+	•	Existing popular categories still visible as featured cards.
+	•	Works on desktop and mobile.
+
+⸻
+
+When you paste this into Replit Agent, label it:
+Prompt → “Gigify Explore Service Dropdown Enhancement — Step 1 of 4.”
+
+Once it completes, we’ll proceed to Step 2 of 4: category-based filtering and routing so Explore dynamically loads matching gigs.

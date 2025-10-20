@@ -9,46 +9,88 @@ async function seed() {
     // Create service categories
     console.log("Creating categories...");
     const categories = [
-      {
-        name: "Home Repair",
-        description: "Handyman services, plumbing, electrical",
-        icon: "wrench",
-      },
-      {
-        name: "House Cleaning",
-        description: "Professional cleaning services",
-        icon: "home",
-      },
-      {
-        name: "Personal Chef",
-        description: "Meal preparation and catering",
-        icon: "chef-hat",
-      },
-      {
-        name: "Fitness Training",
-        description: "Personal training and fitness coaching",
-        icon: "dumbbell",
-      },
-      {
-        name: "Lawn Care",
-        description: "Lawn mowing and landscaping",
-        icon: "scissors",
-      },
-      {
-        name: "Childcare",
-        description: "Babysitting and nanny services",
-        icon: "baby",
-      },
-      {
-        name: "Pet Care",
-        description: "Dog walking and pet sitting",
-        icon: "dog",
-      },
-      {
-        name: "Tutoring",
-        description: "Academic tutoring and lessons",
-        icon: "book",
-      },
+      // Popular Categories
+      { name: "Home Repair", description: "Expert handymen", icon: "wrench" },
+      { name: "Personal Chef", description: "Meal preparation", icon: "chef-hat" },
+      { name: "Fitness Training", description: "Get in shape", icon: "dumbbell" },
+      { name: "House Cleaning", description: "Spotless homes", icon: "home" },
+
+      // Home & Property
+      { name: "Appliance Repair", description: "Fix appliances", icon: "wrench" },
+      { name: "Electrical Services", description: "Licensed electricians", icon: "zap" },
+      { name: "Plumbing", description: "Plumbing repairs and installation", icon: "droplet" },
+      { name: "HVAC / Heating & Cooling", description: "Climate control experts", icon: "thermometer" },
+      { name: "Painting & Decor", description: "Interior and exterior painting", icon: "paintbrush" },
+      { name: "Roofing & Gutters", description: "Roof repair and maintenance", icon: "home" },
+      { name: "Flooring & Tiling", description: "Floor installation and repair", icon: "square" },
+      { name: "Landscaping & Yard Work", description: "Lawn care and gardening", icon: "tree-pine" },
+      { name: "Pest Control", description: "Pest removal services", icon: "bug" },
+      { name: "Pool Maintenance", description: "Pool cleaning and repair", icon: "waves" },
+      { name: "Moving Help", description: "Packing and moving assistance", icon: "truck" },
+      { name: "Furniture Assembly", description: "Assemble your furniture", icon: "package" },
+      { name: "Smart Home Installation", description: "Install smart devices", icon: "home" },
+      { name: "Carpet & Upholstery Cleaning", description: "Deep cleaning services", icon: "sparkles" },
+      { name: "Interior Design", description: "Professional design services", icon: "palette" },
+
+      // Personal & Wellness
+      { name: "Massage Therapy", description: "Therapeutic massage", icon: "hand" },
+      { name: "Hair Styling / Barber", description: "Hair cuts and styling", icon: "scissors" },
+      { name: "Makeup Artist", description: "Professional makeup", icon: "sparkles" },
+      { name: "Nail Technician", description: "Manicure and pedicure", icon: "hand" },
+      { name: "Yoga Instruction", description: "Personal yoga sessions", icon: "activity" },
+      { name: "Nutrition Coaching", description: "Diet and nutrition planning", icon: "apple" },
+      { name: "Life Coaching", description: "Personal development", icon: "target" },
+
+      // Automotive
+      { name: "Car Detailing", description: "Professional car cleaning", icon: "car" },
+      { name: "Mobile Mechanic", description: "On-site car repair", icon: "wrench" },
+      { name: "Tire Service", description: "Tire replacement and repair", icon: "circle" },
+      { name: "Car Wash / Wax", description: "Wash and wax services", icon: "droplet" },
+
+      // Business & Technology
+      { name: "Web Design", description: "Website creation", icon: "globe" },
+      { name: "Graphic Design", description: "Logo and graphic design", icon: "palette" },
+      { name: "Copywriting", description: "Professional writing", icon: "file-text" },
+      { name: "Virtual Assistant", description: "Remote administrative help", icon: "user" },
+      { name: "Bookkeeping & Taxes", description: "Financial services", icon: "calculator" },
+      { name: "Social Media Management", description: "Social media marketing", icon: "share-2" },
+      { name: "Photography / Videography", description: "Photo and video services", icon: "camera" },
+      { name: "Computer Repair", description: "Fix computers and laptops", icon: "laptop" },
+      { name: "IT Support", description: "Technical support", icon: "monitor" },
+
+      // Education & Training
+      { name: "Tutoring (K-12 / College)", description: "Academic tutoring", icon: "book" },
+      { name: "Language Lessons", description: "Learn a new language", icon: "message-circle" },
+      { name: "Music Lessons", description: "Instrument instruction", icon: "music" },
+      { name: "Test Prep (SAT, GED, etc.)", description: "Test preparation", icon: "file-check" },
+      { name: "Professional Development", description: "Career coaching", icon: "briefcase" },
+
+      // Events & Entertainment
+      { name: "DJ Services", description: "Event DJ and music", icon: "music" },
+      { name: "Event Planner", description: "Plan your events", icon: "calendar" },
+      { name: "Catering", description: "Food catering services", icon: "utensils" },
+      { name: "Bartending", description: "Professional bartenders", icon: "glass-water" },
+      { name: "Party Rentals", description: "Equipment rental", icon: "package" },
+      { name: "Live Musicians", description: "Live music performance", icon: "music" },
+      { name: "Balloon & Decor", description: "Party decorations", icon: "gift" },
+
+      // Pet Services
+      { name: "Dog Walking", description: "Walk your dog", icon: "dog" },
+      { name: "Pet Grooming", description: "Pet washing and grooming", icon: "scissors" },
+      { name: "Pet Sitting", description: "In-home pet care", icon: "home" },
+      { name: "Pet Training", description: "Train your pet", icon: "zap" },
+
+      // Transportation
+      { name: "Rideshare / Driver", description: "Personal driver services", icon: "car" },
+      { name: "Courier Delivery", description: "Package delivery", icon: "package" },
+      { name: "Moving Truck Rental", description: "Rent moving trucks", icon: "truck" },
+
+      // Other
+      { name: "Errand Runner", description: "Run errands for you", icon: "map-pin" },
+      { name: "Senior Care / Companionship", description: "Elder care services", icon: "heart" },
+      { name: "Child Care / Babysitting", description: "Babysitting services", icon: "baby" },
+      { name: "Laundry Service", description: "Wash and fold", icon: "shirt" },
+      { name: "Custom Requests", description: "Other services", icon: "sparkles" },
     ];
 
     for (const category of categories) {
