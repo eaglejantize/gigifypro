@@ -104,70 +104,221 @@ async function seed() {
       }
     }
 
+    // Get all categories for reference
+    const allCategories = await storage.getAllCategories();
+    const findCategory = (name: string) => allCategories.find((c) => c.name === name);
+
     // Create demo client user
     console.log("Creating demo client user...");
     const clientPassword = await bcrypt.hash("password123", 10);
-    const client = await storage.createUser({
-      email: "client@demo.com",
-      password: clientPassword,
-      name: "Sarah Johnson",
-      role: "user",
-    });
-
-    // Create demo worker user
-    console.log("Creating demo worker user...");
-    const workerPassword = await bcrypt.hash("password123", 10);
-    const worker = await storage.createUser({
-      email: "worker@demo.com",
-      password: workerPassword,
-      name: "John Smith",
-      role: "worker",
-    });
-
-    // Create worker profile
-    console.log("Creating worker profile...");
-    const workerProfile = await storage.createWorkerProfile({
-      userId: worker.id,
-      bio: "Professional handyman with 10+ years of experience. Specialized in home repairs, plumbing, and electrical work.",
-      skills: ["Plumbing", "Electrical", "Carpentry", "Painting", "General Repairs"],
-      hourlyRate: "50.00",
-      responseTimeMinutes: 15,
-      verified: true,
-    });
-
-    // Create a demo service listing
-    console.log("Creating demo listing...");
-    const homeRepairCategory = await storage.getAllCategories();
-    const homeRepair = homeRepairCategory.find((c) => c.name === "Home Repair");
-
-    if (homeRepair) {
-      await storage.createListing({
-        workerId: workerProfile.id,
-        categoryId: homeRepair.id,
-        title: "Professional Home Repair Services",
-        description:
-          "I provide expert handyman services including plumbing, electrical work, carpentry, and general home repairs. With over 10 years of experience, I ensure quality workmanship and timely completion.",
-        customRate: "50.00",
-        duration: 120,
-        active: true,
+    let client;
+    try {
+      client = await storage.createUser({
+        email: "client@demo.com",
+        password: clientPassword,
+        name: "Sarah Johnson",
+        role: "user",
       });
+    } catch (error: any) {
+      if (error.code === "23505") {
+        client = await storage.getUserByEmail("client@demo.com");
+      } else {
+        throw error;
+      }
     }
 
-    // Create some demo reviews
-    console.log("Creating demo reviews...");
-    await storage.createReviewLike({
-      workerId: workerProfile.id,
-      clientId: client.id,
-      rating: 5,
-      comment: "Excellent work! Very professional and completed the job quickly.",
-    });
+    // Create multiple demo workers with listings
+    console.log("Creating demo workers and listings...");
+    
+    const workers = [
+      {
+        email: "worker@demo.com",
+        name: "John Smith",
+        bio: "Professional handyman with 10+ years of experience. Specialized in home repairs, plumbing, and electrical work.",
+        skills: ["Plumbing", "Electrical", "Carpentry", "Painting"],
+        hourlyRate: "50.00",
+        listings: [
+          {
+            category: "Home Repair",
+            title: "Professional Home Repair Services",
+            description: "I provide expert handyman services including plumbing, electrical work, carpentry, and general home repairs. With over 10 years of experience, I ensure quality workmanship and timely completion.",
+            rate: "50.00",
+            duration: 120,
+          },
+        ],
+      },
+      {
+        email: "maria.lawn@demo.com",
+        name: "Maria Garcia",
+        bio: "Experienced lawn care specialist with a passion for creating beautiful outdoor spaces.",
+        skills: ["Lawn Mowing", "Landscaping", "Tree Trimming", "Garden Design"],
+        hourlyRate: "35.00",
+        listings: [
+          {
+            category: "Lawn Care",
+            title: "Professional Lawn Mowing & Maintenance",
+            description: "Keep your lawn looking pristine with regular mowing, edging, and trimming services. I use professional equipment and provide weekly or bi-weekly services.",
+            rate: "35.00",
+            duration: 90,
+          },
+        ],
+      },
+      {
+        email: "chef.mike@demo.com",
+        name: "Mike Chen",
+        bio: "Personal chef with 8 years of culinary experience. Specialized in meal prep and healthy eating plans.",
+        skills: ["Meal Prep", "Cooking", "Nutrition Planning", "Catering"],
+        hourlyRate: "45.00",
+        listings: [
+          {
+            category: "Meal Prep",
+            title: "Weekly Meal Prep Service",
+            description: "Healthy, delicious meals prepared fresh for your week. Custom menus based on dietary preferences and restrictions. All ingredients included.",
+            rate: "45.00",
+            duration: 180,
+          },
+        ],
+      },
+      {
+        email: "trainer.alex@demo.com",
+        name: "Alex Rodriguez",
+        bio: "Certified personal trainer helping clients achieve their fitness goals through customized workout plans.",
+        skills: ["Personal Training", "Nutrition", "Weight Loss", "Strength Training"],
+        hourlyRate: "55.00",
+        listings: [
+          {
+            category: "Personal Training",
+            title: "One-on-One Personal Training Sessions",
+            description: "Customized fitness programs designed for your goals. Whether you want to lose weight, build muscle, or improve overall health, I'll create the perfect plan for you.",
+            rate: "55.00",
+            duration: 60,
+          },
+        ],
+      },
+      {
+        email: "tutor.emma@demo.com",
+        name: "Emma Wilson",
+        bio: "Math tutor with a Master's degree in Mathematics. Helping students from middle school to college level.",
+        skills: ["Math Tutoring", "Algebra", "Calculus", "Test Prep"],
+        hourlyRate: "40.00",
+        listings: [
+          {
+            category: "Math Tutoring",
+            title: "Expert Math Tutoring - All Levels",
+            description: "Struggling with math? I provide patient, effective tutoring for students of all levels. From basic algebra to advanced calculus, I'll help you understand and succeed.",
+            rate: "40.00",
+            duration: 60,
+          },
+        ],
+      },
+      {
+        email: "cleaner.lisa@demo.com",
+        name: "Lisa Thompson",
+        bio: "Professional house cleaner with attention to detail and eco-friendly products.",
+        skills: ["House Cleaning", "Deep Cleaning", "Move-in/out Cleaning"],
+        hourlyRate: "30.00",
+        listings: [
+          {
+            category: "House Cleaning",
+            title: "Thorough House Cleaning Services",
+            description: "Make your home sparkle with professional deep cleaning services. I use eco-friendly products and pay attention to every detail. Weekly, bi-weekly, or one-time cleaning available.",
+            rate: "30.00",
+            duration: 180,
+          },
+        ],
+      },
+      {
+        email: "plumber.dave@demo.com",
+        name: "Dave Martinez",
+        bio: "Licensed plumber with 15 years of experience. Available for emergencies and scheduled repairs.",
+        skills: ["Plumbing", "Pipe Repair", "Drain Cleaning", "Water Heater"],
+        hourlyRate: "65.00",
+        listings: [
+          {
+            category: "Plumbing",
+            title: "Licensed Plumbing Services",
+            description: "From leaky faucets to major pipe repairs, I handle all plumbing needs. Licensed, insured, and available for emergencies. Fair pricing and quality work guaranteed.",
+            rate: "65.00",
+            duration: 90,
+          },
+        ],
+      },
+      {
+        email: "photographer.sarah@demo.com",
+        name: "Sarah Kim",
+        bio: "Professional photographer specializing in events, portraits, and product photography.",
+        skills: ["Photography", "Event Photography", "Portraits", "Editing"],
+        hourlyRate: "75.00",
+        listings: [
+          {
+            category: "Photography",
+            title: "Professional Event & Portrait Photography",
+            description: "Capture your special moments with professional photography services. Weddings, family portraits, corporate events, and more. Includes editing and digital delivery.",
+            rate: "75.00",
+            duration: 120,
+          },
+        ],
+      },
+    ];
 
-    await storage.createReviewLike({
-      workerId: workerProfile.id,
-      clientId: client.id,
-      rating: 5,
-      comment: "Fixed my plumbing issue perfectly. Highly recommend!",
-    });
+    for (const workerData of workers) {
+      try {
+        let worker;
+        try {
+          const workerPassword = await bcrypt.hash("password123", 10);
+          worker = await storage.createUser({
+            email: workerData.email,
+            password: workerPassword,
+            name: workerData.name,
+            role: "worker",
+          });
+        } catch (error: any) {
+          if (error.code === "23505") {
+            worker = await storage.getUserByEmail(workerData.email);
+          } else {
+            throw error;
+          }
+        }
+
+        if (!worker) continue;
+
+        const workerProfile = await storage.createWorkerProfile({
+          userId: worker.id,
+          bio: workerData.bio,
+          skills: workerData.skills,
+          hourlyRate: workerData.hourlyRate,
+          responseTimeMinutes: 15,
+          verified: true,
+        });
+
+        for (const listingData of workerData.listings) {
+          const category = findCategory(listingData.category);
+          if (category) {
+            await storage.createListing({
+              workerId: workerProfile.id,
+              categoryId: category.id,
+              title: listingData.title,
+              description: listingData.description,
+              customRate: listingData.rate,
+              duration: listingData.duration,
+              active: true,
+            });
+          }
+        }
+
+        // Create some demo reviews for each worker
+        if (client) {
+          await storage.createReviewLike({
+            workerId: workerProfile.id,
+            clientId: client.id,
+            rating: 5,
+            comment: "Excellent service! Very professional and completed the job quickly.",
+          });
+        }
+      } catch (error: any) {
+        console.log(`Skipping worker ${workerData.email}: ${error.message}`);
+      }
+    }
 
     console.log("✅ Database seeded successfully!");
     console.log("\n📝 Demo Credentials:");
