@@ -7,7 +7,7 @@ import Stripe from "stripe";
 
 // Stripe setup - from javascript_stripe integration
 const stripe = process.env.STRIPE_SECRET_KEY
-  ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2023-10-16" })
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2025-09-30.clover" })
   : null;
 
 // Validation schemas
@@ -309,7 +309,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const job = await storage.createJobRequest({
         clientId,
-        ...data,
+        title: data.title,
+        duration: data.duration,
+        description: data.description,
+        categoryId: data.categoryId,
+        budget: data.budget,
+        location: data.location,
+        scheduledFor: data.scheduledFor ? new Date(data.scheduledFor) : null,
       });
       res.json(job);
     } catch (error: any) {
@@ -359,7 +365,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const booking = await storage.createBooking({
         clientId,
-        ...data,
+        duration: data.duration,
+        location: data.location,
+        scheduledFor: new Date(data.scheduledFor),
+        workerId: data.workerId,
+        quotedTotal: data.quotedTotal,
+        listingId: data.listingId,
+        jobRequestId: data.jobRequestId,
+        notes: data.notes,
       });
       res.json(booking);
     } catch (error: any) {

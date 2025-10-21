@@ -1,0 +1,185 @@
+TITLE: Replit Agent — Make the Gig Marketplace app RUN & DEPLOY for testing (Next.js + Prisma + SQLite + Stripe test)
+
+GOAL
+Turn this repo into a fully runnable and testable deployment in Replit (or locally) with:
+- Next.js 14 (app router) server running on a single port (3000)
+- Prisma + SQLite database initialized
+- Auth (NextAuth Credentials) working
+- Stripe in TEST MODE with manual capture (auth at booking, capture on release)
+- Seed route to create Admin / Giger / Customer demo users and sample gigs
+- Basic smoke tests & a README with copy-paste steps
+- Fix any port/Nix/.replit issues that prevent running/deploying
+
+CONSTRAINTS / RULES
+- Do NOT require multiple ports. Only expose one HTTP port (3000).
+- If Nix is enabled, ensure replit.nix has nodejs >=18, openssl, python for Prisma.
+- If Nix is disabled or missing, skip Nix and use regular npm install.
+- If files are missing (e.g., prisma/schema.prisma, .env, pages), CREATE THEM with sensible defaults.
+- Document EVERY assumption in README under “Assumptions”.
+- Stripe: implement test-mode-only; show clear labels “Authorized (not captured)” vs “Captured”.
+- Disputes: Admin can choose NONE / PARTIAL / FULL refund outcome.
+- If any failures occur, print the error and fix them automatically.
+
+TASKS (DO ALL)
+1) AUDIT & CLEANUP
+   - Detect the framework; if this is not a Next.js app, convert to Next.js 14 (TypeScript, app router).
+   - Ensure the folder structure:
+     /app
+     /components
+     /lib
+     /server
+     /server/actions
+     /server/stripe
+     /prisma
+     /public
+   - Ensure package.json scripts exist:
+     {
+       "scripts": {
+         "dev": "next dev -p 3000",
+         "build": "next build",
+         "start": "next start -p 3000",
+         "db:push": "prisma db push",
+         "seed:dev": "tsx scripts/seed.ts"
+       }
+     }
+   - Ensure Next.js config file exists (next.config.js). If missing, create a minimal one enabling experimental app router.
+
+2) .REPLIT & NIX CONFIG (Replit-specific)
+   - Create/update .replit:
+       run = "npm run dev"
+       entrypoint = "index.js"
+     (entrypoint can be any existing file; Replit ignores if using run)
+   - If the workspace uses Nix, create/update replit.nix to include:
+       { pkgs }: {
+         deps = [
+           pkgs.nodejs_18
+           pkgs.openssl
+           pkgs.python3
+           pkgs.pkg-config
+         ];
+       }
+     - After changing replit.nix, run “npm rebuild” as needed.
+   - Ensure ONLY one port is used (3000). Remove/ignore any config exposing 80/3001/8000.
+
+3) ENVIRONMENT (.env)
+   - Create .env with the following placeholders if missing; do not commit real secrets:
+       NEXTAUTH_SECRET="dev_secret_change_me"
+       NEXTAUTH_URL="http://localhost:3000"
+       DATABASE_URL="file:./dev.db"
+       STRIPE_SECRET_KEY="sk_test_123"
+       STRIPE_PUBLISHABLE_KEY="pk_test_123"
+       STRIPE_WEBHOOK_SECRET="whsec_123"
+       DEV_KEY="let_me_in"
+   - If on Replit, also set these via the “Secrets” panel.
+   - Print a warning to the console if STRIPE keys are still placeholders when the app boots, but allow the app to boot and show a banner in the Admin dashboard “Stripe test keys not configured”.
+
+4) DATABASE (Prisma + SQLite)
+   - Create prisma/schema.prisma if missing using the provided data models (adjust for SQLite):
+     - Role, BookingStatus, DisputeStatus, PayoutStatus, JobStatus enums
+     - User, Profile, Gig, GigAddon, Booking, Message, Review, Dispute, Payout, Notification, Job
+     - Use JSON field for images (imagesJson) instead of string[] (SQLite limitation).
+   - Install prisma and @prisma/client. Run:
+       npx prisma generate
+       npx prisma db push
+   - Add a simple /api/health/db route that returns { ok: true } if a quick Prisma query succeeds.
+
+5) AUTH (NextAuth Credentials)
+   - Implement basic email/password auth with password hashing (bcrypt).
+   - Pages: /auth/signin, /auth/signup
+   - Protect dashboards and server actions by role.
+
+6) STRIPE (TEST MODE, manual capture)
+   - Implement API/server actions:
+     - createBooking(gigId, addons[], notes, scheduledAt) → creates PaymentIntent with capture_method=manual; confirm & authorize; store PaymentIntent id.
+     - customerReleasePayment(bookingId) → capture PaymentIntent full.
+     - adminResolveDispute(bookingId, outcome: NONE|PARTIAL|FULL, partialAmountCents?) → if NONE: capture full; PARTIAL: capture partial; FULL: cancel PaymentIntent (if not captured) or refund.
+   - Add /api/stripe/webhook route and a banner/instructions in README for `stripe listen --forward-to localhost:3000/api/stripe/webhook`.
+
+7) ROUTES & PAGES (minimum viable)
+   - Public:
+     - / (Landing)
+     - /explore (list gigs with filters)
+     - /gig/[id] (details + add-ons + Book button → /checkout/confirm)
+   - Auth:
+     - /auth/signin, /auth/signup
+   - Customer dashboard:
+     - /dashboard/customer/home
+     - /dashboard/customer/bookings → detail page with chat, Release Payment, Open Dispute
+     - /dashboard/customer/profile
+   - Giger dashboard:
+     - /dashboard/giger/home (KPIs)
+     - /dashboard/giger/gigs (CRUD gigs + add-ons)
+     - /dashboard/giger/bookings (accept/decline, progress → IN_PROGRESS → COMPLETED)
+     - /dashboard/giger/payouts (simulated)
+     - /dashboard/giger/profile
+   - Admin:
+     - /dashboard/admin/overview
+     - /dashboard/admin/disputes (list + detail + resolve modal)
+     - /dashboard/admin/users (basic moderation)
+   - Checkout:
+     - /checkout/confirm (final review + card entry)
+     - /checkout/success, /checkout/cancel
+   - Dev:
+     - /dev/seed?key=DEV_KEY → creates Admin/Giger/Customer demo users + sample gigs + (optional) 1 pending booking with authorized PaymentIntent if Stripe keys exist
+     - /dev/mailbox?key=DEV_KEY → in-memory email previews (no SMTP)
+
+8) UI/UX
+   - Tailwind + shadcn/ui for consistent styling.
+   - On booking detail (customer):
+     - Show status badges
+     - Clearly display “Authorized (not captured)” amount and “Captured” amount
+     - Buttons: “Release Payment” and “Open Dispute”
+   - On admin dispute page:
+     - Outcome chooser: None / Partial (input capture amount) / Full
+     - When outcome is saved, call the appropriate capture/cancel/refund logic
+
+9) SEED DATA
+   - Create seed route & script:
+     Admin: admin@gigify.dev / Admin123!
+     Giger: gina@gigify.dev / Giger123! (2 gigs: Washer Diagnosis $75 + Same-day +$25; Dishwasher Install $149)
+     Customer: carl@gigify.dev / Customer123!
+   - If STRIPE keys are set, optionally create a sample booking with PaymentIntent authorized (test card 4242…).
+
+10) SMOKE TESTS / HEALTH CHECKS
+   - /api/health → { ok: true, db: true } confirms server + db
+   - Print first-run instructions to the console after server starts, including:
+     - URL to /dev/seed?key=let_me_in
+     - Test accounts
+     - Stripe test card (4242 4242 4242 4242)
+     - Dispute flow: open, then admin resolve
+
+11) README.md (MUST WRITE)
+   Include:
+   - Quick Start (Replit and Local)
+   - Environment variables (.env block)
+   - DB init commands
+   - Stripe setup (test mode + webhook)
+   - Seed instructions
+   - Test plan (Customer Booking → Giger → Release OR Dispute → Admin resolve)
+   - Common errors (Nix, multi-port, prisma generate) and how to fix
+   - “Assumptions” & “Future work”
+
+12) FINAL VALIDATION (Definition of Done)
+   - I can run the app in Replit (single port 3000), visit /dev/seed, sign in as:
+     - Customer → explore → gig → book → Stripe test auth success → Booking=PENDING
+     - Giger → accept → in progress → complete
+     - Customer → Release → capture OR Dispute → Admin resolve (Full/Partial/None)
+   - No 500s in happy paths. Console shows clear guidance if Stripe keys are placeholders.
+
+OUTPUTS
+- A running app on port 3000.
+- Updated files committed:
+  - .replit
+  - replit.nix (if needed)
+  - prisma/schema.prisma
+  - README.md
+  - All pages, components, server actions, and API routes described above
+- Print to console:
+  1) “App running on http://localhost:3000 or Replit webview”
+  2) “Run seed at /dev/seed?key=let_me_in”
+  3) “Stripe test card: 4242 4242 4242 4242”
+  4) “Admin login: admin@gigify.dev / Admin123!”
+  5) “Next steps: Visit /explore, book a gig, then complete the flows.”
+
+IF ERRORS
+- If any step throws, fix automatically; if you can’t, print exact failing command, file, and a proposed patch, then apply it and retry.
