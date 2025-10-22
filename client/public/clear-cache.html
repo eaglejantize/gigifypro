@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Clear Cache</title>
+</head>
+<body>
+  <h1>Clearing Service Workers and Cache...</h1>
+  <div id="status">Working...</div>
+  <script>
+    async function clearEverything() {
+      const statusEl = document.getElementById('status');
+      
+      // Unregister all service workers
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (let registration of registrations) {
+          await registration.unregister();
+          console.log('Unregistered service worker');
+        }
+      }
+      
+      // Clear all caches
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map(name => caches.delete(name)));
+        console.log('Cleared all caches');
+      }
+      
+      statusEl.innerHTML = 'Cache cleared! <a href="/">Go to homepage</a>';
+    }
+    
+    clearEverything();
+  </script>
+</body>
+</html>
