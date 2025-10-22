@@ -112,10 +112,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/auth/login", async (req, res) => {
     try {
+      console.log("[LOGIN] Request received:", { email: req.body?.email });
       const data = loginSchema.parse(req.body);
+      console.log("[LOGIN] Schema validated, looking up user...");
 
       // Find user
       const user = await storage.getUserByEmail(data.email);
+      console.log("[LOGIN] User lookup complete:", user ? "found" : "not found");
       if (!user) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
@@ -130,6 +133,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { password: _, ...userWithoutPassword } = user;
       res.json({ user: userWithoutPassword });
     } catch (error: any) {
+      console.error("[LOGIN] Error:", error);
       res.status(400).json({ message: error.message });
     }
   });

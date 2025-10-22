@@ -1,10 +1,7 @@
-// From javascript_database integration
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
+// Using Neon serverless driver - works with Replit's outbound proxy
+import { neon } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-http';
 import * as schema from "@shared/schema";
-
-neonConfig.webSocketConstructor = ws;
 
 if (!process.env.DATABASE_URL) {
   throw new Error(
@@ -12,5 +9,6 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle({ client: pool, schema });
+// Use Neon's HTTP driver (no WebSocket needed, works through Replit proxy)
+const sql = neon(process.env.DATABASE_URL);
+export const db = drizzle(sql, { schema });
