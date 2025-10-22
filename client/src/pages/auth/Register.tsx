@@ -24,6 +24,7 @@ export default function Register() {
     setIsLoading(true);
 
     try {
+      console.log("Making registration request to /api/auth/register");
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -33,14 +34,19 @@ export default function Register() {
           name,
           role: isWorker ? "worker" : "user",
         }),
+        credentials: "same-origin",
       });
+
+      console.log("Registration response status:", response.status);
 
       if (!response.ok) {
         const error = await response.json();
+        console.error("Registration failed with error:", error);
         throw new Error(error.message || "Registration failed");
       }
 
       const data = await response.json();
+      console.log("Registration successful, user:", data.user);
       login(data.user);
       
       toast({
@@ -49,6 +55,7 @@ export default function Register() {
       });
       setLocation(isWorker ? "/dashboard" : "/feed");
     } catch (error: any) {
+      console.error("Registration error:", error);
       toast({
         title: "Registration failed",
         description: error.message || "Something went wrong. Please try again.",

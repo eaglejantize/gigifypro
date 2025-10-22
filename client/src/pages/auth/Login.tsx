@@ -21,18 +21,24 @@ export default function Login() {
     setIsLoading(true);
 
     try {
+      console.log("Making login request to /api/auth/login");
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
+        credentials: "same-origin",
       });
+
+      console.log("Login response status:", response.status);
 
       if (!response.ok) {
         const error = await response.json();
+        console.error("Login failed with error:", error);
         throw new Error(error.message || "Login failed");
       }
 
       const data = await response.json();
+      console.log("Login successful, user:", data.user);
       login(data.user);
       
       toast({
@@ -41,6 +47,7 @@ export default function Login() {
       });
       setLocation(data.user.role === "worker" ? "/dashboard" : "/feed");
     } catch (error: any) {
+      console.error("Login error:", error);
       toast({
         title: "Login failed",
         description: error.message || "Invalid credentials. Please try again.",
