@@ -3,20 +3,103 @@ import { products, productVariants } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
 const storeProducts = [
+  // Polos - G PRO over heart
   {
-    slug: "gig-shirt",
-    name: "GigifyPro Shirt",
-    description: "Breathable, quick-dry performance tee with GigifyPro mark. Perfect for active service professionals.",
-    imageUrl: "/store/shirt.jpg",
+    slug: "navy-polo-gpro",
+    name: "Navy Polo - G PRO",
+    description: "Professional navy blue polo with embroidered 'G PRO' over the left chest. Premium fabric, corporate style.",
+    imageUrl: "/store/navy-polo.png",
     category: "shirt" as const,
-    priceCents: 1999,
+    priceCents: 3499,
     variants: [
-      { name: "Small", priceCents: 1999, sku: "SHIRT-S" },
-      { name: "Medium", priceCents: 1999, sku: "SHIRT-M" },
-      { name: "Large", priceCents: 1999, sku: "SHIRT-L" },
-      { name: "XL", priceCents: 1999, sku: "SHIRT-XL" },
+      { name: "Small", priceCents: 3499, sku: "POLO-NAVY-S" },
+      { name: "Medium", priceCents: 3499, sku: "POLO-NAVY-M" },
+      { name: "Large", priceCents: 3499, sku: "POLO-NAVY-L" },
+      { name: "XL", priceCents: 3499, sku: "POLO-NAVY-XL" },
+      { name: "2XL", priceCents: 3799, sku: "POLO-NAVY-2XL" },
     ],
   },
+  {
+    slug: "charcoal-polo-gpro",
+    name: "Charcoal Polo - G PRO",
+    description: "Sophisticated charcoal gray polo with embroidered 'G PRO' over the left chest. Breathable, professional grade.",
+    imageUrl: "/store/charcoal-polo.png",
+    category: "shirt" as const,
+    priceCents: 3499,
+    variants: [
+      { name: "Small", priceCents: 3499, sku: "POLO-CHAR-S" },
+      { name: "Medium", priceCents: 3499, sku: "POLO-CHAR-M" },
+      { name: "Large", priceCents: 3499, sku: "POLO-CHAR-L" },
+      { name: "XL", priceCents: 3499, sku: "POLO-CHAR-XL" },
+      { name: "2XL", priceCents: 3799, sku: "POLO-CHAR-2XL" },
+    ],
+  },
+  {
+    slug: "white-polo-gpro",
+    name: "White Polo - G PRO",
+    description: "Crisp white polo with navy 'G PRO' embroidery over the left chest. Classic, clean, professional.",
+    imageUrl: "/store/white-polo.png",
+    category: "shirt" as const,
+    priceCents: 3499,
+    variants: [
+      { name: "Small", priceCents: 3499, sku: "POLO-WHITE-S" },
+      { name: "Medium", priceCents: 3499, sku: "POLO-WHITE-M" },
+      { name: "Large", priceCents: 3499, sku: "POLO-WHITE-L" },
+      { name: "XL", priceCents: 3499, sku: "POLO-WHITE-XL" },
+      { name: "2XL", priceCents: 3799, sku: "POLO-WHITE-2XL" },
+    ],
+  },
+  
+  // T-Shirts - G PRO over heart
+  {
+    slug: "white-tee-gpro",
+    name: "White Tee - G PRO",
+    description: "Premium white cotton t-shirt with 'G PRO' printed over the left chest. Comfortable, corporate casual.",
+    imageUrl: "/store/white-tee.png",
+    category: "shirt" as const,
+    priceCents: 2499,
+    variants: [
+      { name: "Small", priceCents: 2499, sku: "TEE-WHITE-GPRO-S" },
+      { name: "Medium", priceCents: 2499, sku: "TEE-WHITE-GPRO-M" },
+      { name: "Large", priceCents: 2499, sku: "TEE-WHITE-GPRO-L" },
+      { name: "XL", priceCents: 2499, sku: "TEE-WHITE-GPRO-XL" },
+      { name: "2XL", priceCents: 2699, sku: "TEE-WHITE-GPRO-2XL" },
+    ],
+  },
+  
+  // T-Shirts - GIGIFYPRO across chest
+  {
+    slug: "black-tee-gigifypro",
+    name: "Black Tee - GIGIFYPRO",
+    description: "Bold black cotton t-shirt with 'GIGIFYPRO' printed across the chest in modern typography. Stylish and professional.",
+    imageUrl: "/store/black-tee.png",
+    category: "shirt" as const,
+    priceCents: 2499,
+    variants: [
+      { name: "Small", priceCents: 2499, sku: "TEE-BLACK-FULL-S" },
+      { name: "Medium", priceCents: 2499, sku: "TEE-BLACK-FULL-M" },
+      { name: "Large", priceCents: 2499, sku: "TEE-BLACK-FULL-L" },
+      { name: "XL", priceCents: 2499, sku: "TEE-BLACK-FULL-XL" },
+      { name: "2XL", priceCents: 2699, sku: "TEE-BLACK-FULL-2XL" },
+    ],
+  },
+  {
+    slug: "gray-tee-gigifypro",
+    name: "Gray Tee - GIGIFYPRO",
+    description: "Heather gray cotton t-shirt with 'GIGIFYPRO' printed across the chest. Clean, corporate style with modern appeal.",
+    imageUrl: "/store/gray-tee.png",
+    category: "shirt" as const,
+    priceCents: 2499,
+    variants: [
+      { name: "Small", priceCents: 2499, sku: "TEE-GRAY-FULL-S" },
+      { name: "Medium", priceCents: 2499, sku: "TEE-GRAY-FULL-M" },
+      { name: "Large", priceCents: 2499, sku: "TEE-GRAY-FULL-L" },
+      { name: "XL", priceCents: 2499, sku: "TEE-GRAY-FULL-XL" },
+      { name: "2XL", priceCents: 2699, sku: "TEE-GRAY-FULL-2XL" },
+    ],
+  },
+  
+  // Accessories
   {
     slug: "gig-hat",
     name: "GigifyPro Hat",
