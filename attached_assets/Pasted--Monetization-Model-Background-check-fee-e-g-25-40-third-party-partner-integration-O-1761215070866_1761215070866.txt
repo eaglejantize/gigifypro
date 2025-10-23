@@ -1,0 +1,48 @@
+💳 Monetization Model
+	•	Background check fee: e.g., $25–$40 (third-party partner integration).
+	•	Optional certification modules (e.g., Meal Prep Safety 101 $15–$25).
+	•	Insurance referral revenue: affiliate commissions from gig insurance partners.
+	•	Business license assistance: partner with services like LegalZoom or ZenBusiness.
+
+⸻
+
+🧠 Safety & Liability Recommendations (for your consideration)
+
+Meal Prep:
+	•	Require Gigers to check a “Food Safety Acknowledgment” box before activating this category.
+	•	Offer upload field for ServSafe certificate or equivalent.
+	•	Display “Food Safety Verified” badge for compliant Gigers.
+
+Lawncare:
+	•	Require “Equipment Use Agreement” for shared-equipment jobs (digital checkbox).
+	•	Optional “Equipment Insurance” add-on if Gigify partners with a micro-insurer.
+
+All Gigs:
+	•	Require customer signature on completed job (digital acknowledgment).
+	•	Maintain basic $1M platform liability coverage (later partnership with Insurtech).
+
+⸻
+
+🧰 Technical Implementation (for the app build)
+	•	Database tables: KnowledgeArticle, Certification, Badge, UserBadge, TrainingProgress
+	•	UI Sections:
+	•	/knowledge (Hub home)
+	•	/knowledge/article/:slug (article detail)
+	•	/knowledge/certifications (badges + progress)
+	•	/knowledge/resources (state-by-state license map)
+	•	Admin Panel: for you or staff to add new resources and link external licensing tools.
+	•	Gamification: visual progress bar “You’re 75% Gigified!”
+
+⸻
+
+🧱 Next Step Options
+
+Now that we have the blueprint, I can:
+	1.	Write the in-app Knowledge Hub text content (the articles and lessons for each section)
+	2.	Create a Replit Agent prompt to build the Knowledge Hub skeleton in your app (React + Express + Prisma modules with placeholder lessons, badges, and progress tracking)
+
+⸻
+
+👉 Which do you want next:
+	•	A) The Replit Agent prompt to add the Knowledge Hub structure (ready for app integration), or
+	•	B) The written content (the actual articles and lesson drafts) for your first 5 Knowledge Hub topics

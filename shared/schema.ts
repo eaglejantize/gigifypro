@@ -14,6 +14,25 @@ export const bookingStatusEnum = pgEnum("booking_status", [
 ]);
 export const productCategoryEnum = pgEnum("product_category", ["shirt", "hat", "car_sign"]);
 export const orderStatusEnum = pgEnum("order_status", ["pending", "paid", "cancelled"]);
+export const knowledgeSectionEnum = pgEnum("knowledge_section", [
+  "getting_started",
+  "safety_compliance",
+  "skill_builder",
+  "customer_service",
+  "local_law",
+  "insurance_financial"
+]);
+export const badgeTypeEnum = pgEnum("badge_type", [
+  "verified_identity",
+  "business_ready",
+  "safety_verified",
+  "ambassador",
+  "lawncare_basics",
+  "culinary_safety",
+  "shopper_pro",
+  "handy_essentials",
+  "companion_care"
+]);
 
 // Users table
 export const users = pgTable("users", {
@@ -175,6 +194,52 @@ export const orderItems = pgTable("order_items", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Knowledge Hub: Articles
+export const knowledgeArticles = pgTable("knowledge_articles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  slug: text("slug").notNull().unique(),
+  section: knowledgeSectionEnum("section").notNull(),
+  title: text("title").notNull(),
+  summary: text("summary").notNull(),
+  content: text("content").notNull(),
+  icon: text("icon"),
+  readTimeMinutes: integer("read_time_minutes").notNull().default(5),
+  order: integer("order").notNull().default(0),
+  published: boolean("published").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Knowledge Hub: Badges
+export const badges = pgTable("badges", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  type: badgeTypeEnum("type").notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  icon: text("icon").notNull(),
+  color: text("color").notNull().default("#3b82f6"),
+  order: integer("order").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Knowledge Hub: User Badges (earned badges)
+export const userBadges = pgTable("user_badges", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  badgeId: varchar("badge_id").notNull().references(() => badges.id, { onDelete: "cascade" }),
+  earnedAt: timestamp("earned_at").notNull().defaultNow(),
+});
+
+// Knowledge Hub: Training Progress
+export const trainingProgress = pgTable("training_progress", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  articleId: varchar("article_id").notNull().references(() => knowledgeArticles.id, { onDelete: "cascade" }),
+  completed: boolean("completed").notNull().default(false),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   workerProfile: one(workerProfiles, {
@@ -186,6 +251,8 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   sentMessages: many(messages),
   notifications: many(notifications),
   reviewsGiven: many(reviewLikes),
+  badges: many(userBadges),
+  trainingProgress: many(trainingProgress),
 }));
 
 export const workerProfilesRelations = relations(workerProfiles, ({ one, many }) => ({
@@ -316,6 +383,36 @@ export const orderItemsRelations = relations(orderItems, ({ one }) => ({
   }),
 }));
 
+export const knowledgeArticlesRelations = relations(knowledgeArticles, ({ many }) => ({
+  progress: many(trainingProgress),
+}));
+
+export const badgesRelations = relations(badges, ({ many }) => ({
+  userBadges: many(userBadges),
+}));
+
+export const userBadgesRelations = relations(userBadges, ({ one }) => ({
+  user: one(users, {
+    fields: [userBadges.userId],
+    references: [users.id],
+  }),
+  badge: one(badges, {
+    fields: [userBadges.badgeId],
+    references: [badges.id],
+  }),
+}));
+
+export const trainingProgressRelations = relations(trainingProgress, ({ one }) => ({
+  user: one(users, {
+    fields: [trainingProgress.userId],
+    references: [users.id],
+  }),
+  article: one(knowledgeArticles, {
+    fields: [trainingProgress.articleId],
+    references: [knowledgeArticles.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -384,6 +481,27 @@ export const insertOrderItemSchema = createInsertSchema(orderItems).omit({
   createdAt: true,
 });
 
+export const insertKnowledgeArticleSchema = createInsertSchema(knowledgeArticles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertBadgeSchema = createInsertSchema(badges).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertUserBadgeSchema = createInsertSchema(userBadges).omit({
+  id: true,
+  earnedAt: true,
+});
+
+export const insertTrainingProgressSchema = createInsertSchema(trainingProgress).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -423,3 +541,15 @@ export type InsertOrder = z.infer<typeof insertOrderSchema>;
 
 export type OrderItem = typeof orderItems.$inferSelect;
 export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
+
+export type KnowledgeArticle = typeof knowledgeArticles.$inferSelect;
+export type InsertKnowledgeArticle = z.infer<typeof insertKnowledgeArticleSchema>;
+
+export type Badge = typeof badges.$inferSelect;
+export type InsertBadge = z.infer<typeof insertBadgeSchema>;
+
+export type UserBadge = typeof userBadges.$inferSelect;
+export type InsertUserBadge = z.infer<typeof insertUserBadgeSchema>;
+
+export type TrainingProgress = typeof trainingProgress.$inferSelect;
+export type InsertTrainingProgress = z.infer<typeof insertTrainingProgressSchema>;

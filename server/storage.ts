@@ -12,6 +12,10 @@ import {
   productVariants,
   orders,
   orderItems,
+  knowledgeArticles,
+  badges,
+  userBadges,
+  trainingProgress,
   type User,
   type InsertUser,
   type WorkerProfile,
@@ -38,6 +42,14 @@ import {
   type InsertOrder,
   type OrderItem,
   type InsertOrderItem,
+  type KnowledgeArticle,
+  type InsertKnowledgeArticle,
+  type Badge,
+  type InsertBadge,
+  type UserBadge,
+  type InsertUserBadge,
+  type TrainingProgress,
+  type InsertTrainingProgress,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql } from "drizzle-orm";
@@ -99,6 +111,26 @@ export interface IStorage {
   createOrder(order: InsertOrder, items: InsertOrderItem[]): Promise<Order & { items: OrderItem[] }>;
   getOrderById(id: string): Promise<(Order & { items: OrderItem[] }) | undefined>;
   getOrdersByUser(userId: string): Promise<(Order & { items: OrderItem[] })[]>;
+  
+  // Knowledge Hub: Articles
+  getAllArticles(): Promise<KnowledgeArticle[]>;
+  getArticlesBySection(section: string): Promise<KnowledgeArticle[]>;
+  getArticleBySlug(slug: string): Promise<KnowledgeArticle | undefined>;
+  createArticle(article: InsertKnowledgeArticle): Promise<KnowledgeArticle>;
+  
+  // Knowledge Hub: Badges
+  getAllBadges(): Promise<Badge[]>;
+  getBadgeByType(type: string): Promise<Badge | undefined>;
+  createBadge(badge: InsertBadge): Promise<Badge>;
+  
+  // Knowledge Hub: User Badges
+  getUserBadges(userId: string): Promise<(UserBadge & { badge: Badge })[]>;
+  awardBadge(userId: string, badgeId: string): Promise<UserBadge>;
+  
+  // Knowledge Hub: Training Progress
+  getUserProgress(userId: string): Promise<TrainingProgress[]>;
+  getArticleProgress(userId: string, articleId: string): Promise<TrainingProgress | undefined>;
+  markArticleComplete(userId: string, articleId: string): Promise<TrainingProgress>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -420,6 +452,139 @@ export class DatabaseStorage implements IStorage {
     );
     
     return ordersWithItems;
+  }
+
+  // Knowledge Hub: Articles
+  async getAllArticles(): Promise<KnowledgeArticle[]> {
+    return await db
+      .select()
+      .from(knowledgeArticles)
+      .where(eq(knowledgeArticles.published, true))
+      .orderBy(knowledgeArticles.section, knowledgeArticles.order);
+  }
+
+  async getArticlesBySection(section: string): Promise<KnowledgeArticle[]> {
+    return await db
+      .select()
+      .from(knowledgeArticles)
+      .where(and(
+        eq(knowledgeArticles.section, section as any),
+        eq(knowledgeArticles.published, true)
+      ))
+      .orderBy(knowledgeArticles.order);
+  }
+
+  async getArticleBySlug(slug: string): Promise<KnowledgeArticle | undefined> {
+    const [article] = await db
+      .select()
+      .from(knowledgeArticles)
+      .where(eq(knowledgeArticles.slug, slug));
+    return article || undefined;
+  }
+
+  async createArticle(insertArticle: InsertKnowledgeArticle): Promise<KnowledgeArticle> {
+    const [article] = await db
+      .insert(knowledgeArticles)
+      .values(insertArticle)
+      .returning();
+    return article;
+  }
+
+  // Knowledge Hub: Badges
+  async getAllBadges(): Promise<Badge[]> {
+    return await db
+      .select()
+      .from(badges)
+      .orderBy(badges.order);
+  }
+
+  async getBadgeByType(type: string): Promise<Badge | undefined> {
+    const [badge] = await db
+      .select()
+      .from(badges)
+      .where(eq(badges.type, type as any));
+    return badge || undefined;
+  }
+
+  async createBadge(insertBadge: InsertBadge): Promise<Badge> {
+    const [badge] = await db
+      .insert(badges)
+      .values(insertBadge)
+      .returning();
+    return badge;
+  }
+
+  // Knowledge Hub: User Badges
+  async getUserBadges(userId: string): Promise<(UserBadge & { badge: Badge })[]> {
+    const result = await db
+      .select({
+        id: userBadges.id,
+        userId: userBadges.userId,
+        badgeId: userBadges.badgeId,
+        earnedAt: userBadges.earnedAt,
+        badge: badges,
+      })
+      .from(userBadges)
+      .innerJoin(badges, eq(userBadges.badgeId, badges.id))
+      .where(eq(userBadges.userId, userId))
+      .orderBy(desc(userBadges.earnedAt));
+    
+    return result as (UserBadge & { badge: Badge })[];
+  }
+
+  async awardBadge(userId: string, badgeId: string): Promise<UserBadge> {
+    const [userBadge] = await db
+      .insert(userBadges)
+      .values({ userId, badgeId })
+      .returning();
+    return userBadge;
+  }
+
+  // Knowledge Hub: Training Progress
+  async getUserProgress(userId: string): Promise<TrainingProgress[]> {
+    return await db
+      .select()
+      .from(trainingProgress)
+      .where(eq(trainingProgress.userId, userId))
+      .orderBy(desc(trainingProgress.createdAt));
+  }
+
+  async getArticleProgress(userId: string, articleId: string): Promise<TrainingProgress | undefined> {
+    const [progress] = await db
+      .select()
+      .from(trainingProgress)
+      .where(and(
+        eq(trainingProgress.userId, userId),
+        eq(trainingProgress.articleId, articleId)
+      ));
+    return progress || undefined;
+  }
+
+  async markArticleComplete(userId: string, articleId: string): Promise<TrainingProgress> {
+    // Check if progress exists
+    const existing = await this.getArticleProgress(userId, articleId);
+    
+    if (existing) {
+      // Update existing progress
+      const [updated] = await db
+        .update(trainingProgress)
+        .set({ completed: true, completedAt: new Date() })
+        .where(eq(trainingProgress.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      // Create new progress entry
+      const [created] = await db
+        .insert(trainingProgress)
+        .values({
+          userId,
+          articleId,
+          completed: true,
+          completedAt: new Date(),
+        })
+        .returning();
+      return created;
+    }
   }
 }
 
