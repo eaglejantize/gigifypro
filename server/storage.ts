@@ -8,6 +8,10 @@ import {
   reviewLikes,
   messages,
   notifications,
+  products,
+  productVariants,
+  orders,
+  orderItems,
   type User,
   type InsertUser,
   type WorkerProfile,
@@ -26,6 +30,14 @@ import {
   type InsertMessage,
   type Notification,
   type InsertNotification,
+  type Product,
+  type InsertProduct,
+  type ProductVariant,
+  type InsertProductVariant,
+  type Order,
+  type InsertOrder,
+  type OrderItem,
+  type InsertOrderItem,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql } from "drizzle-orm";
@@ -76,6 +88,17 @@ export interface IStorage {
   // Notifications
   getNotificationsByUser(userId: string): Promise<Notification[]>;
   createNotification(notification: InsertNotification): Promise<Notification>;
+  
+  // Store: Products
+  getAllProducts(): Promise<(Product & { variants: ProductVariant[] })[]>;
+  getProductBySlug(slug: string): Promise<(Product & { variants: ProductVariant[] }) | undefined>;
+  createProduct(product: InsertProduct): Promise<Product>;
+  createProductVariant(variant: InsertProductVariant): Promise<ProductVariant>;
+  
+  // Store: Orders
+  createOrder(order: InsertOrder, items: InsertOrderItem[]): Promise<Order & { items: OrderItem[] }>;
+  getOrderById(id: string): Promise<(Order & { items: OrderItem[] }) | undefined>;
+  getOrdersByUser(userId: string): Promise<(Order & { items: OrderItem[] })[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -305,6 +328,98 @@ export class DatabaseStorage implements IStorage {
       .values(insertNotification)
       .returning();
     return notification;
+  }
+
+  // Store: Products
+  async getAllProducts(): Promise<(Product & { variants: ProductVariant[] })[]> {
+    const result = await db
+      .select()
+      .from(products)
+      .where(eq(products.active, true))
+      .orderBy(desc(products.createdAt));
+    
+    const productsWithVariants = await Promise.all(
+      result.map(async (product) => {
+        const variants = await db
+          .select()
+          .from(productVariants)
+          .where(and(
+            eq(productVariants.productId, product.id),
+            eq(productVariants.active, true)
+          ))
+          .orderBy(productVariants.name);
+        return { ...product, variants };
+      })
+    );
+    
+    return productsWithVariants;
+  }
+
+  async getProductBySlug(slug: string): Promise<(Product & { variants: ProductVariant[] }) | undefined> {
+    const [product] = await db
+      .select()
+      .from(products)
+      .where(eq(products.slug, slug));
+    
+    if (!product) return undefined;
+    
+    const variants = await db
+      .select()
+      .from(productVariants)
+      .where(and(
+        eq(productVariants.productId, product.id),
+        eq(productVariants.active, true)
+      ))
+      .orderBy(productVariants.name);
+    
+    return { ...product, variants };
+  }
+
+  async createProduct(insertProduct: InsertProduct): Promise<Product> {
+    const [product] = await db.insert(products).values(insertProduct).returning();
+    return product;
+  }
+
+  async createProductVariant(insertVariant: InsertProductVariant): Promise<ProductVariant> {
+    const [variant] = await db.insert(productVariants).values(insertVariant).returning();
+    return variant;
+  }
+
+  // Store: Orders
+  async createOrder(insertOrder: InsertOrder, items: InsertOrderItem[]): Promise<Order & { items: OrderItem[] }> {
+    const [order] = await db.insert(orders).values(insertOrder).returning();
+    
+    const createdItems = await db
+      .insert(orderItems)
+      .values(items.map(item => ({ ...item, orderId: order.id })))
+      .returning();
+    
+    return { ...order, items: createdItems };
+  }
+
+  async getOrderById(id: string): Promise<(Order & { items: OrderItem[] }) | undefined> {
+    const [order] = await db.select().from(orders).where(eq(orders.id, id));
+    if (!order) return undefined;
+    
+    const items = await db.select().from(orderItems).where(eq(orderItems.orderId, id));
+    return { ...order, items };
+  }
+
+  async getOrdersByUser(userId: string): Promise<(Order & { items: OrderItem[] })[]> {
+    const userOrders = await db
+      .select()
+      .from(orders)
+      .where(eq(orders.userId, userId))
+      .orderBy(desc(orders.createdAt));
+    
+    const ordersWithItems = await Promise.all(
+      userOrders.map(async (order) => {
+        const items = await db.select().from(orderItems).where(eq(orderItems.orderId, order.id));
+        return { ...order, items };
+      })
+    );
+    
+    return ordersWithItems;
   }
 }
 

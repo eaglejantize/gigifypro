@@ -53,6 +53,15 @@ export function Navbar() {
                 Post a Task
               </Button>
             </Link>
+            <Link href="/store" data-testid="link-store">
+              <Button
+                variant={isActive("/store") ? "default" : "ghost"}
+                size="sm"
+                className="font-medium"
+              >
+                Store
+              </Button>
+            </Link>
           </div>
 
           {/* User Menu */}

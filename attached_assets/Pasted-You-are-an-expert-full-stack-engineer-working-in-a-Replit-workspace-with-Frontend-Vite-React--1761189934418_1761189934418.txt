@@ -1,0 +1,486 @@
+You are an expert full-stack engineer working in a Replit workspace with:
+- Frontend: Vite + React + TypeScript (client/)
+- Backend: Express + TypeScript (server/)
+- DB: Prisma + PostgreSQL
+- Auth: session cookie (already working)
+- Payments: Stripe test-mode stub OK
+
+GOAL
+Add a simple “Uniforms & Accessories” store for gig workers with placeholder items (Shirts, Hats, Car Signs), a minimal cart, and a test checkout stub.
+
+SUMMARY OF CHANGES
+1) Prisma models for store
+2) Seed data for shirts/hats/car signs
+3) Server routes: list products, product details, create payment intent (stub), create order (on “success”)
+4) Client pages: /store, /store/product/:id, /store/cart, /store/checkout
+5) Simple UI components: ProductCard, Quantity selector
+6) Minimal placeholder images in client/public/store/
+7) Use existing auth session (if user not logged-in, allow browsing but require login for checkout)
+8) Stripe test integration: create PaymentIntent and return clientSecret (no webhooks)
+
+============================================================
+PRISMA SCHEMA (append to existing schema.prisma)
+============================================================
+model Product {
+  id          String           @id @default(cuid())
+  slug        String           @unique
+  name        String
+  description String
+  imageUrl    String
+  category    ProductCategory
+  priceCents  Int              // base price, may be overridden by variant
+  active      Boolean          @default(true)
+  variants    ProductVariant[]
+  createdAt   DateTime         @default(now())
+}
+
+model ProductVariant {
+  id         String   @id @default(cuid())
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+  name       String
+  priceCents Int
+  sku        String   @unique
+  active     Boolean  @default(true)
+}
+
+model Order {
+  id           String      @id @default(cuid())
+  userId       String
+  email        String
+  totalCents   Int
+  status       OrderStatus @default(pending)
+  stripePiId   String?
+  createdAt    DateTime    @default(now())
+  items        OrderItem[]
+}
+
+model OrderItem {
+  id           String         @id @default(cuid())
+  orderId      String
+  order        Order          @relation(fields: [orderId], references: [id])
+  productId    String
+  product      Product        @relation(fields: [productId], references: [id])
+  variantId    String?
+  variant      ProductVariant @relation(fields: [variantId], references: [id])
+  name         String
+  variantName  String?
+  qty          Int
+  unitCents    Int
+  lineCents    Int
+}
+
+enum ProductCategory { shirt hat car_sign }
+enum OrderStatus { pending paid canceled }
+
+============================================================
+SEED SCRIPT (server/scripts/seedStore.ts)
+============================================================
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
+
+async function main() {
+  const products = [
+    {
+      slug: "gig-shirt",
+      name: "GigifyPro Shirt",
+      description: "Breathable, quick-dry performance tee with GigifyPro mark.",
+      imageUrl: "/store/shirt.jpg",
+      category: "shirt",
+      priceCents: 1999,
+      variants: [
+        { name: "S", priceCents: 1999, sku: "SHIRT-S" },
+        { name: "M", priceCents: 1999, sku: "SHIRT-M" },
+        { name: "L", priceCents: 1999, sku: "SHIRT-L" },
+        { name: "XL", priceCents: 1999, sku: "SHIRT-XL" },
+      ],
+    },
+    {
+      slug: "gig-hat",
+      name: "GigifyPro Hat",
+      description: "Adjustable cap with embroidered GigifyPro monogram.",
+      imageUrl: "/store/hat.jpg",
+      category: "hat",
+      priceCents: 1499,
+      variants: [
+        { name: "One Size", priceCents: 1499, sku: "HAT-ONE" },
+      ],
+    },
+    {
+      slug: "gig-car-sign",
+      name: "GigifyPro Car Magnet",
+      description: "Removable magnetic car sign for easy identification.",
+      imageUrl: "/store/car-sign.jpg",
+      category: "car_sign",
+      priceCents: 1299,
+      variants: [
+        { name: "12x8 in", priceCents: 1299, sku: "SIGN-12x8" },
+        { name: "18x12 in", priceCents: 1799, sku: "SIGN-18x12" },
+      ],
+    },
+  ] as const;
+
+  for (const p of products) {
+    const prod = await prisma.product.upsert({
+      where: { slug: p.slug },
+      update: {},
+      create: {
+        slug: p.slug,
+        name: p.name,
+        description: p.description,
+        imageUrl: p.imageUrl,
+        category: p.category as any,
+        priceCents: p.priceCents,
+      },
+    });
+    for (const v of p.variants) {
+      await prisma.productVariant.upsert({
+        where: { sku: v.sku },
+        update: {},
+        create: {
+          productId: prod.id,
+          name: v.name,
+          priceCents: v.priceCents,
+          sku: v.sku,
+        },
+      });
+    }
+  }
+
+  console.log("✅ Store seed complete");
+}
+
+main().catch(e => { console.error(e); process.exit(1); })
+  .finally(async () => { await prisma.$disconnect(); });
+
+============================================================
+SERVER: STORE ROUTES (server/routes/store.ts)
+============================================================
+import { Router } from "express";
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
+const r = Router();
+
+// GET /api/store/products
+r.get("/products", async (_req, res) => {
+  const products = await prisma.product.findMany({
+    where: { active: true },
+    include: { variants: { where: { active: true }, orderBy: { name: "asc" } } },
+    orderBy: { createdAt: "desc" },
+  });
+  res.json(products);
+});
+
+// GET /api/store/products/:slug
+r.get("/products/:slug", async (req, res) => {
+  const p = await prisma.product.findUnique({
+    where: { slug: req.params.slug },
+    include: { variants: { where: { active: true } } },
+  });
+  if (!p) return res.status(404).json({ error: "Not found" });
+  res.json(p);
+});
+
+export default r;
+
+============================================================
+SERVER: CHECKOUT ROUTES (server/routes/checkout.ts)
+============================================================
+import { Router } from "express";
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
+const r = Router();
+
+// POST /api/checkout/intent  { items: [{slug, variantId?, qty}], email }
+r.post("/intent", async (req, res) => {
+  try {
+    const { items = [], email } = req.body || {};
+    if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ error: "No items" });
+
+    let totalCents = 0;
+    for (const it of items) {
+      const prod = await prisma.product.findUnique({ where: { slug: it.slug } });
+      if (!prod) return res.status(400).json({ error: `Bad item ${it.slug}` });
+      let unit = prod.priceCents;
+      if (it.variantId) {
+        const v = await prisma.productVariant.findUnique({ where: { id: it.variantId } });
+        if (v) unit = v.priceCents;
+      }
+      totalCents += unit * (it.qty || 1);
+    }
+
+    // Stripe stub (no real charge). You can integrate stripe.PaymentIntents here.
+    const fakeClientSecret = "pi_test_client_secret_" + Math.random().toString(36).slice(2);
+
+    res.json({ clientSecret: fakeClientSecret, totalCents });
+  } catch (e:any) {
+    console.error(e); res.status(500).json({ error: "Failed to create intent" });
+  }
+});
+
+// POST /api/checkout/confirm  { items, email, clientSecret }
+r.post("/confirm", async (req, res) => {
+  try {
+    const { items = [], email = "" } = req.body || {};
+    if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ error: "No items" });
+
+    let totalCents = 0;
+    const expanded: any[] = [];
+    for (const it of items) {
+      const prod = await prisma.product.findUnique({ where: { slug: it.slug } });
+      if (!prod) return res.status(400).json({ error: `Bad item ${it.slug}` });
+      let unit = prod.priceCents;
+      let variantName: string | null = null;
+      if (it.variantId) {
+        const v = await prisma.productVariant.findUnique({ where: { id: it.variantId } });
+        if (v) { unit = v.priceCents; variantName = v.name; }
+      }
+      const qty = it.qty || 1;
+      const line = unit * qty;
+      totalCents += line;
+      expanded.push({ productId: prod.id, name: prod.name, variantId: it.variantId || null, variantName, qty, unitCents: unit, lineCents: line });
+    }
+
+    const userId = (req.session as any).uid || "guest";
+    const order = await prisma.order.create({
+      data: {
+        userId,
+        email,
+        totalCents,
+        status: "paid",   // mark paid for stub
+        items: { create: expanded.map(x => ({ ...x, productId: x.productId })) },
+      },
+      include: { items: true },
+    });
+
+    res.json({ ok: true, orderId: order.id });
+  } catch (e:any) {
+    console.error(e); res.status(500).json({ error: "Failed to confirm order" });
+  }
+});
+
+export default r;
+
+============================================================
+SERVER: WIRE ROUTES (server/routes.ts)
+============================================================
+import { Router } from "express";
+import auth from "./routes/auth";
+import store from "./routes/store";
+import checkout from "./routes/checkout";
+const api = Router();
+api.use("/auth", auth);
+api.use("/store", store);        // /api/store/*
+api.use("/checkout", checkout);  // /api/checkout/*
+export default api;
+
+============================================================
+CLIENT: PLACEHOLDER IMAGES (create files)
+============================================================
+// Create folder: client/public/store/
+// Add placeholder images (simple solid color JPGs or use existing assets):
+// shirt.jpg, hat.jpg, car-sign.jpg
+// (Agent: generate simple 1200x800 jpgs with text overlays, or use solid-color placeholders)
+
+============================================================
+CLIENT: COMPONENTS
+============================================================
+/* client/src/components/store/ProductCard.tsx */
+import { Link } from "wouter";
+
+export type Product = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  imageUrl: string;
+  priceCents: number;
+  variants: { id: string; name: string; priceCents: number }[];
+};
+
+export default function ProductCard({ p }: { p: Product }) {
+  const price = (p.priceCents / 100).toFixed(2);
+  return (
+    <div className="rounded-xl border bg-white overflow-hidden">
+      <img src={p.imageUrl} alt={p.name} className="h-48 w-full object-cover" />
+      <div className="p-4 space-y-2">
+        <div className="font-semibold">{p.name}</div>
+        <div className="text-sm text-gray-600 line-clamp-2">{p.description}</div>
+        <div className="text-sm font-bold">${price}</div>
+        <Link href={`/store/product/${p.slug}`} className="text-sm underline">View</Link>
+      </div>
+    </div>
+  );
+}
+
+============================================================
+CLIENT: PAGES
+============================================================
+/* client/src/pages/Store.tsx */
+import { useEffect, useState } from "react";
+import ProductCard, { Product } from "../components/store/ProductCard";
+
+export default function StorePage() {
+  const [items, setItems] = useState<Product[]>([]);
+  useEffect(() => {
+    (async () => {
+      const res = await fetch("/api/store/products", { credentials: "include" });
+      setItems(await res.json());
+    })();
+  }, []);
+  return (
+    <div className="mx-auto max-w-6xl p-6">
+      <h1 className="text-2xl font-bold mb-4">Uniforms & Accessories</h1>
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {items.map(p => <ProductCard key={p.id} p={p} />)}
+      </div>
+    </div>
+  );
+}
+
+/* client/src/pages/StoreProduct.tsx */
+import { useEffect, useState } from "react";
+import { useRoute } from "wouter";
+
+type Variant = { id: string; name: string; priceCents: number };
+type ProductFull = { slug: string; name: string; description: string; imageUrl: string; priceCents: number; variants: Variant[] };
+
+export default function StoreProductPage() {
+  const [, params] = useRoute("/store/product/:slug");
+  const [p, setP] = useState<ProductFull | null>(null);
+  const [variantId, setVariantId] = useState<string | null>(null);
+  const [qty, setQty] = useState(1);
+
+  useEffect(() => {
+    (async () => {
+      const res = await fetch(`/api/store/products/${params?.slug}`, { credentials: "include" });
+      const data = await res.json();
+      setP(data);
+      if (data?.variants?.length) setVariantId(data.variants[0].id);
+    })();
+  }, [params?.slug]);
+
+  async function addToCart() {
+    const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    cart.push({ slug: p!.slug, variantId, qty });
+    localStorage.setItem("cart", JSON.stringify(cart));
+    window.location.href = "/store/cart";
+  }
+
+  if (!p) return null;
+  const base = (p.priceCents/100).toFixed(2);
+  const v = p.variants.find((x:Variant)=>x.id===variantId);
+  const price = ((v?.priceCents ?? p.priceCents)/100).toFixed(2);
+
+  return (
+    <div className="mx-auto max-w-4xl p-6 grid gap-6 md:grid-cols-2">
+      <img src={p.imageUrl} alt={p.name} className="w-full h-80 object-cover rounded-xl" />
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold">{p.name}</h1>
+        <div className="text-gray-600">{p.description}</div>
+        <div className="text-lg font-bold">${price} {price!==base && <span className="text-sm text-gray-500">(base ${base})</span>}</div>
+        {p.variants.length > 0 && (
+          <select value={variantId ?? ""} onChange={e=>setVariantId(e.target.value)} className="border rounded-lg px-3 py-2">
+            {p.variants.map((x:Variant)=> <option key={x.id} value={x.id}>{x.name}</option>)}
+          </select>
+        )}
+        <div className="flex items-center gap-2">
+          <input type="number" min={1} value={qty} onChange={e=>setQty(parseInt(e.target.value||"1"))} className="w-20 border rounded-lg px-3 py-2" />
+          <button onClick={addToCart} className="px-4 py-2 rounded-lg border">Add to cart</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* client/src/pages/StoreCart.tsx */
+import { useEffect, useState } from "react";
+
+export default function StoreCartPage() {
+  const [cart, setCart] = useState<any[]>([]);
+  const [summary, setSummary] = useState<{ totalCents: number } | null>(null);
+
+  useEffect(()=>{ setCart(JSON.parse(localStorage.getItem("cart") || "[]")); }, []);
+
+  async function checkout() {
+    const email = localStorage.getItem("userEmail") || "guest@gigifypro.test";
+    const res = await fetch("/api/checkout/intent", {
+      method: "POST", credentials: "include",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ items: cart, email })
+    });
+    const data = await res.json();
+    setSummary({ totalCents: data.totalCents });
+    // fake immediate confirm
+    const res2 = await fetch("/api/checkout/confirm", {
+      method: "POST", credentials: "include",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ items: cart, email, clientSecret: data.clientSecret })
+    });
+    const ok = await res2.json();
+    if (ok?.orderId) {
+      localStorage.removeItem("cart");
+      window.location.href = `/store/checkout?order=${ok.orderId}`;
+    }
+  }
+
+  const totalItems = cart.reduce((a,x)=>a+(x.qty||1),0);
+
+  return (
+    <div className="mx-auto max-w-3xl p-6 space-y-4">
+      <h1 className="text-2xl font-bold">Your Cart</h1>
+      {cart.length===0 ? <div>Your cart is empty.</div> :
+        <>
+          <ul className="space-y-2">
+            {cart.map((x,i)=> <li key={i} className="border rounded-lg p-3 text-sm">{x.slug} {x.variantId ? `(${x.variantId})` : ""} × {x.qty||1}</li>)}
+          </ul>
+          <button onClick={checkout} className="px-4 py-2 rounded-lg border">Checkout</button>
+          {summary && <div className="text-sm text-gray-600">Total: ${(summary.totalCents/100).toFixed(2)}</div>}
+        </>
+      }
+    </div>
+  );
+}
+
+/* client/src/pages/StoreCheckout.tsx */
+export default function StoreCheckoutDone() {
+  const params = new URLSearchParams(location.search);
+  const order = params.get("order");
+  return (
+    <div className="mx-auto max-w-xl p-6 space-y-4">
+      <h1 className="text-2xl font-bold">Thanks for your order!</h1>
+      <div className="text-gray-600">Order ID: {order}</div>
+      <a href="/store" className="underline text-sm">Back to Store</a>
+    </div>
+  );
+}
+
+============================================================
+CLIENT: ROUTING (Wire pages)
+============================================================
+// In your main router (e.g., client/src/App.tsx), add routes:
+{/* <Route path="/store" component={StorePage} /> */}
+{/* <Route path="/store/product/:slug" component={StoreProductPage} /> */}
+{/* <Route path="/store/cart" component={StoreCartPage} /> */}
+{/* <Route path="/store/checkout" component={StoreCheckoutDone} /> */}
+
+============================================================
+VITE PROXY (already present; ensure /api proxies to http://localhost:3000)
+============================================================
+
+============================================================
+RUN & MIGRATE
+============================================================
+- In server/ shell:
+  npm install @prisma/client prisma
+  npx prisma generate
+  npx prisma migrate dev --name store_init
+  ts-node server/scripts/seedStore.ts  (or add an npm script "seed:store")
+- Ensure server running (npm run dev) and client running (npm run dev).
+- Visit /store to see products, click item to view product, add to cart, then go to /store/cart and Checkout.
+
+============================================================
+OUTPUT
+- Print the URLs for Store: /store, /store/product/:slug, /store/cart, /store/checkout
+- Confirm 3 products seeded and visible.
+- If any step fails, paste the exact error and file path that failed.

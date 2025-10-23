@@ -70,6 +70,25 @@ const messageSchema = z.object({
   content: z.string(),
 });
 
+const checkoutIntentSchema = z.object({
+  items: z.array(z.object({
+    slug: z.string(),
+    variantId: z.string().optional(),
+    qty: z.number().min(1),
+  })),
+  email: z.string().email(),
+});
+
+const checkoutConfirmSchema = z.object({
+  items: z.array(z.object({
+    slug: z.string(),
+    variantId: z.string().optional(),
+    qty: z.number().min(1),
+  })),
+  email: z.string().email(),
+  clientSecret: z.string(),
+});
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth endpoints
   app.post("/api/auth/register", async (req, res) => {
@@ -501,6 +520,137 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const notifications = await storage.getNotificationsByUser(req.params.id);
       res.json(notifications);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Store: Product endpoints
+  app.get("/api/store/products", async (_req, res) => {
+    try {
+      const products = await storage.getAllProducts();
+      res.json(products);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/store/products/:slug", async (req, res) => {
+    try {
+      const product = await storage.getProductBySlug(req.params.slug);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      res.json(product);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Store: Checkout endpoints
+  app.post("/api/checkout/intent", async (req, res) => {
+    try {
+      // Require authentication for checkout
+      const userId = (req as any).session?.uid;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required for checkout" });
+      }
+
+      const data = checkoutIntentSchema.parse(req.body);
+      let totalCents = 0;
+
+      for (const item of data.items) {
+        const product = await storage.getProductBySlug(item.slug);
+        if (!product) {
+          return res.status(400).json({ message: `Product ${item.slug} not found` });
+        }
+
+        let unitPrice = product.priceCents;
+        if (item.variantId) {
+          const variant = product.variants.find(v => v.id === item.variantId);
+          if (variant) {
+            unitPrice = variant.priceCents;
+          }
+        }
+        totalCents += unitPrice * item.qty;
+      }
+
+      // Create Stripe payment intent (stub if Stripe not configured)
+      let clientSecret = "pi_test_" + Math.random().toString(36).slice(2);
+      
+      if (stripe) {
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount: totalCents,
+          currency: "usd",
+          metadata: { email: data.email },
+        });
+        clientSecret = paymentIntent.client_secret || clientSecret;
+      }
+
+      res.json({ clientSecret, totalCents });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/checkout/confirm", async (req, res) => {
+    try {
+      // Require authentication for checkout
+      const userId = (req as any).session?.uid;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required for checkout" });
+      }
+
+      // Validate request body
+      const data = checkoutConfirmSchema.parse(req.body);
+      
+      let totalCents = 0;
+      const orderItemsData: any[] = [];
+
+      for (const item of data.items) {
+        const product = await storage.getProductBySlug(item.slug);
+        if (!product) {
+          return res.status(400).json({ message: `Product ${item.slug} not found` });
+        }
+
+        let unitPrice = product.priceCents;
+        let variantName: string | null = null;
+        if (item.variantId) {
+          const variant = product.variants.find(v => v.id === item.variantId);
+          if (variant) {
+            unitPrice = variant.priceCents;
+            variantName = variant.name;
+          }
+        }
+
+        const qty = item.qty || 1;
+        const lineTotal = unitPrice * qty;
+        totalCents += lineTotal;
+
+        orderItemsData.push({
+          productId: product.id,
+          variantId: item.variantId || null,
+          name: product.name,
+          variantName,
+          qty,
+          unitCents: unitPrice,
+          lineCents: lineTotal,
+        });
+      }
+
+      // Create order
+      const order = await storage.createOrder(
+        {
+          userId,
+          email: data.email,
+          totalCents,
+          status: "paid",
+          stripePiId: data.clientSecret,
+        },
+        orderItemsData
+      );
+
+      res.json({ ok: true, orderId: order.id });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
