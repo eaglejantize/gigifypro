@@ -1,0 +1,621 @@
+You are an expert full-stack engineer working in a Replit workspace with:
+- Frontend: Vite + React + TypeScript (client/)
+- Backend: Express + TypeScript (server/)
+- DB: Prisma + PostgreSQL (already set up)
+- Existing features: Auth, Store skeleton, Listings
+
+OBJECTIVE
+Add a production-ready Knowledge Hub and an Info Icon system with real content (no placeholders), place the brand slogan sitewide, and add merch items (Laundry Bag Kit, Chef Jacket, Chef Hat). Provide exact file paths, create missing folders/files, and confirm builds start cleanly.
+
+============================================================
+A) BRAND SLOGAN PLACEMENT
+============================================================
+1) Edit the site header (or landing hero) to include the brand slogan.
+
+File: client/src/components/Navbar.tsx (or your global header/landing component; if Navbar doesn’t exist, use your main layout)
+- Insert a subtle banner below the nav bar:
+
+// --- insert near top-level render, under nav header ---
+<div className="bg-blue-50 border-b border-blue-100 text-blue-900 text-center text-sm py-2">
+  <strong>Learn. Earn. Get Gigified.</strong> — Turn everyday skills into income, independence, and freedom.
+</div>
+// ---
+
+2) If you have a landing hero (e.g., client/src/pages/Home.tsx or client/src/app/(marketing)/page.tsx), add the slogan subtitle under the H1:
+<p className="text-lg text-gray-700 mt-2">
+  <strong>Learn. Earn. Get Gigified.</strong> — When you’re Gigified, you set your schedule, grow your brand, and even build a team.
+</p>
+
+============================================================
+B) KNOWLEDGE HUB (pages + API + content)
+============================================================
+We’ll implement an API that serves articles and service info from a typed content module (no DB migration needed now). Frontend will fetch and render.
+
+1) SERVER: Content source (real copy)
+Create file: server/content/knowledge.ts
+----------------------------------------------------------------
+export type KnowledgeArticle = {
+  slug: string;
+  title: string;
+  summary: string;
+  body: string; // HTML-safe string (basic markup)
+  category: "business" | "safety" | "service";
+  badges?: string[];
+};
+export type ServiceInfo = {
+  key: string;                 // e.g., "lawncare"
+  label: string;               // e.g., "Lawn Care"
+  summary: string;             // hover text (~1-3 lines)
+  expanded: string;            // full HTML-friendly description
+  recommendedGear?: string[];
+  requirements?: string[];
+  badges?: string[];
+};
+
+export const articles: KnowledgeArticle[] = [
+  {
+    slug: "what-does-gigified-mean",
+    title: "What Does It Mean to Be Gigified?",
+    category: "business",
+    summary:
+      "Gigified = fully independent, certified, and ready to scale your own micro-business with GigifyPro tools and badges.",
+    body: `
+<p><strong>Gigified</strong> means you run your own local micro-business through the GigifyPro ecosystem. You set your schedule and income goals, choose your services, and grow reputation through ratings and badges.</p>
+<ul>
+  <li><strong>Independent:</strong> No clock-in. You control your calendar.</li>
+  <li><strong>Certified:</strong> Pass background checks and complete category training.</li>
+  <li><strong>Compliant:</strong> Upload business license/insurance (where required).</li>
+  <li><strong>Scalable:</strong> Add sub-gigers (helpers/trainees) as demand grows.</li>
+</ul>
+<p>Being Gigified turns skills into a brand. Learn. Earn. Get Gigified.</p>
+`,
+    badges: ["Verified Identity", "Business Ready", "Safety Verified"],
+  },
+  {
+    slug: "start-a-laundry-giger-business",
+    title: "How to Start a Laundry Giger Business",
+    category: "service",
+    summary:
+      "Neighborhood laundry made professional: pickup → wash → dry → fold → return. Branded bag system prevents mix-ups.",
+    body: `
+<p><strong>How it works:</strong> Customers pre-sort into four GigifyPro bags: Whites, Colors, Linens, Intimates (mesh wash-in bag). You pick up, wash, dry, fold, and return — each set stays in its bag, so there's no mixing or sorting later.</p>
+<p><strong>Why customers love it:</strong> No sorting, less risk of mix-ups, and consistent results. Intimates stay protected in the mesh bag through wash/dry.</p>
+<p><strong>Why gigers love it:</strong> Clear process, repeat subscriptions, and easy branding.</p>
+<p><strong>Recommended gear:</strong> GigifyPro Laundry Bag Kit (4 bags), gentle + hypoallergenic detergents, garment steamer (optional), folding surface, vehicle liners.</p>
+<p><strong>Pricing ideas:</strong> By bag, by pound, or subscription (weekly/bi-weekly). Offer express add-on and stain-treatment upgrade.</p>
+<p><strong>Hygiene & safety:</strong> Use clean machines; separate loads by customer; disinfect between jobs; communicate allergies/sensitivities. Follow local laundry/handling guidelines.</p>
+<p><strong>Certification:</strong> <em>“Laundry Giger Certified”</em> after sanitation module + supply setup.</p>
+`,
+    badges: ["Laundry Giger Certified", "Safety Verified"],
+  },
+  {
+    slug: "becoming-a-personal-chef-giger",
+    title: "Becoming a Personal Chef & Meal Prep Giger",
+    category: "service",
+    summary:
+      "Offer cook-in-home or deliver prepped meals. Show food-safety credentials, set menus, and build weekly clients.",
+    body: `
+<p><strong>Two models:</strong></p>
+<ol>
+  <li><strong>Cook in the client’s kitchen:</strong> Client provides space; you bring ingredients or use their pantry. Ideal for fresh, customized meals.</li>
+  <li><strong>Deliver prepped meals:</strong> Prepare in your kitchen or licensed space and deliver sealed, labeled meals for the week.</li>
+</ol>
+<p><strong>Compliance & safety:</strong> Upload food-handler certificates (e.g., ServSafe) and follow local health codes. Sanitize surfaces, prevent cross-contamination, label allergens and dates. Some regions require licensed/commercial kitchens for off-site prep — check local rules in the Knowledge Hub “Local Law & Licensing Map”.</p>
+<p><strong>Branding & gear:</strong> Chef jacket, hat/cap, waterproof apron, temperature-safe carriers, compostable containers, labeling printer.</p>
+<p><strong>Pricing:</strong> Flat per-meal, per-session (e.g., 3-hour block), or subscription. Offer add-ons: grocery shopping, nutrition planning, special events.</p>
+<p><strong>Badges:</strong> <em>“Meal Prep Safety Verified”</em>, <em>“Chef Giger Certified”</em>.</p>
+`,
+    badges: ["Meal Prep Safety Verified", "Chef Giger Certified"],
+  },
+  {
+    slug: "lawncare-with-or-without-customer-equipment",
+    title: "Lawn Care 2.0 — With or Without Customer Equipment",
+    category: "service",
+    summary:
+      "A flexible model: bring your own tools, use the customer’s, or mix. Offer a small discount when using customer equipment.",
+    body: `
+<p><strong>Modes:</strong> (1) Bring your own equipment; (2) Use customer's equipment; (3) Hybrid. Using the client's mower/edger reduces hauling and lowers startup costs; pass along a small discount when not using your own gear.</p>
+<p><strong>Why it works:</strong> Gigers move faster house-to-house without trailers, new gigers can start immediately, and customers can save.</p>
+<p><strong>Protection:</strong> Use an in-app <em>Equipment Use Agreement</em> and take condition photos before/after. Wear PPE: eye/ear protection, gloves, closed-toe shoes. Follow local noise/fuel rules.</p>
+<p><strong>Badges:</strong> <em>“Lawncare Basics”</em>, <em>“Safety Verified”</em>.</p>
+`,
+    badges: ["Lawncare Basics", "Safety Verified"],
+  },
+];
+
+export const serviceInfo: ServiceInfo[] = [
+  {
+    key: "lawncare",
+    label: "Lawn Care",
+    summary:
+      "Flexible options: bring your tools or use the customer’s. Offer a small discount when using customer equipment.",
+    expanded: `
+<p><strong>How it works:</strong> Choose equipment mode per booking. Using customer tools means faster transit and lower overhead—great for new gigers.</p>
+<p><strong>Before you start:</strong> Confirm tool condition, fuel type, and yard boundaries in chat. Take quick photos (pre/post).</p>
+<p><strong>Compliance:</strong> Follow local noise ordinances; wear PPE. Use the Equipment Use Agreement.</p>
+<p><strong>Upsells:</strong> Leaf clean-up, edging, weed control, seasonal care.</p>
+`,
+    recommendedGear: ["Mower/Edger or Customer Tools", "PPE (glasses/ear protection)", "Trash bags", "Fuel can"],
+    requirements: ["Background check", "Local noise/environmental rules"],
+    badges: ["Lawncare Basics", "Safety Verified"],
+  },
+  {
+    key: "meal-prep",
+    label: "Meal Prep / Personal Chef",
+    summary:
+      "Cook in the client’s kitchen or deliver prepped meals. Show food-safety certs and follow local rules.",
+    expanded: `
+<p><strong>Models:</strong> In-home cooking or off-site prep + delivery. Label allergens and dates; sanitize and avoid cross-contamination.</p>
+<p><strong>Compliance:</strong> Many areas require food-handler certificates; some require licensed kitchens for off-site prep. Check our Local Law & Licensing Map.</p>
+<p><strong>Business tips:</strong> Offer weekly menus, subscriptions, and grocery add-on.</p>
+`,
+    recommendedGear: ["Chef jacket/hat", "Waterproof apron", "Food-safe containers", "Cooler/thermal bags"],
+    requirements: ["Background check", "Food-handler certificate (region-dependent)"],
+    badges: ["Meal Prep Safety Verified", "Chef Giger Certified"],
+  },
+  {
+    key: "laundry-fold",
+    label: "Laundry & Fold",
+    summary:
+      "Four-bag system: Whites, Colors, Linens, Intimates (mesh wash-in). Pickup → Wash → Dry → Fold → Return.",
+    expanded: `
+<p><strong>System:</strong> Customer pre-sorts into branded bags. You keep each load separate and return folded in the same bag. Intimates remain in the mesh bag for wash/dry to protect delicate items.</p>
+<p><strong>Pricing:</strong> By bag, by pound, or subscription. Add express and stain-treat upgrades.</p>
+<p><strong>Hygiene:</strong> Sanitize machines, use liners, and communicate allergies.</p>
+`,
+    recommendedGear: ["GigifyPro Laundry Bag Kit (4 bags)", "Gentle detergents", "Vehicle liners"],
+    requirements: ["Background check"],
+    badges: ["Laundry Giger Certified", "Safety Verified"],
+  },
+  {
+    key: "childcare",
+    label: "Childcare / Emergency Childcare",
+    summary:
+      "Short-term, non-medical childcare. Verified background; follow household rules and emergency contacts.",
+    expanded: `
+<p><strong>Scope:</strong> Short-term care, activities, meals, and homework support (non-medical). Always follow parental instructions.</p>
+<p><strong>Requirements:</strong> Background check is mandatory; local childcare rules may apply. Consider First Aid/CPR training.</p>
+`,
+    recommendedGear: ["ID badge", "Activity kit (books/games)"],
+    requirements: ["Background check", "Local childcare guidelines"],
+    badges: ["Safety Verified"],
+  },
+  {
+    key: "handyman",
+    label: "Handyman",
+    summary:
+      "Light home tasks only. Bring your tools or use customer tools with an equipment agreement.",
+    expanded: `
+<p><strong>Scope:</strong> Minor repairs, installations, assembly. Avoid licensed trades unless you hold the proper license.</p>
+<p><strong>Protection:</strong> Use Equipment Use Agreement when using customer tools. Wear PPE.</p>
+`,
+    recommendedGear: ["Basic toolkit", "PPE", "Stud finder", "Level"],
+    requirements: ["Background check", "Local licensing for regulated tasks"],
+    badges: ["Safety Verified"],
+  },
+  {
+    key: "massage",
+    label: "Massage",
+    summary:
+      "Licensed & insured only. Upload credentials. Set clear boundaries and hygiene standards.",
+    expanded: `
+<p><strong>Compliance:</strong> Massage typically requires state licensure and insurance. Upload documents to activate this category.</p>
+<p><strong>Setup:</strong> Clean linens, sanitization, professional conduct.</p>
+`,
+    recommendedGear: ["Portable table", "Clean linens", "Sanitizer"],
+    requirements: ["Background check", "Massage license", "Insurance"],
+    badges: ["Business Ready", "Safety Verified"],
+  },
+  {
+    key: "personal-trainer",
+    label: "Personal Trainer",
+    summary:
+      "Certifications recommended. Train at client home, outdoors, or gym with permission.",
+    expanded: `
+<p><strong>Compliance:</strong> Certifications (NASM/ACE/ISSA) recommended; follow gym rules if on premises.</p>
+<p><strong>Offerings:</strong> Programs, nutrition guidance (non-medical), progress tracking.</p>
+`,
+    recommendedGear: ["Bands/dumbbells", "Timer", "Mat"],
+    requirements: ["Background check"],
+    badges: ["Safety Verified"],
+  },
+  {
+    key: "personal-shopper",
+    label: "Personal Shopper",
+    summary:
+      "Smart routing & receipts. Offer weekly routes, deal-finding, and special requests.",
+    expanded: `
+<p><strong>Process:</strong> Confirm list/budget, share receipts, deliver on time. Offer recurring slots.</p>
+`,
+    recommendedGear: ["Insulated bags", "Receipt envelope"],
+    requirements: ["Background check"],
+    badges: ["Safety Verified"],
+  },
+  {
+    key: "maid-service",
+    label: "Maid Service",
+    summary:
+      "Bring your kit or use customer supplies for sensitivities. Room-by-room checklist and photos.",
+    expanded: `
+<p><strong>Process:</strong> Checklist per room, photos (before/after) if approved, eco-friendly options.</p>
+`,
+    recommendedGear: ["Cleaning kit", "Gloves", "Microfiber cloths"],
+    requirements: ["Background check"],
+    badges: ["Safety Verified"],
+  },
+  {
+    key: "event-planner",
+    label: "Event Planner",
+    summary:
+      "Plan small events; vendor coordination and timelines. Liability coverage recommended.",
+    expanded: `
+<p><strong>Scope:</strong> Birthdays, small weddings, community events. Contracts with vendors; clear timelines.</p>
+`,
+    recommendedGear: ["Planner templates", "Vendor list", "Checklists"],
+    requirements: ["Background check"],
+    badges: ["Business Ready"],
+  },
+  {
+    key: "gift-buyer",
+    label: "Gift Buyer",
+    summary:
+      "Budget-based gifting with taste profiles. Provide options and wrap/deliver.",
+    expanded: `
+<p><strong>Process:</strong> Collect preferences, propose 3 options per budget tier, handle purchase and wrap.</p>
+`,
+    recommendedGear: ["Wrapping kit", "Card stock"],
+    requirements: ["Background check"],
+    badges: ["Safety Verified"],
+  },
+  {
+    key: "transportation",
+    label: "Transportation & Errands",
+    summary:
+      "Non-medical transport & airport runs. Valid license/insurance required.",
+    expanded: `
+<p><strong>Compliance:</strong> Valid driver license, insurance, and vehicle standards. Clarify wait times and tolls.</p>
+`,
+    recommendedGear: ["Phone mount", "Car safety kit"],
+    requirements: ["Background check", "Driver license + insurance"],
+    badges: ["Business Ready", "Safety Verified"],
+  },
+  {
+    key: "senior-checkin",
+    label: "Light Senior Care Check-Ins",
+    summary:
+      "Non-medical check-ins: meals, conversation, reminders. Background check required.",
+    expanded: `
+<p><strong>Scope:</strong> Companionship, light chores, wellness reminders (non-medical). Emergency contacts on file.</p>
+`,
+    recommendedGear: ["ID badge", "Notebook/app for notes"],
+    requirements: ["Background check"],
+    badges: ["Safety Verified"],
+  },
+];
+
+----------------------------------------------------------------
+
+2) SERVER: Knowledge API routes
+Create file: server/routes/knowledge.ts
+----------------------------------------------------------------
+import { Router } from "express";
+import { articles, serviceInfo } from "../content/knowledge";
+const r = Router();
+
+r.get("/articles", (_req, res) => {
+  res.json(articles.map(a => ({ slug: a.slug, title: a.title, summary: a.summary, category: a.category, badges: a.badges || [] })));
+});
+
+r.get("/article/:slug", (req, res) => {
+  const found = articles.find(a => a.slug === req.params.slug);
+  if (!found) return res.status(404).json({ error: "Not found" });
+  res.json(found);
+});
+
+r.get("/services", (_req, res) => {
+  res.json(serviceInfo.map(s => ({ key: s.key, label: s.label, summary: s.summary, badges: s.badges || [] })));
+});
+
+r.get("/services/:key", (req, res) => {
+  const found = serviceInfo.find(s => s.key === req.params.key);
+  if (!found) return res.status(404).json({ error: "Not found" });
+  res.json(found);
+});
+
+export default r;
+----------------------------------------------------------------
+
+3) SERVER: Wire routes
+Edit file: server/routes.ts
+----------------------------------------------------------------
+import { Router } from "express";
+import auth from "./routes/auth";
+import store from "./routes/store";
+import checkout from "./routes/checkout";
+import knowledge from "./routes/knowledge";
+
+const api = Router();
+api.use("/auth", auth);
+api.use("/store", store);
+api.use("/checkout", checkout);
+api.use("/knowledge", knowledge);
+
+export default api;
+----------------------------------------------------------------
+
+4) CLIENT: Knowledge pages
+Create file: client/src/pages/Knowledge.tsx
+----------------------------------------------------------------
+import { useEffect, useState } from "react";
+import { Link } from "wouter";
+
+type ArticleSummary = { slug: string; title: string; summary: string; category: string; badges: string[] };
+
+export default function Knowledge() {
+  const [items, setItems] = useState<ArticleSummary[]>([]);
+  useEffect(() => {
+    (async () => {
+      const res = await fetch("/api/knowledge/articles", { credentials: "include" });
+      setItems(await res.json());
+    })();
+  }, []);
+  return (
+    <div className="mx-auto max-w-5xl p-6 space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">Knowledge Hub</h1>
+        <p className="text-gray-600">Learn. Earn. Get Gigified.</p>
+      </div>
+      <div className="grid gap-6 md:grid-cols-2">
+        {items.map(a => (
+          <div key={a.slug} className="rounded-xl border p-4 bg-white">
+            <div className="text-xs text-gray-500 uppercase">{a.category}</div>
+            <h2 className="text-xl font-semibold mt-1">{a.title}</h2>
+            <p className="text-sm text-gray-700 mt-2">{a.summary}</p>
+            {a.badges?.length ? (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {a.badges.map(b => <span key={b} className="text-xs border rounded-full px-2 py-0.5">{b}</span>)}
+              </div>
+            ) : null}
+            <Link href={`/knowledge/article/${a.slug}`} className="inline-block mt-3 text-sm underline">Read more</Link>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+----------------------------------------------------------------
+
+Create file: client/src/pages/KnowledgeArticle.tsx
+----------------------------------------------------------------
+import { useEffect, useState } from "react";
+import { useRoute } from "wouter";
+
+type Article = { slug: string; title: string; body: string; badges?: string[] };
+
+export default function KnowledgeArticle() {
+  const [, params] = useRoute("/knowledge/article/:slug");
+  const [a, setA] = useState<Article | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const res = await fetch(`/api/knowledge/article/${params?.slug}`, { credentials: "include" });
+      if (res.ok) setA(await res.json());
+    })();
+  }, [params?.slug]);
+
+  if (!a) return null;
+  return (
+    <div className="mx-auto max-w-3xl p-6 space-y-4">
+      <h1 className="text-3xl font-bold">{a.title}</h1>
+      {a.badges?.length ? <div className="flex flex-wrap gap-2">
+        {a.badges.map(b => <span key={b} className="text-xs border rounded-full px-2 py-0.5">{b}</span>)}
+      </div> : null}
+      <article className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: a.body }} />
+      <a href="/knowledge" className="text-sm underline">← Back to Knowledge Hub</a>
+    </div>
+  );
+}
+----------------------------------------------------------------
+
+5) CLIENT: Info Icon component (hover summary + click modal)
+Create file: client/src/components/InfoPopover.tsx
+----------------------------------------------------------------
+import { useEffect, useRef, useState } from "react";
+
+export default function InfoPopover({ serviceKey }: { serviceKey: string }) {
+  const [open, setOpen] = useState(false);
+  const [data, setData] = useState<any>(null);
+  const [hover, setHover] = useState(false);
+  const tRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    // prefetch on mount for snappy UI
+    (async () => {
+      const res = await fetch(`/api/knowledge/services/${serviceKey}`, { credentials: "include" });
+      if (res.ok) setData(await res.json());
+    })();
+  }, [serviceKey]);
+
+  function onMouseEnter() {
+    tRef.current = window.setTimeout(() => setHover(true), 150);
+  }
+  function onMouseLeave() {
+    if (tRef.current) window.clearTimeout(tRef.current);
+    setHover(false);
+  }
+
+  return (
+    <span className="relative inline-flex items-center">
+      <button
+        type="button"
+        aria-label={`More info about ${data?.label || serviceKey}`}
+        onClick={() => setOpen(true)}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+        className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full border text-gray-600 hover:text-black"
+      >
+        i
+      </button>
+
+      {/* Hover summary tooltip */}
+      {hover && data?.summary && (
+        <div
+          className="absolute z-50 -left-2 top-6 w-64 rounded-lg border bg-white p-3 text-xs shadow-lg"
+          onMouseEnter={() => setHover(true)}
+          onMouseLeave={onMouseLeave}
+        >
+          <div className="font-semibold mb-1">{data.label}</div>
+          <div className="text-gray-700">{data.summary}</div>
+        </div>
+      )}
+
+      {/* Click modal */}
+      {open && data && (
+        <div className="fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)}></div>
+          <div className="absolute left-1/2 top-1/2 w-[min(640px,92vw)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border bg-white p-5 shadow-xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-semibold">{data.label}</h3>
+                {data.badges?.length ? <div className="mt-1 flex flex-wrap gap-2">
+                  {data.badges.map((b:string) => <span key={b} className="text-[11px] border rounded-full px-2 py-0.5">{b}</span>)}
+                </div> : null}
+              </div>
+              <button onClick={() => setOpen(false)} className="text-sm text-gray-500">Close</button>
+            </div>
+            <div className="mt-3 text-sm text-gray-800" dangerouslySetInnerHTML={{ __html: data.expanded }} />
+            {data.recommendedGear?.length ? (
+              <div className="mt-3">
+                <div className="text-xs font-semibold uppercase text-gray-500">Recommended Gear</div>
+                <ul className="list-disc pl-5 text-sm">
+                  {data.recommendedGear.map((g:string) => <li key={g}>{g}</li>)}
+                </ul>
+              </div>
+            ) : null}
+            {data.requirements?.length ? (
+              <div className="mt-3">
+                <div className="text-xs font-semibold uppercase text-gray-500">Requirements</div>
+                <ul className="list-disc pl-5 text-sm">
+                  {data.requirements.map((g:string) => <li key={g}>{g}</li>)}
+                </ul>
+              </div>
+            ) : null}
+            <div className="mt-4">
+              <a href="/knowledge" className="text-sm underline">Learn more in Knowledge Hub</a>
+            </div>
+          </div>
+        </div>
+      )}
+    </span>
+  );
+}
+----------------------------------------------------------------
+
+6) CLIENT: Use Info icons in service menus
+- Wherever you render service names (e.g., category pickers, listing cards, booking forms), import and place:
+  <span className="inline-flex items-center">
+    <span>Lawn Care</span>
+    <InfoPopover serviceKey="lawncare" />
+  </span>
+
+Repeat with keys: "meal-prep", "laundry-fold", "childcare", "handyman", "massage", "personal-trainer", "personal-shopper", "maid-service", "event-planner", "gift-buyer", "transportation", "senior-checkin".
+
+7) CLIENT: Routes for Knowledge pages
+In your router (e.g., client/src/App.tsx), add:
+  <Route path="/knowledge" component={Knowledge} />
+  <Route path="/knowledge/article/:slug" component={KnowledgeArticle} />
+
+============================================================
+C) STORE: Add Laundry Bags + Chef Uniforms
+============================================================
+We will upsert 3 more products into the existing store.
+
+Create file: server/scripts/seedStoreExtra.ts
+----------------------------------------------------------------
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
+
+async function up() {
+  const items = [
+    {
+      slug: "laundry-bag-kit-4",
+      name: "GigifyPro Laundry Bag Kit (4 Bags)",
+      description: "Complete set: Whites, Colors, Linens, and a mesh Intimates bag you wash/dry with contents inside.",
+      imageUrl: "/store/laundry-kit.jpg",
+      category: "hat", // reuse enum if needed; or change to a generic category in your schema
+      priceCents: 3999,
+      variants: [{ name: "Standard Set", priceCents: 3999, sku: "LAUNDRY-KIT-STD" }],
+    },
+    {
+      slug: "chef-jacket",
+      name: "GigifyPro Chef Jacket",
+      description: "Lightweight, professional jacket with embroidered logo for Meal Prep & Chef Gigers.",
+      imageUrl: "/store/chef-jacket.jpg",
+      category: "shirt",
+      priceCents: 3499,
+      variants: [{ name: "S", priceCents: 3499, sku: "CHEF-JKT-S" }, { name: "M", priceCents: 3499, sku: "CHEF-JKT-M" }, { name: "L", priceCents: 3499, sku: "CHEF-JKT-L" }, { name: "XL", priceCents: 3499, sku: "CHEF-JKT-XL" }],
+    },
+    {
+      slug: "chef-hat",
+      name: "GigifyPro Chef Hat",
+      description: "Classic chef hat (or skull-cap style) with GigifyPro mark for a clean, pro look.",
+      imageUrl: "/store/chef-hat.jpg",
+      category: "hat",
+      priceCents: 1499,
+      variants: [{ name: "One Size", priceCents: 1499, sku: "CHEF-HAT-ONE" }],
+    },
+  ];
+
+  for (const p of items) {
+    const prod = await prisma.product.upsert({
+      where: { slug: p.slug },
+      update: { description: p.description, imageUrl: p.imageUrl, priceCents: p.priceCents, active: true },
+      create: { slug: p.slug, name: p.name, description: p.description, imageUrl: p.imageUrl, category: p.category as any, priceCents: p.priceCents, active: true },
+    });
+    for (const v of p.variants) {
+      await prisma.productVariant.upsert({
+        where: { sku: v.sku },
+        update: { priceCents: v.priceCents, active: true },
+        create: { productId: prod.id, name: v.name, priceCents: v.priceCents, sku: v.sku, active: true },
+      });
+    }
+  }
+  console.log("✅ Extra store items seeded");
+}
+
+up().catch(e => { console.error(e); process.exit(1); }).finally(async () => { await prisma.$disconnect(); });
+----------------------------------------------------------------
+
+(If you want placeholder images, create client/public/store/laundry-kit.jpg, chef-jacket.jpg, chef-hat.jpg as simple color blocks with text. Otherwise, use temporary stock until design is finalized.)
+
+============================================================
+D) BUILD/RUN & ACCEPTANCE
+============================================================
+1) Ensure server is running (terminal tab A):
+- From /server:
+  npm install
+  npm run dev  (or your start command)
+
+2) Ensure client is running (terminal tab B):
+- From /client:
+  npm install
+  npm run dev
+
+3) Seed extra store items (tab A):
+  npx ts-node server/scripts/seedStoreExtra.ts
+
+4) Navigate:
+- /knowledge (list of articles)
+- /knowledge/article/what-does-gigified-mean
+- /knowledge/article/start-a-laundry-giger-business
+- /knowledge/article/becoming-a-personal-chef-giger
+- /knowledge/article/lawncare-with-or-without-customer-equipment
+- /store (see Laundry Kit + Chef Jacket + Chef Hat)
+
+5) Confirm Info Icons:
+- In the service menus and listing forms, each service label renders <InfoPopover serviceKey="..."/> and shows a summary on hover and a full modal on click with the actual info.
+
+OUTPUT BACK:
+- Confirm the 4 articles render and the info icons show correct summaries/expanded content for Lawn Care, Meal Prep, Laundry, and at least 8 other services.
+- Confirm the 3 new products appear in /store.
+- If any file path differs in your project, adapt accordingly and report the changed paths.
