@@ -1,0 +1,56 @@
+You are an expert gig-economy business developer and technical writer working within the GigifyPro app project.
+
+GOAL:
+Build the **Knowledge Hub business guides** for the new category:
+🎨 **Art, Design & Custom Creations**
+
+This category empowers independent creators, artisans, and designers to sell creative skills and handcrafted work locally through GigifyPro.
+
+SERVICES (create one entry for each):
+1) Artist / Painter (Portraits & Custom Art)
+2) Custom Clothing Designer
+3) Furniture Maker / Refinisher
+4) Home Decor & Design Giger
+5) Upcycled Art & Reclaimed Creations
+
+OUTPUT EXPECTATIONS:
+For each service above, generate a complete Knowledge Hub entry with these fields:
+
+- **title**: Full name of the service
+- **summary**: 2–3 sentence quick overview (for hover popovers)
+- **expanded**: Multi-section HTML-safe detailed description covering:
+  1. How It Works — explain the service workflow step-by-step
+  2. Tools & Startup Gear — list affordable, beginner-friendly tools and materials
+  3. Certifications & Requirements — include any recommended training, permits, or disclaimers
+  4. Safety & Best Practices — for handling tools, paints, finishes, and custom orders
+  5. Pricing Model — examples of hourly or project-based rates
+  6. Upsell & Business Growth — show how to scale into products, workshops, or brand collaborations
+  7. Get Gigified Badge — give each service a unique badge title and short description
+
+- **recommendedGear**: Array of essential tools/supplies
+- **requirements**: Array of recommended or required qualifications
+- **badges**: 1–2 badge titles for certification or excellence
+
+STYLE & VOICE:
+- Warm, entrepreneurial, and empowering tone.
+- Assume many readers are talented but new to turning creativity into income.
+- Encourage safe practices, good client communication, and originality.
+- Use HTML-safe formatting (<p>, <ul>, <li>) in expanded descriptions.
+- Comply with U.S. norms for independent gig work (no false claims, proper disclaimers for chemical/material use).
+
+EXAMPLE FORMAT:
+{
+  "key": "custom-clothing-designer",
+  "label": "Custom Clothing Designer",
+  "summary": "Design or customize apparel—from logo tees and embroidered hats to hand-painted jackets—using your creative skills.",
+  "expanded": "<p><strong>How It Works:</strong> ...</p><p><strong>Tools & Startup Gear:</strong> ...</p><p><strong>Certifications & Requirements:</strong> ...</p><p><strong>Safety & Best Practices:</strong> ...</p><p><strong>Pricing Model:</strong> ...</p><p><strong>Upsell & Business Growth:</strong> ...</p><p><strong>Get Gigified Badge:</strong> ...</p>",
+  "recommendedGear": ["Fabric paints", "Sewing kit or machine", "Heat press or iron", "Protective gloves"],
+  "requirements": ["Background check", "Safe material handling training (optional)"],
+  "badges": ["Certified Customwear Creator", "Safety Verified"]
+}
+
+AFTER YOU FINISH:
+- Summarize recurring success tips for creative Gigers (branding, presentation, customer approvals).
+- Suggest cross-sells: link Art & Design services with Event Planner, Personal Videographer, or Home Decor gigs.
+
+END OF INSTRUCTIONS.
