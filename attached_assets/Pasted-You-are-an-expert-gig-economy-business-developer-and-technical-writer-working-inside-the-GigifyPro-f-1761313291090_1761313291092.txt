@@ -1,0 +1,72 @@
+You are an expert gig-economy business developer and technical writer working inside the GigifyPro fullstack app project.
+
+GOAL:
+Build the **Knowledge Hub business guides** for the **Errands & Transportation** category. These guides will be shown in the Knowledge section and linked from each service’s info icon (“i”) and detail modal.
+
+CATEGORY: 🚗 Errands & Transportation
+SERVICES (create one entry for each):
+1) Donation Drop-Off Concierge
+2) Driveway Snow Shoveling
+3) Errand Cluster Runs
+4) Errand Scheduler (Virtual Coordinator)
+5) Grocery Line Waiter / Queue Holder
+6) Neighborhood Errand Runner
+7) Mobile Oil Change & Basic Car Maintenance
+8) Prescription Pickup Buddy
+9) Ride Along Companion
+10) Transportation & Errands
+
+OUTPUT EXPECTATIONS:
+For each service above, generate a structured Knowledge Hub entry with the following fields:
+
+- title: Full name of the service
+- summary: 2–3 sentence quick overview (used for hover popovers)
+- expanded: Multi-section HTML-safe detailed description covering:
+  1. How It Works — explain the process clearly
+  2. Tools & Startup Gear — list affordable, accessible items
+  3. Certifications & Requirements — note background checks, insurance, permits, and local rules
+  4. Safety & Best Practices — emphasize trust, risk controls, and client communication
+  5. Pricing Model — example pricing structures and recurring options
+  6. Upsell & Business Growth — how to scale, bundle, or add subscriptions
+  7. Get Gigified Badge — unique badge name + what it represents
+- recommendedGear: Array of essential tools/supplies
+- requirements: Array of legal/suggested qualifications
+- badges: 1–2 badge titles for training or excellence
+
+IMPORTANT COMPLIANCE NOTES (apply where relevant):
+- Mobile Oil Change & Basic Car Maintenance:
+  * Limit to basic, non-licensed tasks (oil/filter changes, wiper/air filter swaps, fluids top-off, tire pressure).
+  * Include environmental compliance guidance: used oil collection, disposal via approved facilities, spill kits, absorbents, local regulation awareness (EPA/state).
+  * Prohibit work in prohibited zones (e.g., HOA/municipal restrictions) and advanced mechanical/diagnostic tasks unless properly certified and insured.
+- Prescription Pickup Buddy:
+  * Require verified ID/background check, client consent, and pharmacy pickup protocols (privacy, correct handoff).
+- Ride Along Companion / Transportation & Errands:
+  * Require valid driver’s license, insurance, vehicle safety checklist; clarify wait-time policy, tolls, and mileage.
+- Driveway Snow Shoveling:
+  * Weather safety, slip risk warnings, de-icer handling, PPE.
+
+TONE & STYLE:
+- Warm, instructive, empowering; assume readers are first-time business owners.
+- Use clear, actionable steps.
+- Ensure all examples and advice comply with typical U.S. norms for independent gig work.
+
+FORMAT:
+Return a single JSON array of objects, one per service, ready for insertion into:
+- server/content/serviceInfo.json (summary/expanded/recommendedGear/requirements/badges)
+- Knowledge Hub DB (title/summary/body/category/badges)
+
+EXAMPLE STRUCTURE (use this shape for each item):
+{
+  "key": "donation-dropoff-concierge",
+  "label": "Donation Drop-Off Concierge",
+  "summary": "We pick up donations from your home and deliver them to local charities—receipt and photo proof included.",
+  "expanded": "<p><strong>How It Works:</strong> ...</p><p><strong>Tools & Startup Gear:</strong> ...</p><p><strong>Certifications & Requirements:</strong> ...</p><p><strong>Safety & Best Practices:</strong> ...</p><p><strong>Pricing Model:</strong> ...</p><p><strong>Upsell & Business Growth:</strong> ...</p><p><strong>Get Gigified Badge:</strong> ...</p>",
+  "recommendedGear": ["Dolly or hand truck", "Vehicle cargo liners", "Tie-down straps"],
+  "requirements": ["Background check", "Local donation center acceptance guidelines"],
+  "badges": ["Community Impact Giger", "Safety Verified"]
+}
+
+AFTER YOU FINISH:
+- Provide a brief summary of recurring themes (e.g., insurance, safety, seasonality, bundling) and prime cross-sell ideas to other categories (e.g., pair Driveway Snow Shoveling with Trash Can Sanitation; pair Errand Cluster Runs with Personal Shopper).
+
+END OF INSTRUCTIONS.
