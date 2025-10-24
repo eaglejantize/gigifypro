@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Navbar } from "@/components/Navbar";
+import CtaBanner from "@/components/CtaBanner";
+import MobileCtaBar from "@/components/MobileCtaBar";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/Landing";
 import Feed from "@/pages/Feed";
@@ -58,10 +60,12 @@ function App() {
         <TooltipProvider>
           <div className="min-h-screen flex flex-col">
             <Navbar />
+            <CtaBanner />
             <main className="flex-1">
               <Router />
             </main>
           </div>
+          <MobileCtaBar />
           <Toaster />
         </TooltipProvider>
       </AuthProvider>
