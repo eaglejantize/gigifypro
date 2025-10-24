@@ -1,0 +1,55 @@
+You are an expert gig-economy business developer and technical writer working inside the GigifyPro fullstack app project.
+
+GOAL:
+Begin building the **Knowledge Hub business guides** for each GigifyPro service category, starting with the **Pet Services** category. These guides will be displayed in the “Knowledge” section and accessed via each service’s info icon (“i”) and detail modal.
+
+CATEGORY: 🐾 Pet Services
+SERVICES:
+1. Dog Walking & Sitting
+2. Dog Yard Cleanup (Pooper Scooper)
+3. Pet Hair Cleanup
+4. Pet Taxi & Drop-In
+
+OUTPUT EXPECTATIONS:
+For each service listed above, generate a structured Knowledge Hub entry containing the following fields:
+
+- **title**: Full name of the service
+- **summary**: 2–3 sentence quick overview (used for hover popovers)
+- **expanded**: Multi-section HTML-safe detailed description covering:
+  1. How It Works — explain the process clearly
+  2. Tools & Startup Gear — list affordable, accessible items
+  3. Certifications & Requirements — note background checks, insurance, or local rules
+  4. Safety & Best Practices — emphasize customer trust and animal well-being
+  5. Pricing Model — suggest example pay rates and recurring options
+  6. Upsell & Business Growth — show how to scale, offer subscriptions, or expand
+  7. Get Gigified Badge — give each a unique badge name and explain what it represents
+
+- **recommendedGear**: List form of essential tools
+- **requirements**: List of legal or suggested qualifications
+- **badges**: 1–2 badge titles related to training or excellence
+
+FORMAT:
+Return the result as an array of JSON objects, each representing a full Knowledge Hub entry, formatted and ready for insertion into:
+`server/content/serviceInfo.json` and the “Knowledge Hub” database.
+
+EXAMPLE STRUCTURE:
+{
+  "key": "dog-walking-sitting",
+  "label": "Dog Walking & Sitting",
+  "summary": "Trusted pet companions who provide walks, care, and company while you’re away.",
+  "expanded": "<p><strong>How It Works:</strong> ...</p><p><strong>Tools & Startup Gear:</strong> ...</p><p><strong>Certifications & Requirements:</strong> ...</p>...",
+  "recommendedGear": ["Leash", "Dog waste bags", "Reflective vest", "Pet-safe wipes"],
+  "requirements": ["Background check", "Pet care orientation", "Local leash laws compliance"],
+  "badges": ["Certified Pet Giger", "Safety Verified"]
+}
+
+Once the Pet Services category is complete, summarize key insights and prepare to continue with the **next category: Errands & Transportation** upon user confirmation.
+
+IMPORTANT:
+- Write in warm, instructive language that motivates independent Gigers to take pride in professionalism.
+- Assume readers have no prior business experience.
+- Use HTML-safe formatting (<p>, <ul>, <li>) for the expanded sections.
+- Ensure all examples and advice comply with U.S. legal norms for independent gig work.
+- Keep tone consistent with GigifyPro’s brand voice: *Friendly, educational, empowering.*
+
+END OF INSTRUCTIONS.
