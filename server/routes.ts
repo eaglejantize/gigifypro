@@ -8,6 +8,7 @@ import { readServiceInfo } from "./content/serviceInfoStore";
 import meRouter from "./routes/me";
 import adminServiceInfoRouter from "./routes/admin.serviceInfo";
 import trackRouter from "./routes/track";
+import { getCache, putCache } from "./utils/cache";
 
 // Stripe setup - from javascript_stripe integration
 const stripe = process.env.STRIPE_SECRET_KEY
@@ -663,7 +664,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Knowledge Hub: Articles
   app.get("/api/knowledge/articles", async (req, res) => {
     try {
+      const cacheKey = "articles:list";
+      const cached = getCache(cacheKey);
+      
+      // Check If-None-Match header
+      if (cached && req.headers["if-none-match"] === cached.etag) {
+        return res.status(304).end();
+      }
+      
+      // Use cached body if available
+      if (cached) {
+        res.setHeader("Cache-Control", "public, max-age=60");
+        res.setHeader("ETag", cached.etag);
+        res.setHeader("Content-Type", "application/json");
+        return res.json(cached.body);
+      }
+      
+      // Generate fresh data
       const articles = await storage.getAllArticles();
+      
+      // Cache for 60 seconds (60000 ms)
+      const { etag } = putCache(cacheKey, articles, 60000);
+      
+      res.setHeader("Cache-Control", "public, max-age=60");
+      res.setHeader("ETag", etag);
+      res.setHeader("Content-Type", "application/json");
       res.json(articles);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -672,10 +697,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/knowledge/articles/:slug", async (req, res) => {
     try {
+      const cacheKey = `articles:item:${req.params.slug}`;
+      const cached = getCache(cacheKey);
+      
+      // Check If-None-Match header
+      if (cached && req.headers["if-none-match"] === cached.etag) {
+        return res.status(304).end();
+      }
+      
+      // Use cached body if available
+      if (cached) {
+        res.setHeader("Cache-Control", "public, max-age=300");
+        res.setHeader("ETag", cached.etag);
+        res.setHeader("Content-Type", "application/json");
+        return res.json(cached.body);
+      }
+      
+      // Generate fresh data
       const article = await storage.getArticleBySlug(req.params.slug);
       if (!article) {
         return res.status(404).json({ message: "Article not found" });
       }
+      
+      // Cache for 5 minutes (300000 ms)
+      const { etag } = putCache(cacheKey, article, 300000);
+      
+      res.setHeader("Cache-Control", "public, max-age=300");
+      res.setHeader("ETag", etag);
+      res.setHeader("Content-Type", "application/json");
       res.json(article);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -742,15 +791,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Service Info: File-based tooltips/popover content (JSON storage)
-  app.get("/api/knowledge/services", (_req, res) => {
+  app.get("/api/knowledge/services", (req, res) => {
     try {
+      const cacheKey = "services:list";
+      const cached = getCache(cacheKey);
+      
+      // Check If-None-Match header
+      if (cached && req.headers["if-none-match"] === cached.etag) {
+        return res.status(304).end();
+      }
+      
+      // Use cached body if available
+      if (cached) {
+        res.setHeader("Cache-Control", "public, max-age=300");
+        res.setHeader("ETag", cached.etag);
+        res.setHeader("Content-Type", "application/json");
+        return res.json(cached.body);
+      }
+      
+      // Generate fresh data
       const all = readServiceInfo();
       const summary = all.map((s: any) => ({ 
         key: s.key, 
         label: s.label, 
-        summary: s.summary, 
+        summary: s.summary,
+        category: s.category,
         badges: s.badges || [] 
       }));
+      
+      // Cache for 5 minutes (300000 ms)
+      const { etag } = putCache(cacheKey, summary, 300000);
+      
+      res.setHeader("Cache-Control", "public, max-age=300");
+      res.setHeader("ETag", etag);
+      res.setHeader("Content-Type", "application/json");
       res.json(summary);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -759,11 +833,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/knowledge/services/:key", (req, res) => {
     try {
+      const cacheKey = `services:item:${req.params.key}`;
+      const cached = getCache(cacheKey);
+      
+      // Check If-None-Match header
+      if (cached && req.headers["if-none-match"] === cached.etag) {
+        return res.status(304).end();
+      }
+      
+      // Use cached body if available
+      if (cached) {
+        res.setHeader("Cache-Control", "public, max-age=600");
+        res.setHeader("ETag", cached.etag);
+        res.setHeader("Content-Type", "application/json");
+        return res.json(cached.body);
+      }
+      
+      // Generate fresh data
       const all = readServiceInfo();
       const found = all.find((s: any) => s.key === req.params.key);
       if (!found) {
         return res.status(404).json({ message: "Service not found" });
       }
+      
+      // Cache for 10 minutes (600000 ms)
+      const { etag } = putCache(cacheKey, found, 600000);
+      
+      res.setHeader("Cache-Control", "public, max-age=600");
+      res.setHeader("ETag", etag);
+      res.setHeader("Content-Type", "application/json");
       res.json(found);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
