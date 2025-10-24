@@ -1,0 +1,235 @@
+You are an expert full-stack engineer working in a Replit workspace.
+
+STACK (existing):
+- Frontend: Vite + React + TypeScript (client/)
+- Backend: Express + TypeScript (server/)
+- DB: Prisma + PostgreSQL
+- Existing features: Auth, Knowledge Hub (DB + file hybrid), InfoPopover, Services page, Store, Badges/TrainingProgress
+
+GOAL (Phase 2 Polish):
+1) Add global hero/banner sections (Home, Services, Knowledge).
+2) Add server-side caching for knowledge/service info APIs (ETag + TTL).
+3) Add client-side caching + skeleton loaders for fast-feel UI.
+4) Add a compact “Get Gigified” progress widget (reads TrainingProgress).
+5) Add CTA buttons where it matters, consistent with brand.
+
+Keep changes incremental and safe; report final file paths used.
+
+====================================================
+A) SERVER — CACHING FOR KNOWLEDGE/SERVICE ENDPOINTS
+====================================================
+1) Create simple in-memory cache with TTL and ETag.
+File: server/utils/cache.ts
+------------------------------------------------
+type Entry = { body: any; etag: string; expiresAt: number; };
+const store = new Map<string, Entry>();
+export function putCache(key: string, body: any, ttlMs: number) {
+  const etag = `"gpf-${Buffer.from(JSON.stringify(body)).toString("base64").slice(0,16)}"`;
+  store.set(key, { body, etag, expiresAt: Date.now() + ttlMs });
+  return { etag };
+}
+export function getCache(key: string) {
+  const hit = store.get(key);
+  if (!hit) return null;
+  if (Date.now() > hit.expiresAt) { store.delete(key); return null; }
+  return hit;
+}
+------------------------------------------------
+
+2) Wrap /api/knowledge/services and /api/knowledge/articles with caching.
+Edit: server/routes/knowledge.services.ts  (list route)
+- Compute cache key: "services:list"
+- TTL: 5 minutes (300000 ms)
+- On GET:
+  - Try getCache(key); if hit and If-None-Match matches etag → 304.
+  - If miss, read file JSON, map to public shape, putCache, set headers:
+    Cache-Control: public, max-age=300
+    ETag: <etag>
+    Content-Type: application/json
+- Apply same ETag logic for GET /:key with key "services:item:<key>", TTL 10 minutes.
+
+Edit: server/routes/knowledge.articles.ts  (list + :slug)
+- Same pattern with keys "articles:list" and "articles:item:<slug>".
+- TTL: list 60s (content may change via admin), item 5 minutes.
+
+3) Add small middleware to send 304 when If-None-Match matches:
+Create (if convenient inline) simple compare; otherwise inside each route handler.
+
+4) Verify all responses include appropriate headers.
+
+====================================================
+B) CLIENT — LIGHTWEIGHT DATA LAYER + SKELETONS
+====================================================
+1) Create a tiny fetch wrapper with in-memory cache and abort support.
+File: client/src/lib/api.ts
+------------------------------------------------
+const mem = new Map<string, { t:number; v:any }>();
+export async function apiGet<T=any>(url: string, ttlMs=30000): Promise<T> {
+  const now = Date.now();
+  const hit = mem.get(url);
+  if (hit && now - hit.t < ttlMs) return hit.v;
+  const ctrl = new AbortController();
+  const r = await fetch(url, { credentials: "include", signal: ctrl.signal });
+  if (!r.ok) throw new Error(`GET ${url} ${r.status}`);
+  const v = await r.json();
+  mem.set(url, { t: now, v });
+  return v;
+}
+------------------------------------------------
+
+2) Add a simple Skeleton component for loading states.
+File: client/src/components/Skeleton.tsx
+------------------------------------------------
+export default function Skeleton({ className="" }: { className?: string }) {
+  return <div className={`animate-pulse rounded bg-gray-200/80 ${className}`} />;
+}
+------------------------------------------------
+
+3) Update pages that fetch data (Services, Knowledge list/article) to use apiGet + show Skeletons while loading.
+- client/src/pages/Services.tsx: use apiGet('/api/knowledge/services', 60000)
+  - Show grid of 6–9 Skeleton cards (h-32) while loading.
+- Knowledge list & article pages: show Skeleton for title and 2–3 lines.
+
+====================================================
+C) CLIENT — HERO / BANNER SECTIONS
+====================================================
+1) Global CTA banner already exists; add page-specific heros:
+
+Create: client/src/components/Hero.tsx
+------------------------------------------------
+export default function Hero({
+  title, subtitle, actions
+}: { title:string; subtitle?:string; actions?:React.ReactNode }) {
+  return (
+    <div className="bg-gradient-to-b from-blue-50 to-white border-b">
+      <div className="mx-auto max-w-7xl px-4 py-8 md:py-12">
+        <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900">{title}</h1>
+        {subtitle ? <p className="mt-2 text-gray-700 max-w-3xl">{subtitle}</p> : null}
+        {actions ? <div className="mt-5 flex flex-wrap gap-3">{actions}</div> : null}
+      </div>
+    </div>
+  );
+}
+------------------------------------------------
+
+2) Apply Hero to key pages:
+
+- Home (client/src/pages/Home.tsx)
+  - title: "Turn skills into freedom"
+  - subtitle: "Learn. Earn. Get Gigified. Start a service business today with step-by-step guides."
+  - actions: "Offer Services" (/post?type=offer), "Post a Task" (/post?type=request), "Get Gigified" (/knowledge)
+
+- Services (client/src/pages/Services.tsx)
+  - title: "Browse Services"
+  - subtitle: "Explore 12 categories and 75 step-by-step service playbooks."
+  - action: "View Knowledge Hub" (/knowledge)
+
+- Knowledge list (client/src/pages/Knowledge.tsx or equivalent)
+  - title: "Knowledge Hub"
+  - subtitle: "Business guides, safety tips, and pricing playbooks for every service."
+  - action: "Get Gigified" (/knowledge) or remove action if redundant.
+
+Ensure imports and placement at top of each page component.
+
+====================================================
+D) CLIENT — “GET GIGIFIED” PROGRESS WIDGET
+====================================================
+Create a small widget that reads TrainingProgress (percent per module) and shows a compact progress bar + badges earned.
+
+1) Helper to fetch current user and modules:
+File: client/src/lib/progress.ts
+------------------------------------------------
+export type ProgressItem = { moduleKey:string; percent:number };
+export async function fetchTrainingProgress(): Promise<ProgressItem[]> {
+  const r = await fetch("/api/me", { credentials:"include" });
+  const me = await r.json();
+  if (!me) return [];
+  const resp = await fetch("/api/knowledge/progress", { credentials:"include" });
+  if (!resp.ok) return [];
+  return await resp.json();
+}
+------------------------------------------------
+
+2) Server route to return user progress (if missing):
+File: server/routes/knowledge.progress.ts
+------------------------------------------------
+import { Router } from "express";
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
+const r = Router();
+r.get("/", async (req, res) => {
+  const uid = (req.session as any)?.uid;
+  if (!uid) return res.json([]);
+  const items = await prisma.trainingProgress.findMany({ where: { userId: uid }, select: { moduleKey:true, percent:true }});
+  res.json(items);
+});
+export default r;
+------------------------------------------------
+Wire into server/routes/knowledge.index.ts:
+- r.use("/progress", progressRoute)
+
+3) Create Progress widget:
+File: client/src/components/GigifiedProgress.tsx
+------------------------------------------------
+import { useEffect, useState } from "react";
+import Skeleton from "./Skeleton";
+
+export default function GigifiedProgress() {
+  const [items, setItems] = useState<{moduleKey:string;percent:number}[]|null>(null);
+  useEffect(()=>{ (async()=>{
+    try {
+      const r = await fetch("/api/knowledge/progress",{credentials:"include"});
+      setItems(await r.json());
+    } catch { setItems([]); }
+  })(); },[]);
+  if (items===null) return <Skeleton className="h-6 w-64" />;
+  const total = items.length ? Math.round(items.reduce((a,b)=>a+b.percent,0)/items.length) : 0;
+  return (
+    <div className="flex items-center gap-3">
+      <div className="text-sm font-medium">Get Gigified Progress</div>
+      <div className="h-2 w-40 rounded bg-gray-200 overflow-hidden">
+        <div className="h-2 bg-blue-600" style={{ width: `${total}%` }} />
+      </div>
+      <div className="text-xs text-gray-600">{total}%</div>
+    </div>
+  );
+}
+------------------------------------------------
+
+4) Mount widget in Navbar or Knowledge page header (non-auth users see nothing or 0%).
+
+====================================================
+E) CTA CONSISTENCY + ACTION HOOKS
+====================================================
+- Ensure primary CTAs appear on:
+  - Home hero (Offer Services, Post a Task, Get Gigified)
+  - Services hero (View Knowledge Hub)
+  - Knowledge hero (Start a Service / Offer Services)
+- Add data tracking to CTA clicks using existing /api/track/cta-click endpoint.
+
+Update: client/src/components/Hero.tsx usages to add onClick() that POSTs to /api/track/cta-click with meaningful names.
+
+====================================================
+F) ACCEPTANCE & QA
+====================================================
+- Server:
+  - GET /api/knowledge/services responds with ETag + Cache-Control.
+  - Repeated GET with If-None-Match returns 304.
+  - GET /api/knowledge/articles and /:slug use cache, respect TTLs.
+  - GET /api/knowledge/progress returns per-user module progress (empty if not logged in).
+
+- Client:
+  - Home, Services, Knowledge pages display new Hero components.
+  - Services and Knowledge pages show Skeletons while loading.
+  - API calls use apiGet() with TTL (Services 60s, Knowledge list 30s, Article 60s).
+  - GigifiedProgress shows % if logged in (0–100), Skeleton when loading.
+  - CTA tracking logs to server on click.
+
+- Performance:
+  - Navigating between Services and Knowledge feels instant due to cache.
+  - Lighthouse (or similar) shows improved TTI/FCP compared to prior build.
+
+Return with:
+- A list of files added/edited and any path deviations
+- A short log snippet demonstrating ETag/304 behavior
+- Screenshots or notes confirming heroes, skeleton loaders, and progress widget render correctly
