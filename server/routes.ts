@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import bcrypt from "bcrypt";
 import { z } from "zod";
 import Stripe from "stripe";
+import { serviceInfo } from "./content/knowledge";
 
 // Stripe setup - from javascript_stripe integration
 const stripe = process.env.STRIPE_SECRET_KEY
@@ -732,6 +733,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const progress = await storage.markArticleComplete(userId, req.params.articleId);
       res.json(progress);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Service Info: File-based tooltips/popover content
+  app.get("/api/knowledge/services", (_req, res) => {
+    try {
+      const summary = serviceInfo.map(s => ({ 
+        key: s.key, 
+        label: s.label, 
+        summary: s.summary, 
+        badges: s.badges || [] 
+      }));
+      res.json(summary);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/knowledge/services/:key", (req, res) => {
+    try {
+      const found = serviceInfo.find(s => s.key === req.params.key);
+      if (!found) {
+        return res.status(404).json({ message: "Service not found" });
+      }
+      res.json(found);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
