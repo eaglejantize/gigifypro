@@ -4,11 +4,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, Clock, CheckCircle2 } from "lucide-react";
+import * as LucideIcons from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { KnowledgeArticle, TrainingProgress } from "@shared/schema";
 import { useAuth } from "@/contexts/AuthContext";
+
+function getDynamicIcon(iconName: string) {
+  const Icon = (LucideIcons as any)[iconName] || LucideIcons.Circle;
+  return Icon;
+}
 
 export default function ArticleDetail() {
   const [, params] = useRoute("/knowledge/article/:slug");
@@ -28,12 +33,7 @@ export default function ArticleDetail() {
 
   const completeMutation = useMutation({
     mutationFn: async (articleId: string) => {
-      const response = await fetch(`/api/knowledge/complete/${articleId}`, {
-        method: "POST",
-        credentials: "include",
-      });
-      if (!response.ok) throw new Error("Failed to mark complete");
-      return await response.json();
+      return await apiRequest(`/api/knowledge/complete/${articleId}`, "POST");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/knowledge/my-progress"] });
@@ -86,7 +86,7 @@ export default function ArticleDetail() {
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           <Link href="/knowledge">
             <Button variant="ghost" size="sm" className="mb-8" data-testid="button-back">
-              <ChevronLeft className="w-4 h-4 mr-2" />
+              <LucideIcons.ChevronLeft className="w-4 h-4 mr-2" />
               Back to Knowledge Hub
             </Button>
           </Link>
@@ -105,14 +105,17 @@ export default function ArticleDetail() {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <Link href="/knowledge">
           <Button variant="ghost" size="sm" className="mb-8" data-testid="button-back">
-            <ChevronLeft className="w-4 h-4 mr-2" />
+            <LucideIcons.ChevronLeft className="w-4 h-4 mr-2" />
             Back to Knowledge Hub
           </Button>
         </Link>
 
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-4">
-            <span className="text-4xl">{article.icon}</span>
+            {(() => {
+              const IconComponent = getDynamicIcon(article.icon || "FileText");
+              return <IconComponent className="w-10 h-10 text-primary" />;
+            })()}
             <div>
               <h1 className="text-3xl font-bold" data-testid="text-article-title">
                 {article.title}
@@ -122,12 +125,12 @@ export default function ArticleDetail() {
           
           <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
             <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4" />
+              <LucideIcons.Clock className="w-4 h-4" />
               <span className="text-sm">{article.readTimeMinutes} min read</span>
             </div>
             {isCompleted && (
               <Badge variant="default" className="gap-1.5" data-testid="badge-completed">
-                <CheckCircle2 className="w-3.5 h-3.5" />
+                <LucideIcons.CheckCircle2 className="w-3.5 h-3.5" />
                 Completed
               </Badge>
             )}
@@ -152,7 +155,7 @@ export default function ArticleDetail() {
               size="lg"
               data-testid="button-mark-complete"
             >
-              <CheckCircle2 className="w-5 h-5 mr-2" />
+              <LucideIcons.CheckCircle2 className="w-5 h-5 mr-2" />
               {completeMutation.isPending ? "Saving..." : "Mark as Complete"}
             </Button>
           </div>

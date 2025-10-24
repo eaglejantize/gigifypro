@@ -2,13 +2,13 @@ import { db } from "./db";
 import { knowledgeArticles, badges } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
-// Badges configuration
+// Badges configuration - using Lucide icon names instead of emoji
 const badgesData = [
   {
     type: "verified_identity",
     name: "Verified Identity",
     description: "Basic ID and background check completed",
-    icon: "👤",
+    icon: "UserCheck",
     color: "#3b82f6",
     order: 1,
   },
@@ -16,7 +16,7 @@ const badgesData = [
     type: "business_ready",
     name: "Business Ready",
     description: "Business license and insurance uploaded",
-    icon: "🪪",
+    icon: "Briefcase",
     color: "#10b981",
     order: 2,
   },
@@ -24,7 +24,7 @@ const badgesData = [
     type: "safety_verified",
     name: "Safety Verified",
     description: "Completed safety and compliance training",
-    icon: "🔒",
+    icon: "ShieldCheck",
     color: "#f59e0b",
     order: 3,
   },
@@ -32,7 +32,7 @@ const badgesData = [
     type: "ambassador",
     name: "Gigify Ambassador",
     description: "Maintain 4+ star rating and active jobs",
-    icon: "⭐",
+    icon: "Star",
     color: "#8b5cf6",
     order: 4,
   },
@@ -40,7 +40,7 @@ const badgesData = [
     type: "lawncare_basics",
     name: "Lawncare Basics",
     description: "Certified in professional lawncare techniques",
-    icon: "🌿",
+    icon: "Leaf",
     color: "#22c55e",
     order: 5,
   },
@@ -48,7 +48,7 @@ const badgesData = [
     type: "culinary_safety",
     name: "Culinary Safety",
     description: "Food safety and meal prep certification",
-    icon: "🍱",
+    icon: "ChefHat",
     color: "#ef4444",
     order: 6,
   },
@@ -56,7 +56,7 @@ const badgesData = [
     type: "shopper_pro",
     name: "Shopper Pro",
     description: "Professional personal shopping certification",
-    icon: "🛒",
+    icon: "ShoppingCart",
     color: "#06b6d4",
     order: 7,
   },
@@ -64,7 +64,7 @@ const badgesData = [
     type: "handy_essentials",
     name: "Handy Essentials",
     description: "Basic handyman skills and safety certification",
-    icon: "🔧",
+    icon: "Wrench",
     color: "#f97316",
     order: 8,
   },
@@ -72,20 +72,20 @@ const badgesData = [
     type: "companion_care",
     name: "Companion Care",
     description: "Senior check-in and companion care certified",
-    icon: "❤️",
+    icon: "Heart",
     color: "#ec4899",
     order: 9,
   },
 ];
 
-// Knowledge articles by section
+// Knowledge articles by section - using Lucide icon names
 const articlesData = [
-  // 1️⃣ Getting Started
   {
     slug: "do-i-need-business-license",
     section: "getting_started",
     title: "Do I Need a Business License?",
     summary: "Understanding when and why you need a business license to operate legally",
+    icon: "FileText",
     content: `# Do I Need a Business License?
 
 The short answer: **it depends on your location and the type of services you offer**.
@@ -121,7 +121,6 @@ Operating without a required license can result in:
 - Legal liability if something goes wrong
 
 **Bottom line:** Check your local requirements. Most business licenses cost $50-200 and are worth the peace of mind.`,
-    icon: "📋",
     readTimeMinutes: 3,
     order: 1,
   },
@@ -130,6 +129,7 @@ Operating without a required license can result in:
     section: "getting_started",
     title: "How to Register an LLC or Sole Proprietorship",
     summary: "Step-by-step guide to choosing and registering your business structure",
+    icon: "Building2",
     content: `# How to Register an LLC or Sole Proprietorship
 
 Choosing the right business structure protects you legally and affects your taxes.
@@ -184,7 +184,6 @@ Choosing the right business structure protects you legally and affects your taxe
 ## State-by-State Resources
 
 Most states allow online LLC filing through the Secretary of State website. Search "[Your State] Secretary of State LLC" to find your state's portal.`,
-    icon: "🏢",
     readTimeMinutes: 5,
     order: 2,
   },
@@ -193,6 +192,7 @@ Most states allow online LLC filing through the Secretary of State website. Sear
     section: "getting_started",
     title: "How to Get an EIN for Taxes (Free via IRS.gov)",
     summary: "Get your Employer Identification Number in minutes - free and easy",
+    icon: "Hash",
     content: `# How to Get an EIN for Taxes
 
 An **Employer Identification Number (EIN)** is like a Social Security Number for your business. It's free and takes about 10 minutes to get.
@@ -247,17 +247,16 @@ You **should** get one even if you're a sole proprietor to protect your SSN.
 2. Use it to open a business bank account
 3. Include it on all business tax forms
 4. Give it to clients who need it for 1099 forms`,
-    icon: "🔢",
     readTimeMinutes: 4,
     order: 3,
   },
 
-  // 2️⃣ Safety & Compliance
   {
     slug: "when-you-need-background-check",
     section: "safety_compliance",
     title: "When You Need a Background Check",
     summary: "Understanding background check requirements for gig workers",
+    icon: "Search",
     content: `# When You Need a Background Check and How to Complete It
 
 Background checks build trust with clients and are required for certain types of gig work on GigifyPro.
@@ -315,7 +314,6 @@ A: Each case is reviewed individually. Minor or old offenses rarely disqualify y
 
 **Q: Can I dispute the results?**
 A: Yes. You have the right to dispute inaccurate information through our background check partner.`,
-    icon: "🔍",
     readTimeMinutes: 4,
     order: 1,
   },
@@ -324,6 +322,7 @@ A: Yes. You have the right to dispute inaccurate information through our backgro
     section: "safety_compliance",
     title: "GigifyPro's Safety Policy & Conduct Standards",
     summary: "Our community standards and safety expectations for all Gigers",
+    icon: "AlertTriangle",
     content: `# GigifyPro's Safety Policy & Conduct Standards
 
 Our platform is built on trust. These standards ensure safety for everyone.
@@ -391,17 +390,16 @@ Our platform is built on trust. These standards ensure safety for everyone.
 - **Illegal activity:** Reported to authorities, permanent ban
 
 We want you to succeed. If you're ever unsure about a safety issue, contact support before proceeding.`,
-    icon: "⚠️",
     readTimeMinutes: 5,
     order: 2,
   },
 
-  // 3️⃣ Skill Builder
   {
     slug: "lawncare-basics",
     section: "skill_builder",
     title: "Lawncare Basics: Mowing Patterns, Edging & Safety",
     summary: "Essential lawn care techniques for professional results",
+    icon: "Leaf",
     content: `# Lawncare Basics: Mowing Patterns, Edging & Safety
 
 Professional lawn care is about more than just cutting grass. Master these fundamentals.
@@ -475,7 +473,6 @@ Once you've proven your skills:
 - Shrub trimming
 
 **Earn the Lawncare Basics badge** by completing this module and the safety quiz.`,
-    icon: "🌿",
     readTimeMinutes: 6,
     order: 1,
   },
@@ -484,6 +481,7 @@ Once you've proven your skills:
     section: "skill_builder",
     title: "Meal Prep: Food Safety & Client Agreements",
     summary: "Safe food handling and professional meal prep service",
+    icon: "ChefHat",
     content: `# Meal Prep: Food Safety & Client Agreements
 
 Meal prep is one of the highest-paying gigs. It's also highly regulated. Here's what you need to know.
@@ -575,17 +573,16 @@ Minimum order: 5 meals or $100
 - Diabetes-friendly meals
 
 **Earn the Culinary Safety badge** by completing a food safety course and uploading your certificate.`,
-    icon: "🍱",
     readTimeMinutes: 7,
     order: 2,
   },
 
-  // 4️⃣ Customer Service & Growth
   {
     slug: "building-repeat-clients",
     section: "customer_service",
     title: "Building Repeat Clients Through Trust",
     summary: "Turn one-time gigs into long-term clients and steady income",
+    icon: "Handshake",
     content: `# Building Repeat Clients Through Trust and Follow-Up
 
 Your best clients are the ones you already have. Here's how to keep them coming back.
@@ -694,17 +691,16 @@ Don't sell - serve. When you consistently:
 Your reputation is your business. Protect it by treating every client like your only client.
 
 **Earn the Ambassador badge** by maintaining a 4+ star rating and completing 25+ jobs.`,
-    icon: "🤝",
     readTimeMinutes: 6,
     order: 1,
   },
 
-  // 5️⃣ Local Law & Licensing
   {
     slug: "local-law-licensing-map",
     section: "local_law",
     title: "Local Law & Licensing Requirements",
     summary: "Understanding location-specific business requirements",
+    icon: "MapPin",
     content: `# Local Law & Licensing Map
 
 Requirements vary dramatically by state, county, and city. Here's how to find YOUR specific requirements.
@@ -826,17 +822,16 @@ A: Fines typically range from $500-5,000, plus you may be barred from getting th
 
 **Q: Do I need insurance if I have a license?**
 A: Usually, yes. Many licenses require proof of insurance to be issued or renewed.`,
-    icon: "📍",
     readTimeMinutes: 8,
     order: 1,
   },
 
-  // 6️⃣ Insurance & Financial
   {
     slug: "liability-insurance-overview",
     section: "insurance_financial",
     title: "Liability Insurance for Gig Workers",
     summary: "Protecting yourself and your clients with the right insurance coverage",
+    icon: "Shield",
     content: `# Liability Coverage Overview (Per Job)
 
 Insurance isn't optional - it's essential. Here's what you need to know.
@@ -967,7 +962,6 @@ Insurance is:
 - Cheaper than you think (especially pay-per-job options)
 
 Don't wait until you need it. Get insured BEFORE your first job.`,
-    icon: "🛡️",
     readTimeMinutes: 7,
     order: 1,
   },

@@ -4,53 +4,58 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BookOpen, GraduationCap, Shield, Award, MapPin, DollarSign, Clock, ChevronRight } from "lucide-react";
+import * as LucideIcons from "lucide-react";
 import type { KnowledgeArticle, Badge as BadgeType } from "@shared/schema";
 
 const sections = [
   { 
     id: "getting_started", 
     title: "Getting Started", 
-    icon: BookOpen,
+    icon: LucideIcons.BookOpen,
     description: "Business basics and legal foundations",
     color: "text-blue-600"
   },
   { 
     id: "safety_compliance", 
     title: "Safety & Compliance", 
-    icon: Shield,
+    icon: LucideIcons.Shield,
     description: "Background checks and safety standards",
     color: "text-green-600"
   },
   { 
     id: "skill_builder", 
     title: "Skill Builder", 
-    icon: GraduationCap,
+    icon: LucideIcons.GraduationCap,
     description: "Service-specific training and certifications",
     color: "text-purple-600"
   },
   { 
     id: "customer_service", 
     title: "Customer Service & Growth", 
-    icon: Award,
+    icon: LucideIcons.Award,
     description: "Build repeat clients and trust",
     color: "text-amber-600"
   },
   { 
     id: "local_law", 
     title: "Local Law Map", 
-    icon: MapPin,
+    icon: LucideIcons.MapPin,
     description: "Location-specific licensing requirements",
     color: "text-red-600"
   },
   { 
     id: "insurance_financial", 
     title: "Insurance & Financial", 
-    icon: DollarSign,
+    icon: LucideIcons.DollarSign,
     description: "Liability coverage and financial planning",
     color: "text-emerald-600"
   },
 ];
+
+function getDynamicIcon(iconName: string) {
+  const Icon = (LucideIcons as any)[iconName] || LucideIcons.Circle;
+  return Icon;
+}
 
 export default function KnowledgeHub() {
   const { data: articles, isLoading: articlesLoading } = useQuery<KnowledgeArticle[]>({
@@ -95,26 +100,26 @@ export default function KnowledgeHub() {
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6" data-testid="text-badges-title">Available Certifications</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {badges.map((badge) => (
-                <Card key={badge.id} className="hover-elevate" data-testid={`card-badge-${badge.type}`}>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start gap-3">
-                      <div 
-                        className="text-3xl" 
-                        style={{ color: badge.color }}
-                      >
-                        {badge.icon}
+              {badges.map((badge) => {
+                const IconComponent = getDynamicIcon(badge.icon);
+                return (
+                  <Card key={badge.id} className="hover-elevate" data-testid={`card-badge-${badge.type}`}>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start gap-3">
+                        <div style={{ color: badge.color }}>
+                          <IconComponent className="w-8 h-8" />
+                        </div>
+                        <div className="flex-1">
+                          <CardTitle className="text-base">{badge.name}</CardTitle>
+                          <CardDescription className="text-sm mt-1">
+                            {badge.description}
+                          </CardDescription>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <CardTitle className="text-base">{badge.name}</CardTitle>
-                        <CardDescription className="text-sm mt-1">
-                          {badge.description}
-                        </CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                </Card>
-              ))}
+                    </CardHeader>
+                  </Card>
+                );
+              })}
             </div>
           </div>
         )}
@@ -146,36 +151,39 @@ export default function KnowledgeHub() {
                   </Card>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {sectionArticles.map((article) => (
-                      <Link 
-                        key={article.id} 
-                        href={`/knowledge/article/${article.slug}`}
-                        data-testid={`link-article-${article.slug}`}
-                      >
-                        <Card className="h-full hover-elevate active-elevate-2 cursor-pointer">
-                          <CardHeader>
-                            <div className="flex items-start gap-3">
-                              <div className="text-2xl">{article.icon}</div>
-                              <div className="flex-1">
-                                <CardTitle className="text-lg group-hover:text-primary">
-                                  {article.title}
-                                </CardTitle>
-                                <CardDescription className="mt-2">
-                                  {article.summary}
-                                </CardDescription>
-                                <div className="flex items-center gap-2 mt-3">
-                                  <Clock className="w-4 h-4 text-muted-foreground" />
-                                  <span className="text-sm text-muted-foreground">
-                                    {article.readTimeMinutes} min read
-                                  </span>
+                    {sectionArticles.map((article) => {
+                      const ArticleIcon = getDynamicIcon(article.icon || "FileText");
+                      return (
+                        <Link 
+                          key={article.id} 
+                          href={`/knowledge/article/${article.slug}`}
+                          data-testid={`link-article-${article.slug}`}
+                        >
+                          <Card className="h-full hover-elevate active-elevate-2 cursor-pointer">
+                            <CardHeader>
+                              <div className="flex items-start gap-3">
+                                <ArticleIcon className="w-6 h-6 text-primary flex-shrink-0" />
+                                <div className="flex-1">
+                                  <CardTitle className="text-lg group-hover:text-primary">
+                                    {article.title}
+                                  </CardTitle>
+                                  <CardDescription className="mt-2">
+                                    {article.summary}
+                                  </CardDescription>
+                                  <div className="flex items-center gap-2 mt-3">
+                                    <LucideIcons.Clock className="w-4 h-4 text-muted-foreground" />
+                                    <span className="text-sm text-muted-foreground">
+                                      {article.readTimeMinutes} min read
+                                    </span>
+                                  </div>
                                 </div>
+                                <LucideIcons.ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
                               </div>
-                              <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                            </div>
-                          </CardHeader>
-                        </Card>
-                      </Link>
-                    ))}
+                            </CardHeader>
+                          </Card>
+                        </Link>
+                      );
+                    })}
                   </div>
                 )}
               </div>
