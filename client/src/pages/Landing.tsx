@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { Wrench, ChefHat, Dumbbell, Home, Star, Users, Shield } from "lucide-react";
+import { Wrench, ChefHat, Dumbbell, Home, Star, Users, Shield, Briefcase, Plus, GraduationCap } from "lucide-react";
 import { CategoryCard } from "@/components/CategoryCard";
+import { trackCta } from "@/lib/track";
 import heroImage from "@assets/generated_images/Hero_image_service_workers_48414824.png";
 
 const categories = [
@@ -27,22 +28,81 @@ export default function Landing() {
         {/* Hero Content */}
         <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-6" data-testid="text-hero-title">
-            Find Trusted Local Services
+            Learn. Earn. Get Gigified.
           </h1>
-          <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-2xl mx-auto" data-testid="text-hero-subtitle">
-            Connect with verified professionals for all your needs. From home repairs to personal care.
+          <p className="text-xl md:text-2xl text-white/90 mb-4 max-w-2xl mx-auto" data-testid="text-hero-subtitle">
+            Turn everyday skills into income, independence, and freedom.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/post" data-testid="link-post-task-hero">
-              <Button size="lg" variant="default" className="text-lg px-8">
+          <p className="text-lg text-white/80 mb-8 max-w-2xl mx-auto">
+            When you're Gigified, you set your schedule, grow your brand, and even build a team.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button
+              size="lg"
+              variant="default"
+              className="text-lg px-8"
+              asChild
+              data-testid="button-hero-offer-services"
+            >
+              <a
+                href="/post?type=offer"
+                onClick={() => trackCta("hero_offer_services")}
+              >
+                <Briefcase className="h-5 w-5" />
+                Offer Services
+              </a>
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="text-lg px-8 bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white/20"
+              asChild
+              data-testid="button-hero-post-task"
+            >
+              <a
+                href="/post?type=request"
+                onClick={() => trackCta("hero_post_task")}
+              >
+                <Plus className="h-5 w-5" />
                 Post a Task
-              </Button>
-            </Link>
-            <Link href="/feed" data-testid="link-explore-hero">
-              <Button size="lg" variant="outline" className="text-lg px-8 bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white/20">
-                Explore Services
-              </Button>
-            </Link>
+              </a>
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="text-lg px-8 bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white/20"
+              asChild
+              data-testid="button-hero-get-gigified"
+            >
+              <a
+                href="/knowledge"
+                onClick={() => trackCta("hero_get_gigified")}
+              >
+                <GraduationCap className="h-5 w-5" />
+                Get Gigified
+              </a>
+            </Button>
+          </div>
+          <div className="mt-6 text-sm text-white/70">
+            New? Explore{" "}
+            <a
+              className="underline hover:text-white"
+              href="/services"
+              onClick={() => trackCta("hero_view_services")}
+              data-testid="link-hero-services"
+            >
+              Services
+            </a>{" "}
+            or read the{" "}
+            <a
+              className="underline hover:text-white"
+              href="/knowledge"
+              onClick={() => trackCta("hero_view_knowledge")}
+              data-testid="link-hero-knowledge"
+            >
+              Knowledge Hub
+            </a>
+            .
           </div>
 
           {/* Trust Indicators */}
