@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import InfoPopover from "@/components/InfoPopover";
 import { Hero } from "@/components/Hero";
+import TestimonialCarousel from "@/components/TestimonialCarousel";
 import { ArrowRight, BookOpen } from "lucide-react";
 import { apiGet } from "@/lib/api";
 
@@ -105,6 +106,12 @@ export default function Services() {
             </div>
           ))
         )}
+
+        {/* Testimonials */}
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-bold mb-6 text-center">What Our Community Says</h2>
+          <TestimonialCarousel />
+        </div>
 
         {/* Bottom CTA */}
         <div className="bg-muted rounded-lg p-8 text-center space-y-4">

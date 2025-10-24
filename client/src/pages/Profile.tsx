@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Star, Heart, Clock, MapPin, Award, MessageSquare } from "lucide-react";
+import ProfileBadges from "@/components/ProfileBadges";
 
 export default function Profile() {
   const [, params] = useRoute("/profile/:id");
@@ -125,6 +126,14 @@ export default function Profile() {
                     ))}
                   </div>
                 </div>
+
+                {/* Badges */}
+                {userId && (
+                  <div className="mb-6">
+                    <div className="text-sm font-semibold mb-2">Certifications & Badges</div>
+                    <ProfileBadges userId={userId} />
+                  </div>
+                )}
 
                 {/* Actions */}
                 <div className="flex gap-3">

@@ -7,8 +7,10 @@ import Stripe from "stripe";
 import { readServiceInfo } from "./content/serviceInfoStore";
 import meRouter from "./routes/me";
 import adminServiceInfoRouter from "./routes/admin.serviceInfo";
+import adminAnalyticsRouter from "./routes/admin.analytics";
 import trackRouter from "./routes/track";
 import profileRouter from "./routes/profile";
+import testimonialsRouter from "./routes/testimonials";
 import { getCache, putCache } from "./utils/cache";
 
 // Stripe setup - from javascript_stripe integration
@@ -877,9 +879,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Admin routes
   app.use("/api/admin/service-info", adminServiceInfoRouter);
+  app.use("/api/admin/analytics", adminAnalyticsRouter);
 
   // Tracking routes
   app.use("/api/track", trackRouter);
+
+  // Testimonials route
+  app.use("/api/testimonials", testimonialsRouter);
 
   const httpServer = createServer(app);
   return httpServer;

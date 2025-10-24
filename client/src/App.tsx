@@ -26,6 +26,7 @@ import KnowledgeHub from "@/pages/KnowledgeHub";
 import ArticleDetail from "@/pages/ArticleDetail";
 import Services from "@/pages/Services";
 import AdminServices from "@/pages/admin/AdminServices";
+import AdminAnalytics from "@/pages/AdminAnalytics";
 
 function Router() {
   return (
@@ -48,6 +49,7 @@ function Router() {
       <Route path="/knowledge/article/:slug" component={ArticleDetail} />
       <Route path="/services" component={Services} />
       <Route path="/admin/services" component={AdminServices} />
+      <Route path="/admin/analytics" component={AdminAnalytics} />
       <Route component={NotFound} />
     </Switch>
   );
