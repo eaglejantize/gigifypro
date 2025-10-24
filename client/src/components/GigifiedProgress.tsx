@@ -5,13 +5,25 @@ import { Progress } from "@/components/ui/progress";
 import { Award, BookOpen, Target } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
+type ProgressData = {
+  total: number;
+  completed: number;
+};
+
+type UserBadge = {
+  id: string;
+  badge: {
+    name: string;
+  };
+};
+
 export function GigifiedProgress() {
-  const { data: progress, isLoading } = useQuery({
+  const { data: progress, isLoading } = useQuery<ProgressData>({
     queryKey: ["/api/knowledge/my-progress"],
     retry: false,
   });
 
-  const { data: badges } = useQuery({
+  const { data: badges } = useQuery<UserBadge[]>({
     queryKey: ["/api/knowledge/my-badges"],
     retry: false,
   });
@@ -77,7 +89,7 @@ export function GigifiedProgress() {
           <div className="pt-2 border-t">
             <div className="text-xs text-muted-foreground mb-2">Recent Badges</div>
             <div className="flex flex-wrap gap-1.5">
-              {badges.slice(0, 3).map((ub: any) => (
+              {badges.slice(0, 3).map((ub) => (
                 <Badge key={ub.id} variant="secondary" className="text-xs">
                   {ub.badge.name}
                 </Badge>

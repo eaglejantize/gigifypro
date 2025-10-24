@@ -4,8 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Hero } from "@/components/Hero";
+import { GigifiedProgress } from "@/components/GigifiedProgress";
 import * as LucideIcons from "lucide-react";
 import type { KnowledgeArticle, Badge as BadgeType } from "@shared/schema";
+import { apiGet } from "@/lib/api";
 
 const sections = [
   { 
@@ -60,10 +63,12 @@ function getDynamicIcon(iconName: string) {
 export default function KnowledgeHub() {
   const { data: articles, isLoading: articlesLoading } = useQuery<KnowledgeArticle[]>({
     queryKey: ["/api/knowledge/articles"],
+    queryFn: () => apiGet("/api/knowledge/articles"),
   });
 
   const { data: badges, isLoading: badgesLoading } = useQuery<BadgeType[]>({
     queryKey: ["/api/knowledge/badges"],
+    queryFn: () => apiGet("/api/knowledge/badges"),
   });
 
   const articlesBySection = articles?.reduce((acc, article) => {
@@ -76,53 +81,56 @@ export default function KnowledgeHub() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-background border-b">
-        <div className="container mx-auto px-4 py-12">
-          <div className="max-w-3xl">
-            <h1 className="text-4xl font-bold mb-4" data-testid="text-knowledge-title">Knowledge Hub</h1>
-            <p className="text-lg text-muted-foreground" data-testid="text-knowledge-description">
-              Learn the skills, certifications, and legal requirements to build a successful gig business. 
-              Earn badges as you complete training modules.
-            </p>
-          </div>
-        </div>
-      </div>
+      <Hero
+        title="Knowledge Hub"
+        subtitle="Learn. Earn. Get Gigified."
+        description="Learn the skills, certifications, and legal requirements to build a successful gig business. Earn badges as you complete training modules."
+        primaryCta={{ text: "Browse Services", href: "/services", trackingId: "knowledge-services" }}
+        secondaryCta={{ text: "Start Learning", href: "#training", trackingId: "knowledge-start" }}
+      />
 
       <div className="container mx-auto px-4 py-8">
-        {badgesLoading ? (
-          <div className="mb-12">
-            <Skeleton className="h-8 w-48 mb-4" />
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1, 2, 3].map(i => <Skeleton key={i} className="h-32" />)}
-            </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+          <div className="lg:col-span-2">
+            {badgesLoading ? (
+              <div>
+                <Skeleton className="h-8 w-48 mb-4" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {[1, 2, 3].map(i => <Skeleton key={i} className="h-32" />)}
+                </div>
+              </div>
+            ) : badges && badges.length > 0 && (
+              <div>
+                <h2 className="text-2xl font-bold mb-6" data-testid="text-badges-title">Available Certifications</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {badges.map((badge) => {
+                    const IconComponent = getDynamicIcon(badge.icon);
+                    return (
+                      <Card key={badge.id} className="hover-elevate" data-testid={`card-badge-${badge.type}`}>
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start gap-3">
+                            <div style={{ color: badge.color }}>
+                              <IconComponent className="w-8 h-8" />
+                            </div>
+                            <div className="flex-1">
+                              <CardTitle className="text-base">{badge.name}</CardTitle>
+                              <CardDescription className="text-sm mt-1">
+                                {badge.description}
+                              </CardDescription>
+                            </div>
+                          </div>
+                        </CardHeader>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
-        ) : badges && badges.length > 0 && (
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6" data-testid="text-badges-title">Available Certifications</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {badges.map((badge) => {
-                const IconComponent = getDynamicIcon(badge.icon);
-                return (
-                  <Card key={badge.id} className="hover-elevate" data-testid={`card-badge-${badge.type}`}>
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start gap-3">
-                        <div style={{ color: badge.color }}>
-                          <IconComponent className="w-8 h-8" />
-                        </div>
-                        <div className="flex-1">
-                          <CardTitle className="text-base">{badge.name}</CardTitle>
-                          <CardDescription className="text-sm mt-1">
-                            {badge.description}
-                          </CardDescription>
-                        </div>
-                      </div>
-                    </CardHeader>
-                  </Card>
-                );
-              })}
-            </div>
+          <div className="lg:col-span-1">
+            <GigifiedProgress />
           </div>
-        )}
+        </div>
 
         <div className="space-y-12">
           {sections.map((section) => {
