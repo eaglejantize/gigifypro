@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Bell, Menu, X, Briefcase, MessageSquare, LayoutDashboard, Settings, LogOut, User } from "lucide-react";
+import { Bell, Menu, X, Briefcase, MessageSquare, LayoutDashboard, Settings, LogOut, User, BookOpen } from "lucide-react";
 import { useState } from "react";
 
 export function Navbar() {
@@ -60,6 +60,15 @@ export function Navbar() {
                 className="font-medium"
               >
                 Store
+              </Button>
+            </Link>
+            <Link href="/knowledge" data-testid="link-knowledge">
+              <Button
+                variant={isActive("/knowledge") || location.startsWith("/knowledge/") ? "default" : "ghost"}
+                size="sm"
+                className="font-medium"
+              >
+                Learn
               </Button>
             </Link>
           </div>
@@ -156,6 +165,17 @@ export function Navbar() {
             <Link href="/post" data-testid="link-post-mobile">
               <Button variant="ghost" className="w-full justify-start" onClick={() => setMobileMenuOpen(false)}>
                 Post a Task
+              </Button>
+            </Link>
+            <Link href="/store" data-testid="link-store-mobile">
+              <Button variant="ghost" className="w-full justify-start" onClick={() => setMobileMenuOpen(false)}>
+                Store
+              </Button>
+            </Link>
+            <Link href="/knowledge" data-testid="link-knowledge-mobile">
+              <Button variant="ghost" className="w-full justify-start" onClick={() => setMobileMenuOpen(false)}>
+                <BookOpen className="w-4 h-4 mr-2" />
+                Learn
               </Button>
             </Link>
             {user ? (

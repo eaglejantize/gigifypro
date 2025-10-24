@@ -20,6 +20,8 @@ import Store from "@/pages/store/Store";
 import ProductDetail from "@/pages/store/ProductDetail";
 import Cart from "@/pages/store/Cart";
 import Checkout from "@/pages/store/Checkout";
+import KnowledgeHub from "@/pages/KnowledgeHub";
+import ArticleDetail from "@/pages/ArticleDetail";
 
 function Router() {
   return (
@@ -38,6 +40,8 @@ function Router() {
       <Route path="/store/product/:slug" component={ProductDetail} />
       <Route path="/store/cart" component={Cart} />
       <Route path="/store/checkout" component={Checkout} />
+      <Route path="/knowledge" component={KnowledgeHub} />
+      <Route path="/knowledge/article/:slug" component={ArticleDetail} />
       <Route component={NotFound} />
     </Switch>
   );
