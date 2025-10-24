@@ -1,0 +1,66 @@
+You are an expert gig-economy business developer and technical writer working inside the GigifyPro app project.
+
+GOAL:
+Create the **Knowledge Hub business guides** for the category:
+🌿 **Outdoor & Yard Care**
+
+This category covers all outdoor maintenance, lawn, and seasonal yard services. Your task is to generate clear, motivational “how-to” business entries that help Gigers launch and grow sustainable outdoor service businesses.
+
+SERVICES (create one entry for each):
+1) Backyard Movie Setup  
+2) Lawn Care  
+3) Plant & Garden Maintenance  
+4) Storm Prep & Cleanup  
+5) Tool Share Setup  
+6) Trash Can Sanitation  
+
+OUTPUT EXPECTATIONS:
+For each service, build a structured Knowledge Hub entry with:
+
+- **title**: Full name of the service  
+- **summary**: 2–3 sentence overview for hover popovers  
+- **expanded**: Multi-section HTML-safe business guide including:
+  1. How It Works — clear step-by-step explanation  
+  2. Tools & Startup Gear — list affordable, beginner-friendly tools  
+  3. Certifications & Requirements — licenses, background checks, local rules  
+  4. Safety & Best Practices — PPE, tool safety, weather awareness  
+  5. Pricing Model — suggested hourly or per-job rates, subscription ideas  
+  6. Upsell & Business Growth — show how to scale or cross-sell services  
+  7. Get Gigified Badge — create a unique badge name + short meaning  
+
+- **recommendedGear**: Array of key tools/materials  
+- **requirements**: Array of required or recommended qualifications  
+- **badges**: 1–2 badge titles (training or excellence)
+
+STYLE & TONE:
+- Practical, outdoorsy, confident tone — easy for beginners to follow.  
+- Encourage responsibility, punctuality, and eco-friendly practices.  
+- Use HTML-safe formatting (<p>, <ul>, <li>) inside the “expanded” field.  
+- Comply with general U.S. norms for independent yard and handyman work.
+
+CATEGORY-SPECIFIC NOTES:
+- **Lawn Care:** Describe both “Bring Your Own Equipment” and “Use Customer’s Equipment” models; include mower safety and noise regulations.  
+- **Backyard Movie Setup:** Mention extension cords, screen setup, and weather precautions.  
+- **Plant & Garden Maintenance:** Include watering schedules, pruning, fertilizing, and eco-friendly pesticide awareness.  
+- **Storm Prep & Cleanup:** Cover debris removal, insurance claims caution, and PPE.  
+- **Tool Share Setup:** Focus on agreements, labeling, maintenance, and liability avoidance.  
+- **Trash Can Sanitation:** Include water-runoff management and odor-neutralizing methods.
+
+FORMAT:
+Each object should follow this structure:
+{
+  "key": "lawn-care",
+  "label": "Lawn Care",
+  "summary": "Maintain healthy lawns for clients—mow, trim, edge, and tidy outdoor spaces with or without your own equipment.",
+  "expanded": "<p><strong>How It Works:</strong> ...</p><p><strong>Tools & Startup Gear:</strong> ...</p><p><strong>Certifications & Requirements:</strong> ...</p><p><strong>Safety & Best Practices:</strong> ...</p><p><strong>Pricing Model:</strong> ...</p><p><strong>Upsell & Business Growth:</strong> ...</p><p><strong>Get Gigified Badge:</strong> ...</p>",
+  "recommendedGear": ["Lawn mower or trimmer", "Gloves", "Safety glasses", "Fuel can", "Ear protection"],
+  "requirements": ["Background check", "Noise-ordinance awareness", "Local business registration (recommended)"],
+  "badges": ["Certified Lawn Giger", "Safety Verified"]
+}
+
+AFTER YOU FINISH:
+- Summarize best practices and recurring themes (maintenance scheduling, safety, client trust).  
+- Suggest logical cross-sells (e.g., Lawn Care + Plant Maintenance + Trash Can Sanitation).  
+- Prepare to continue with **Family & Child Services** upon user confirmation.
+
+END OF INSTRUCTIONS.
