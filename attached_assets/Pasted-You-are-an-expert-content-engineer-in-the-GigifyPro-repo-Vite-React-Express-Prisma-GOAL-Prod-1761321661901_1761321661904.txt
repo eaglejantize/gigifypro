@@ -1,0 +1,58 @@
+You are an expert content engineer in the GigifyPro repo (Vite React + Express + Prisma).
+
+GOAL
+Produce a single, downloadable JSON file containing ALL GigifyPro services (target: 75), each with:
+- key (kebab-case, unique)
+- label (title-cased)
+- category (one of: Home & Living; Cleaning & Detailing; Food & Hospitality; Errands & Transportation; Outdoor & Yard Care; Family & Child Services; Senior & Care Companion; Pet Services; Creative, Media & Event Services; Personal Growth & Lifestyle; Business & Digital Support; Art, Design & Custom Creations)
+- summary (2–3 sentence quick overview)
+- expanded (HTML-safe guide with sections: How It Works; Tools & Startup Gear; Certifications & Requirements; Safety & Best Practices; Pricing Model; Upsell & Business Growth; Get Gigified Badge)
+- recommendedGear (string[])
+- requirements (string[])
+- badges (string[])
+
+IMPORTANT
+- Do NOT overwrite existing project files yet. First, create a downloadable file and display its link.
+- Validate:
+  - No duplicate keys
+  - All fields present for every service
+  - category values from the allowed list only
+- After I approve, replace/merge into `server/content/serviceInfo.json` with shape: `{ "services": [ ... ] }`
+
+SCOPE
+Include the entire catalog:
+- Everything already present in the project (current count shows 56 services total)
+- Add the remaining **19 Home & Living** entries to bring Home & Living to 28
+- Ensure recently added categories/services are included:
+  - Pet Services (Dog Walking & Sitting, Dog Yard Cleanup, Pet Hair Cleanup, Pet Taxi & Drop-In)
+  - Errands & Transportation (incl. Mobile Oil Change & Basic Car Maintenance)
+  - Art, Design & Custom Creations (Artist / Painter; Custom Clothing Designer; Furniture Maker / Refinisher; Home Decor & Design Giger; Upcycled Art & Reclaimed Creations)
+  - Creative, Media & Event Services (Birthday Surprise Delivery; Costume & Prop Maker; Custom Gift Basket Creator; Event Planner; Memorial & Gravesite Care; Personal Videographer; Pop-Up Party Host; Proposal or Surprise Planner; Social Media Moments)
+
+CONTENT QUALITY
+- Keep summaries concise and useful.
+- In `expanded`, include short, actionable paragraphs for each section (HTML-safe: <p>, <ul>, <li>), but keep the total per service reasonable (~150–250 words) so the file stays reviewable.
+- Where regulation matters (e.g., Mobile Oil Change, Childcare, Massage), include brief, generic compliance notes (no legal advice).
+
+PROCESS
+1) Gather the current services from `server/content/serviceInfo.json` if exists.
+2) Build a master array for all 75 services. Fill in missing ones with new entries.
+3) Validate uniqueness of `key` and category enum values.
+4) Write the result to a new file at project root:
+   - `gigifypro-services-draft.json`
+   - Shape: `{ "services": [ ...75 items... ] }`
+5) Provide a downloadable link to that file in Replit.
+6) WAIT for my approval.
+
+ON APPROVAL (DO NOT RUN UNTIL I SAY “APPROVED”)
+- Backup existing: copy `server/content/serviceInfo.json` to `server/content/serviceInfo.backup.json` (create folder if missing)
+- Replace with the new file contents (rename/merge to maintain shape: `{ "services": [...] }`)
+- Run quick sanity checks:
+  - Can GET `/api/knowledge/services` and get an array with 75 items
+  - Spot check a few `/api/knowledge/services/:key` responses (e.g., `lawncare`, `maid-service`, `personal-videographer`)
+- Output a brief summary: total services, categories covered, and any keys that were normalized.
+
+ACCEPTANCE CRITERIA
+- A downloadable `gigifypro-services-draft.json` link is shown
+- JSON validates (no duplicates, categories in allowed list, fields present)
+- No project files overwritten until I say “APPROVED”
