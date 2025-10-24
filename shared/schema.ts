@@ -12,7 +12,7 @@ export const bookingStatusEnum = pgEnum("booking_status", [
   "completed",
   "cancelled"
 ]);
-export const productCategoryEnum = pgEnum("product_category", ["shirt", "hat", "car_sign"]);
+export const productCategoryEnum = pgEnum("product_category", ["shirt", "hat", "car_sign", "gear"]);
 export const orderStatusEnum = pgEnum("order_status", ["pending", "paid", "cancelled"]);
 export const knowledgeSectionEnum = pgEnum("knowledge_section", [
   "getting_started",

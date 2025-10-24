@@ -123,6 +123,45 @@ const storeProducts = [
       { name: "18x12 in", priceCents: 1799, sku: "SIGN-18x12" },
     ],
   },
+  
+  // Professional Gear
+  {
+    slug: "laundry-bag-kit",
+    name: "GigifyPro Laundry Bag Kit",
+    description: "Professional 4-bag system: Whites, Colors, Linens, and Intimates (mesh wash-in). Prevents mix-ups and keeps loads organized. Essential for Laundry Giger certification.",
+    imageUrl: "/store/laundry-kit.jpg",
+    category: "gear" as const,
+    priceCents: 3999,
+    variants: [
+      { name: "4-Bag Set", priceCents: 3999, sku: "LAUNDRY-KIT-4" },
+    ],
+  },
+  {
+    slug: "chef-jacket",
+    name: "GigifyPro Chef Jacket",
+    description: "Professional double-breasted chef jacket with GigifyPro logo. Breathable fabric, stain-resistant. Perfect for personal chefs and meal prep gigers.",
+    imageUrl: "/store/chef-jacket.jpg",
+    category: "gear" as const,
+    priceCents: 4999,
+    variants: [
+      { name: "Small", priceCents: 4999, sku: "CHEF-JACKET-S" },
+      { name: "Medium", priceCents: 4999, sku: "CHEF-JACKET-M" },
+      { name: "Large", priceCents: 4999, sku: "CHEF-JACKET-L" },
+      { name: "XL", priceCents: 4999, sku: "CHEF-JACKET-XL" },
+      { name: "2XL", priceCents: 5299, sku: "CHEF-JACKET-2XL" },
+    ],
+  },
+  {
+    slug: "chef-hat",
+    name: "GigifyPro Chef Hat",
+    description: "Classic white chef toque with embroidered GigifyPro monogram. Professional appearance for meal prep and personal chef services.",
+    imageUrl: "/store/chef-hat.jpg",
+    category: "hat" as const,
+    priceCents: 1999,
+    variants: [
+      { name: "One Size", priceCents: 1999, sku: "CHEF-HAT-ONE" },
+    ],
+  },
 ];
 
 async function seedStore() {
