@@ -1,0 +1,497 @@
+You are an expert full-stack engineer working in a Replit workspace with:
+- Frontend: Vite + React + TypeScript (client/)
+- Backend: Express + TypeScript (server/)
+- DB: Prisma + PostgreSQL
+- Existing: Auth (session cookie), Knowledge Hub hybrid, Store, InfoPopover (or create if missing)
+
+GOAL
+Implement an Admin area and service information management now (no Stripe needed):
+1) Role-gated Admin: /admin/articles (DB CRUD for Knowledge Articles), /admin/services (file-based Service Info editor)
+2) InfoPopover “i” icons: ensure they appear anywhere services are listed (dropdowns, pages, forms)
+3) Services index page: /services with InfoPopover per item and Post/Learn CTAs
+4) Add a script to promote a given user to admin
+5) Keep everything else working; report any path deviations
+
+========================================
+A) SERVER — ADMIN GUARD & “ME” ROUTE
+========================================
+Create: server/middleware/isAdmin.ts
+------------------------------------------------
+import { PrismaClient } from "@prisma/client";
+import { Request, Response, NextFunction } from "express";
+const prisma = new PrismaClient();
+
+export default async function isAdmin(req: Request, res: Response, next: NextFunction) {
+  try {
+    const uid = (req.session as any)?.uid;
+    if (!uid) return res.status(401).json({ error: "Unauthorized" });
+    const user = await prisma.user.findUnique({ where: { id: uid } });
+    if (!user || user.role !== "admin") return res.status(403).json({ error: "Forbidden" });
+    (req as any).user = user;
+    next();
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Admin check failed" });
+  }
+}
+------------------------------------------------
+
+Create: server/routes/me.ts
+------------------------------------------------
+import { Router } from "express";
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
+const r = Router();
+
+r.get("/", async (req, res) => {
+  const uid = (req.session as any)?.uid;
+  if (!uid) return res.json(null);
+  const u = await prisma.user.findUnique({ where: { id: uid }, select: { id:true, email:true, name:true, role:true }});
+  res.json(u || null);
+});
+export default r;
+------------------------------------------------
+
+Update: server/routes.ts (wire /api/me)
+------------------------------------------------
+import { Router } from "express";
+import auth from "./routes/auth";
+import store from "./routes/store";
+import checkout from "./routes/checkout";
+import knowledge from "./routes/knowledge.index"; // if present
+import me from "./routes/me";
+
+const api = Router();
+api.use("/auth", auth);
+api.use("/store", store);
+api.use("/checkout", checkout);
+api.use("/knowledge", knowledge);
+api.use("/me", me);
+export default api;
+------------------------------------------------
+
+============================================
+B) SERVER — SERVICE INFO JSON + ADMIN CRUD
+============================================
+Create: server/content/serviceInfo.json  (if not present; use your latest content)
+------------------------------------------------
+{ "services": [] }
+------------------------------------------------
+
+Create: server/content/serviceInfoStore.ts
+------------------------------------------------
+import fs from "fs";
+import path from "path";
+const filePath = path.join(process.cwd(), "server", "content", "serviceInfo.json");
+
+export function readServiceInfo() {
+  const raw = fs.readFileSync(filePath, "utf8");
+  const data = JSON.parse(raw || "{}");
+  return data.services || [];
+}
+export function writeServiceInfo(services: any[]) {
+  const out = JSON.stringify({ services }, null, 2);
+  fs.writeFileSync(filePath, out, "utf8");
+  return true;
+}
+------------------------------------------------
+
+Public service info API (for InfoPopover + /services):
+Create/replace: server/routes/knowledge.services.ts
+------------------------------------------------
+import { Router } from "express";
+import { readServiceInfo } from "../content/serviceInfoStore";
+const r = Router();
+
+r.get("/", (_req, res) => {
+  const all = readServiceInfo();
+  res.json(all.map((s:any) => ({ key:s.key, label:s.label, summary:s.summary, badges:s.badges||[] })));
+});
+r.get("/:key", (req, res) => {
+  const all = readServiceInfo();
+  const found = all.find((s:any)=> s.key === req.params.key);
+  if (!found) return res.status(404).json({ error:"Not found" });
+  res.json(found);
+});
+export default r;
+------------------------------------------------
+
+Admin service info routes (file-backed CRUD):
+Create: server/routes/admin.serviceInfo.ts
+------------------------------------------------
+import { Router } from "express";
+import isAdmin from "../middleware/isAdmin";
+import { readServiceInfo, writeServiceInfo } from "../content/serviceInfoStore";
+const r = Router();
+r.use(isAdmin);
+
+r.get("/", (_req,res)=> res.json(readServiceInfo()));
+
+r.post("/upsert", (req,res)=>{
+  const body = req.body||{};
+  if (!body.key || !body.label) return res.status(400).json({ error:"key and label required" });
+  const all = readServiceInfo();
+  const i = all.findIndex((s:any)=> s.key===body.key);
+  if (i>=0) all[i] = { ...all[i], ...body }; else all.push(body);
+  writeServiceInfo(all);
+  res.json({ ok:true });
+});
+
+r.post("/delete", (req,res)=>{
+  const { key } = req.body||{};
+  if (!key) return res.status(400).json({ error:"key required" });
+  const all = readServiceInfo().filter((s:any)=> s.key!==key);
+  writeServiceInfo(all);
+  res.json({ ok:true });
+});
+export default r;
+------------------------------------------------
+
+Wire routes:
+Update: server/routes/knowledge.index.ts  (or create it if missing)
+------------------------------------------------
+import { Router } from "express";
+import knowledgeArticles from "./knowledge.articles";     // DB-backed (already present)
+import knowledgeServices from "./knowledge.services";      // file-backed
+const r = Router();
+r.use("/articles", knowledgeArticles);
+r.use("/services", knowledgeServices);
+export default r;
+------------------------------------------------
+
+Update: server/routes.ts (add admin)
+------------------------------------------------
+import adminServiceInfo from "./routes/admin.serviceInfo";
+// ...
+api.use("/admin/service-info", adminServiceInfo);
+------------------------------------------------
+
+=================================================
+C) CLIENT — HOOK & ADMIN LAYOUT + PAGES
+=================================================
+Create: client/src/hooks/useMe.ts
+------------------------------------------------
+import { useEffect, useState } from "react";
+export function useMe() {
+  const [me, setMe] = useState<any>(undefined);
+  useEffect(()=>{ (async()=> {
+    const r = await fetch("/api/me", { credentials:"include" });
+    setMe(await r.json());
+  })(); },[]);
+  return me; // null or {id,email,name,role}
+}
+export default useMe;
+------------------------------------------------
+
+Create: client/src/pages/admin/AdminLayout.tsx
+------------------------------------------------
+import { Redirect } from "wouter";
+import { useMe } from "../../hooks/useMe";
+
+export default function AdminLayout({ children }: { children:any }) {
+  const me = useMe();
+  if (me===undefined) return null;
+  if (!me || me.role!=="admin") return <Redirect to="/" />;
+  return (
+    <div className="mx-auto max-w-6xl p-6 space-y-6">
+      <h1 className="text-2xl font-bold">Admin</h1>
+      <nav className="flex gap-4 text-sm">
+        <a href="/admin/articles" className="underline">Articles</a>
+        <a href="/admin/services" className="underline">Service Info</a>
+      </nav>
+      <div>{children}</div>
+    </div>
+  );
+}
+------------------------------------------------
+
+Admin Services editor:
+Create: client/src/pages/admin/AdminServices.tsx
+------------------------------------------------
+import { useEffect, useState } from "react";
+import AdminLayout from "./AdminLayout";
+
+export default function AdminServices() {
+  const [items, setItems] = useState<any[]>([]);
+  const empty = { key:"", label:"", summary:"", expanded:"", recommendedGear:"", requirements:"", badges:"" };
+  const [form, setForm] = useState<any>(empty);
+
+  async function refresh(){ const r=await fetch("/api/admin/service-info",{credentials:"include"}); setItems(await r.json()); }
+  useEffect(()=>{ refresh(); },[]);
+
+  async function save(){
+    const payload:any = {
+      key: form.key,
+      label: form.label,
+      summary: form.summary,
+      expanded: form.expanded,
+      recommendedGear: form.recommendedGear ? form.recommendedGear.split(",").map((s:string)=>s.trim()) : [],
+      requirements: form.requirements ? form.requirements.split(",").map((s:string)=>s.trim()) : [],
+      badges: form.badges ? form.badges.split(",").map((s:string)=>s.trim()) : [],
+    };
+    await fetch("/api/admin/service-info/upsert",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+    setForm(empty); refresh();
+  }
+  async function del(key:string){
+    await fetch("/api/admin/service-info/delete",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({key})});
+    refresh();
+  }
+  function load(it:any){
+    setForm({
+      key: it.key, label: it.label, summary: it.summary, expanded: it.expanded,
+      recommendedGear: (it.recommendedGear||[]).join(", "),
+      requirements: (it.requirements||[]).join(", "),
+      badges: (it.badges||[]).join(", ")
+    });
+  }
+
+  return (
+    <AdminLayout>
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="space-y-3">
+          <h2 className="font-semibold">Create / Update Service</h2>
+          <input className="border rounded px-2 py-1 w-full" placeholder="key (e.g., lawncare)" value={form.key} onChange={e=>setForm({...form,key:e.target.value})}/>
+          <input className="border rounded px-2 py-1 w-full" placeholder="label" value={form.label} onChange={e=>setForm({...form,label:e.target.value})}/>
+          <textarea className="border rounded px-2 py-1 w-full" rows={2} placeholder="summary (hover)" value={form.summary} onChange={e=>setForm({...form,summary:e.target.value})}/>
+          <textarea className="border rounded px-2 py-1 w-full" rows={8} placeholder="expanded (HTML OK)" value={form.expanded} onChange={e=>setForm({...form,expanded:e.target.value})}/>
+          <input className="border rounded px-2 py-1 w-full" placeholder="recommendedGear (comma-separated)" value={form.recommendedGear} onChange={e=>setForm({...form,recommendedGear:e.target.value})}/>
+          <input className="border rounded px-2 py-1 w-full" placeholder="requirements (comma-separated)" value={form.requirements} onChange={e=>setForm({...form,requirements:e.target.value})}/>
+          <input className="border rounded px-2 py-1 w-full" placeholder="badges (comma-separated)" value={form.badges} onChange={e=>setForm({...form,badges:e.target.value})}/>
+          <button className="border rounded px-3 py-1" onClick={save}>Save</button>
+        </div>
+        <div>
+          <h2 className="font-semibold">Services</h2>
+          <ul className="space-y-2">
+            {items.map(it=>(
+              <li key={it.key} className="border rounded p-2 text-sm">
+                <div className="font-semibold">{it.label} <span className="text-gray-500">({it.key})</span></div>
+                <div className="text-gray-600 line-clamp-2">{it.summary}</div>
+                <div className="flex gap-2 mt-2">
+                  <button className="underline" onClick={()=>load(it)}>edit</button>
+                  <button className="underline" onClick={()=>del(it.key)}>delete</button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </AdminLayout>
+  );
+}
+------------------------------------------------
+
+(If you also want Articles CRUD UI, reuse your existing AdminArticles or create one similarly.)
+
+Wire client routes:
+Update: client/src/App.tsx (or your router)
+------------------------------------------------
+import AdminServices from "./pages/admin/AdminServices";
+<Route path="/admin/services" component={AdminServices} />
+------------------------------------------------
+
+=========================================
+D) CLIENT — INFOPOPOVER (ensure available)
+=========================================
+If client/src/components/InfoPopover.tsx doesn’t exist, create:
+------------------------------------------------
+import { useEffect, useRef, useState } from "react";
+
+export default function InfoPopover({ serviceKey }: { serviceKey: string }) {
+  const [open, setOpen] = useState(false);
+  const [data, setData] = useState<any>(null);
+  const [hover, setHover] = useState(false);
+  const tRef = useRef<number | null>(null);
+
+  useEffect(() => { (async()=>{
+    const r = await fetch(`/api/knowledge/services/${serviceKey}`, { credentials:"include" });
+    if (r.ok) setData(await r.json());
+  })(); }, [serviceKey]);
+
+  function onMouseEnter(){ tRef.current = window.setTimeout(()=>setHover(true),150); }
+  function onMouseLeave(){ if(tRef.current) window.clearTimeout(tRef.current); setHover(false); }
+
+  return (
+    <span className="relative inline-flex items-center">
+      <button type="button" aria-label={`More info about ${data?.label||serviceKey}`}
+        onClick={()=>setOpen(true)} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}
+        className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full border text-gray-600 hover:text-black">i</button>
+
+      {hover && data?.summary && (
+        <div className="absolute z-50 -left-2 top-6 w-64 rounded-lg border bg-white p-3 text-xs shadow-lg"
+             onMouseEnter={()=>setHover(true)} onMouseLeave={onMouseLeave}>
+          <div className="font-semibold mb-1">{data.label}</div>
+          <div className="text-gray-700">{data.summary}</div>
+        </div>
+      )}
+
+      {open && data && (
+        <div className="fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-black/40" onClick={()=>setOpen(false)}></div>
+          <div className="absolute left-1/2 top-1/2 w-[min(640px,92vw)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border bg-white p-5 shadow-xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-semibold">{data.label}</h3>
+                {data.badges?.length ? <div className="mt-1 flex flex-wrap gap-2">
+                  {data.badges.map((b:string)=><span key={b} className="text-[11px] border rounded-full px-2 py-0.5">{b}</span>)}
+                </div> : null}
+              </div>
+              <button onClick={()=>setOpen(false)} className="text-sm text-gray-500">Close</button>
+            </div>
+            <div className="mt-3 text-sm text-gray-800" dangerouslySetInnerHTML={{ __html: data.expanded }} />
+            {data.recommendedGear?.length ? (
+              <div className="mt-3">
+                <div className="text-xs font-semibold uppercase text-gray-500">Recommended Gear</div>
+                <ul className="list-disc pl-5 text-sm">
+                  {data.recommendedGear.map((g:string)=><li key={g}>{g}</li>)}
+                </ul>
+              </div>
+            ) : null}
+            {data.requirements?.length ? (
+              <div className="mt-3">
+                <div className="text-xs font-semibold uppercase text-gray-500">Requirements</div>
+                <ul className="list-disc pl-5 text-sm">
+                  {data.requirements.map((g:string)=><li key={g}>{g}</li>)}
+                </ul>
+              </div>
+            ) : null}
+            <div className="mt-4">
+              <a href="/knowledge" className="text-sm underline">Learn more in Knowledge Hub</a>
+            </div>
+          </div>
+        </div>
+      )}
+    </span>
+  );
+}
+------------------------------------------------
+
+=========================================
+E) CLIENT — SERVICES DROPDOWN & PAGE
+=========================================
+Add/ensure dropdown has InfoPopover beside each item.
+Create (if missing): client/src/components/ServiceDropdown.tsx
+------------------------------------------------
+import InfoPopover from "./InfoPopover";
+import { Link } from "wouter";
+const items = [
+  { key:"lawncare", label:"Lawn Care" },
+  { key:"meal-prep", label:"Meal Prep / Personal Chef" },
+  { key:"laundry-fold", label:"Laundry & Fold" },
+  { key:"childcare", label:"Childcare / Emergency Childcare" },
+  { key:"handyman", label:"Handyman" },
+  { key:"massage", label:"Massage" },
+  { key:"personal-trainer", label:"Personal Trainer" },
+  { key:"personal-shopper", label:"Personal Shopper" },
+  { key:"maid-service", label:"Maid Service" },
+  { key:"event-planner", label:"Event Planner" },
+  { key:"gift-buyer", label:"Gift Buyer" },
+  { key:"transportation", label:"Transportation & Errands" },
+  { key:"senior-checkin", label:"Light Senior Care Check-Ins" }
+];
+export default function ServiceDropdown(){
+  return (
+    <div className="rounded-xl border bg-white p-3 shadow-sm w-80">
+      <ul className="divide-y">
+        {items.map(it=>(
+          <li key={it.key} className="py-2 flex items-center justify-between">
+            <Link href={`/services#${it.key}`} className="hover:underline">{it.label}</Link>
+            <InfoPopover serviceKey={it.key}/>
+          </li>
+        ))}
+      </ul>
+      <div className="pt-3 text-right">
+        <a href="/services" className="text-sm underline">View all services</a>
+      </div>
+    </div>
+  );
+}
+------------------------------------------------
+
+Create: client/src/pages/Services.tsx
+------------------------------------------------
+import { useEffect, useState } from "react";
+import InfoPopover from "../components/InfoPopover";
+type Service = { key:string; label:string; summary:string; badges?:string[] };
+export default function ServicesPage(){
+  const [items, setItems] = useState<Service[]>([]);
+  useEffect(()=>{ (async()=>{
+    const r = await fetch("/api/knowledge/services", { credentials:"include" });
+    setItems(await r.json());
+  })(); },[]);
+  return (
+    <div className="mx-auto max-w-6xl p-6 space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">Services</h1>
+        <p className="text-gray-600">Hover the <span className="inline-block border rounded-full px-1 text-xs align-middle">i</span> for a quick summary, click for full details.</p>
+      </div>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {items.map(s=>(
+          <div id={s.key} key={s.key} className="rounded-xl border bg-white p-4">
+            <div className="flex items-center justify-between">
+              <div className="font-semibold">{s.label}</div>
+              <InfoPopover serviceKey={s.key}/>
+            </div>
+            <p className="text-sm text-gray-700 mt-2">{s.summary}</p>
+            {s.badges?.length ? (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {s.badges.map(b=><span key={b} className="text-[11px] border rounded-full px-2 py-0.5">{b}</span>)}
+              </div>
+            ):null}
+            <div className="mt-3 flex gap-2">
+              <a href={`/post?service=${encodeURIComponent(s.key)}`} className="text-sm underline">Post this service</a>
+              <a href="/knowledge" className="text-sm underline">Learn more</a>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+------------------------------------------------
+
+Wire client routes:
+Update: client/src/App.tsx (or your router)
+------------------------------------------------
+import ServicesPage from "./pages/Services";
+import AdminServices from "./pages/admin/AdminServices";
+<Route path="/services" component={ServicesPage}/>
+<Route path="/admin/services" component={AdminServices}/>
+------------------------------------------------
+
+=========================================
+F) ADMIN PROMOTION SCRIPT
+=========================================
+Create: server/scripts/makeAdmin.ts
+------------------------------------------------
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
+
+async function run() {
+  const email = process.env.ADMIN_EMAIL;
+  if (!email) { console.error("Set ADMIN_EMAIL in secrets"); process.exit(1); }
+  const u = await prisma.user.findUnique({ where: { email } });
+  if (!u) { console.error("User not found:", email); process.exit(1); }
+  await prisma.user.update({ where: { id: u.id }, data: { role: "admin" }});
+  console.log("✅ Promoted to admin:", email);
+}
+run().finally(()=>prisma.$disconnect());
+------------------------------------------------
+
+INSTRUCTIONS to run once (server shell):
+- Set a secret ADMIN_EMAIL = your account email
+- Run: npx ts-node server/scripts/makeAdmin.ts
+
+=========================================
+G) ACCEPTANCE TESTS
+=========================================
+- Server & client running as usual
+- Visit /admin/services → confirm access is blocked unless your user is admin
+- Run makeAdmin.ts → refresh /admin/services → should load
+- Add/edit a service (e.g., “meal-prep”); verify changes show in:
+  - Services dropdown (i icon hover/click)
+  - /services page (cards + info icons)
+- /api/knowledge/services and /api/knowledge/services/:key return updated JSON
+
+Return with:
+- Final file paths if any differ
+- Confirmation that admin access works, info icons appear in dropdown and /services page, and JSON edits reflect immediately.

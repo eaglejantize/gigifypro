@@ -4,7 +4,9 @@ import { storage } from "./storage";
 import bcrypt from "bcrypt";
 import { z } from "zod";
 import Stripe from "stripe";
-import { serviceInfo } from "./content/knowledge";
+import { readServiceInfo } from "./content/serviceInfoStore";
+import meRouter from "./routes/me";
+import adminServiceInfoRouter from "./routes/admin.serviceInfo";
 
 // Stripe setup - from javascript_stripe integration
 const stripe = process.env.STRIPE_SECRET_KEY
@@ -738,10 +740,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Service Info: File-based tooltips/popover content
+  // Service Info: File-based tooltips/popover content (JSON storage)
   app.get("/api/knowledge/services", (_req, res) => {
     try {
-      const summary = serviceInfo.map(s => ({ 
+      const all = readServiceInfo();
+      const summary = all.map((s: any) => ({ 
         key: s.key, 
         label: s.label, 
         summary: s.summary, 
@@ -755,7 +758,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/knowledge/services/:key", (req, res) => {
     try {
-      const found = serviceInfo.find(s => s.key === req.params.key);
+      const all = readServiceInfo();
+      const found = all.find((s: any) => s.key === req.params.key);
       if (!found) {
         return res.status(404).json({ message: "Service not found" });
       }
@@ -764,6 +768,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: error.message });
     }
   });
+
+  // Current user / ME route
+  app.use("/api/me", meRouter);
+
+  // Admin routes
+  app.use("/api/admin/service-info", adminServiceInfoRouter);
 
   const httpServer = createServer(app);
   return httpServer;

@@ -35,6 +35,15 @@ export function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">
+            <Link href="/services" data-testid="link-services">
+              <Button
+                variant={isActive("/services") ? "default" : "ghost"}
+                size="sm"
+                className="font-medium"
+              >
+                Services
+              </Button>
+            </Link>
             <Link href="/feed" data-testid="link-feed">
               <Button
                 variant={isActive("/feed") ? "default" : "ghost"}
@@ -157,6 +166,12 @@ export function Navbar() {
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden pb-4 space-y-2">
+            <Link href="/services" data-testid="link-services-mobile">
+              <Button variant="ghost" className="w-full justify-start" onClick={() => setMobileMenuOpen(false)}>
+                <Briefcase className="w-4 h-4 mr-2" />
+                Services
+              </Button>
+            </Link>
             <Link href="/feed" data-testid="link-feed-mobile">
               <Button variant="ghost" className="w-full justify-start" onClick={() => setMobileMenuOpen(false)}>
                 Explore

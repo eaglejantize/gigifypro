@@ -37,6 +37,9 @@ Preferred communication style: Simple, everyday language.
 - Real-time messaging inbox interface
 - Dashboard for managing bookings and tracking performance
 - Settings pages for account and worker profile configuration
+- Services index page with InfoPopover tooltips for each service
+- Admin area for managing service information (role-restricted)
+- Brand slogan banner "Learn. Earn. Get Gigified."
 
 ### Backend Architecture
 
@@ -49,7 +52,9 @@ Preferred communication style: Simple, everyday language.
 - Bcrypt for password hashing (6 rounds)
 - Session-based authentication with express-session
 - Role-based access control (user, worker, admin roles)
+- Admin middleware protecting sensitive routes (/api/admin/*)
 - Credential-based auth with future OAuth readiness
+- Current user endpoint (/api/me) for retrieving user profile with role
 
 **API Structure**
 - Validation using Zod schemas for request bodies
@@ -85,6 +90,12 @@ Preferred communication style: Simple, everyday language.
 - One-to-many: Worker to ServiceListings, User to JobRequests, Booking to Messages
 - Many-to-many implicit: Categories to Services through listings
 
+**File-Based Storage**
+- Service info stored in JSON format at server/content/serviceInfo.json
+- Contains 13 service guides with summaries, detailed descriptions, gear recommendations, requirements, and badges
+- Admin-editable via protected CRUD endpoints with Zod validation
+- Used by InfoPopover component for inline tooltips across the platform
+
 ### External Dependencies
 
 **Payment Processing**
@@ -102,6 +113,12 @@ Preferred communication style: Simple, everyday language.
 - Vite for fast development and optimized production builds
 - Replit-specific plugins for development environment integration
 - Drizzle Kit for database migrations and schema management
+
+**Admin Tools**
+- Make-admin script (scripts/make-admin.ts) for promoting users to admin role
+- Usage: `npx tsx scripts/make-admin.ts <email>`
+- Admin dashboard accessible at /admin/services for managing service info
+- Protected by isAdmin middleware and client-side role checks
 
 **Additional Services**
 - Google Fonts CDN for Inter and JetBrains Mono font families
