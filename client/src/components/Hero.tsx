@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { Link } from "wouter";
+import { trackCta } from "@/lib/track";
 
 interface HeroProps {
   title: string;
@@ -73,7 +74,10 @@ export function Hero({
                   className="group"
                   data-testid={`button-${primaryCta.trackingId || "primary-cta"}`}
                 >
-                  <Link href={primaryCta.href}>
+                  <Link 
+                    href={primaryCta.href}
+                    onClick={() => primaryCta.trackingId && trackCta(primaryCta.trackingId)}
+                  >
                     {primaryCta.text}
                     <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </Link>
@@ -87,7 +91,12 @@ export function Hero({
                   className={hasBackground ? "bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white/20" : ""}
                   data-testid={`button-${secondaryCta.trackingId || "secondary-cta"}`}
                 >
-                  <Link href={secondaryCta.href}>{secondaryCta.text}</Link>
+                  <Link 
+                    href={secondaryCta.href}
+                    onClick={() => secondaryCta.trackingId && trackCta(secondaryCta.trackingId)}
+                  >
+                    {secondaryCta.text}
+                  </Link>
                 </Button>
               )}
             </div>

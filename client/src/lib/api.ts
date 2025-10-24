@@ -27,12 +27,15 @@ export async function apiGet<T = any>(url: string): Promise<T> {
   }
   
   // Add ETag header if we have a cached version (even if expired)
-  const headers: HeadersInit = { credentials: "include" };
+  const headers: HeadersInit = {};
   if (cacheHit?.etag) {
     headers["If-None-Match"] = cacheHit.etag;
   }
   
-  const response = await fetch(fullUrl, { headers: headers as any });
+  const response = await fetch(fullUrl, { 
+    headers, 
+    credentials: "include" 
+  });
   
   // 304: Not Modified - reuse cached data and refresh timestamp
   if (response.status === 304 && cacheHit) {
