@@ -240,6 +240,17 @@ export const trainingProgress = pgTable("training_progress", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Analytics: Events
+export const analyticsEvents = pgTable("analytics_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "set null" }),
+  kind: text("kind").notNull(), // page_view, service_view, knowledge_view, cta_click
+  name: text("name"), // service key, article slug, CTA name
+  path: text("path"),
+  meta: text("meta"), // JSON string
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   workerProfile: one(workerProfiles, {

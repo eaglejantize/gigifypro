@@ -1,0 +1,523 @@
+You are an expert full-stack engineer working in a Replit workspace.
+
+STACK (existing):
+- Frontend: Vite + React + TypeScript (client/)
+- Backend: Express + TypeScript (server/)
+- DB: Prisma + PostgreSQL
+- Existing: Auth, Knowledge Hub (DB + file hybrid), TrainingProgress, InfoPopover, CTA click tracking (/api/track/cta-click)
+
+GOAL (Phase 2.5):
+1) Show **badges on user profiles** (derived from TrainingProgress, background check, and service certifications).
+2) Add a **Testimonial Carousel** component with content from JSON + admin-manageable.
+3) Implement a minimal **Analytics Dashboard (Admin)** that summarizes adoption KPIs (users, CTA clicks, service views, knowledge views).
+4) Light tracking for **page/service views** and **knowledge article views** (server-side), stored in DB.
+
+Keep changes incremental/safe; report final file paths used and any deviations.
+
+====================================================
+A) BADGES ON PROFILE PAGES
+====================================================
+1) Prisma models (add if missing).
+File: prisma/schema.prisma (append or confirm)
+------------------------------------------------
+model Badge {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  name      String
+  desc      String
+  createdAt DateTime @default(now())
+  users     UserBadge[]
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  badgeId   String
+  awardedAt DateTime @default(now())
+  note      String?
+  user      User     @relation(fields: [userId], references: [id])
+  badge     Badge    @relation(fields: [badgeId], references: [id])
+
+  @@unique([userId, badgeId])
+}
+
+/// Existing
+model TrainingProgress {
+  id        String   @id @default(cuid())
+  userId    String
+  moduleKey String
+  percent   Int
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+enum UserVerification {
+  NONE
+  BACKGROUND_CHECK_PASSED
+}
+
+/// Extend User with optional fields if not present:
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  role      String   @default("user")
+  verification UserVerification @default(NONE)
+  createdAt DateTime @default(now())
+  // relations:
+  badges    UserBadge[]
+  progress  TrainingProgress[]
+}
+------------------------------------------------
+Run:
+- npx prisma generate
+- npx prisma migrate dev -n "phase2_5_badges_and_analytics"
+
+2) Seed a few standard badges.
+File: server/scripts/seedBadges.ts
+------------------------------------------------
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
+async function run() {
+  const entries = [
+    { key: "safety-verified", name: "Safety Verified", desc: "Background check passed and safety basics completed." },
+    { key: "gigified-core", name: "Gigified Core", desc: "Completed the core onboarding modules." },
+    { key: "category-pro", name: "Category Pro", desc: "Certified in a service category’s fundamentals." },
+    { key: "top-rated", name: "Top Rated", desc: "High ratings and reliability on completed gigs." }
+  ];
+  for (const e of entries) {
+    await prisma.badge.upsert({ where: { key: e.key }, update: e, create: e });
+  }
+  console.log("✅ Seeded badges");
+}
+run().finally(()=>prisma.$disconnect());
+------------------------------------------------
+Run once:
+- npx ts-node server/scripts/seedBadges.ts
+
+3) Auto-award badges from progress/verification (idempotent).
+File: server/services/badgeService.ts
+------------------------------------------------
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
+
+export async function refreshUserBadges(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { progress: true, badges: { include: { badge: true } } }
+  });
+  if (!user) return;
+
+  const have = new Set(user.badges.map(b => b.badge.key));
+  const toAward: string[] = [];
+
+  // Safety Verified if background check passed
+  if (user.verification === "BACKGROUND_CHECK_PASSED" && !have.has("safety-verified")) {
+    toAward.push("safety-verified");
+  }
+
+  // Gigified Core if average progress >= 60% across modules
+  const avg = user.progress.length ? user.progress.reduce((a, b) => a + b.percent, 0) / user.progress.length : 0;
+  if (avg >= 60 && !have.has("gigified-core")) {
+    toAward.push("gigified-core");
+  }
+
+  // Category Pro if any moduleKey starts with "category:" and percent >= 80
+  const categoryDone = user.progress.some(p => p.moduleKey.startsWith("category:") && p.percent >= 80);
+  if (categoryDone && !have.has("category-pro")) {
+    toAward.push("category-pro");
+  }
+
+  for (const key of toAward) {
+    const badge = await prisma.badge.findUnique({ where: { key } });
+    if (badge) {
+      await prisma.userBadge.upsert({
+        where: { userId_badgeId: { userId: user.id, badgeId: badge.id } },
+        create: { userId: user.id, badgeId: badge.id },
+        update: {}
+      });
+    }
+  }
+  return { awarded: toAward };
+}
+------------------------------------------------
+
+4) Expose a compact profile badges API.
+File: server/routes/profile.badges.ts
+------------------------------------------------
+import { Router } from "express";
+import { PrismaClient } from "@prisma/client";
+import { refreshUserBadges } from "../services/badgeService";
+const prisma = new PrismaClient();
+const r = Router();
+
+// GET /api/profile/:id/badges
+r.get("/:id/badges", async (req, res) => {
+  const id = req.params.id;
+  await refreshUserBadges(id);
+  const rows = await prisma.userBadge.findMany({
+    where: { userId: id },
+    include: { badge: true },
+    orderBy: { awardedAt: "desc" }
+  });
+  res.json(rows.map(rb => ({ key: rb.badge.key, name: rb.badge.name, desc: rb.badge.desc, awardedAt: rb.awardedAt })));
+});
+
+export default r;
+------------------------------------------------
+Wire it:
+- server/routes.ts → api.use("/profile", profileBadgesRouter)
+
+5) Client components.
+File: client/src/components/BadgePill.tsx
+------------------------------------------------
+export default function BadgePill({ name, title }: { name: string; title?: string }) {
+  return (
+    <span title={title} className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs">
+      <span>🏅</span><span>{name}</span>
+    </span>
+  );
+}
+------------------------------------------------
+File: client/src/components/ProfileBadges.tsx
+------------------------------------------------
+import { useEffect, useState } from "react";
+import BadgePill from "./BadgePill";
+export default function ProfileBadges({ userId }: { userId: string }) {
+  const [items, setItems] = useState<any[]|null>(null);
+  useEffect(()=>{ (async()=>{
+    const r = await fetch(`/api/profile/${userId}/badges`, { credentials:"include" });
+    setItems(await r.json());
+  })(); },[userId]);
+  if (items===null) return <div className="text-xs text-gray-500">Loading badges…</div>;
+  if (!items.length) return null;
+  return (
+    <div className="flex flex-wrap gap-2">
+      {items.map(b => <BadgePill key={b.key} name={b.name} title={b.desc} />)}
+    </div>
+  );
+}
+------------------------------------------------
+
+6) Mount on profile page.
+- In client/src/pages/profile/[id].tsx (or equivalent profile page), import and render:
+  <ProfileBadges userId={profileUserId} />
+
+====================================================
+B) TESTIMONIAL CAROUSEL (JSON + Admin)
+====================================================
+1) Content file + public API (cached).
+File: server/content/testimonials.json
+------------------------------------------------
+{
+  "items": [
+    { "name": "Alyssa M.", "role": "Busy Parent", "quote": "GigifyPro saved my weekends—laundry and meal prep done without stress." },
+    { "name": "Will C.", "role": "Giger · Lawn Care", "quote": "I started with my neighbor’s mower. Now I have 12 weekly clients." },
+    { "name": "Devon R.", "role": "Small Business Owner", "quote": "Booked a videographer in hours. Great clips for our launch." }
+  ]
+}
+------------------------------------------------
+File: server/routes/content.testimonials.ts
+------------------------------------------------
+import { Router } from "express";
+import fs from "fs";
+import path from "path";
+import { getCache, putCache } from "../utils/cache";
+const r = Router();
+const filePath = path.join(process.cwd(), "server", "content", "testimonials.json");
+
+r.get("/", (_req, res) => {
+  const key = "content:testimonials";
+  const hit = getCache(key);
+  if (hit) {
+    if (_req.headers["if-none-match"] === hit.etag) return res.status(304).end();
+    res.setHeader("Cache-Control", "public, max-age=300");
+    res.setHeader("ETag", hit.etag);
+    return res.json(hit.body);
+  }
+  const raw = fs.readFileSync(filePath, "utf8");
+  const body = JSON.parse(raw);
+  const { etag } = putCache(key, body, 300000);
+  res.setHeader("Cache-Control", "public, max-age=300");
+  res.setHeader("ETag", etag);
+  res.json(body);
+});
+export default r;
+------------------------------------------------
+Wire:
+- server/routes.ts → api.use("/content/testimonials", testimonialsRouter)
+
+2) Client carousel component (auto-rotate, accessible).
+File: client/src/components/TestimonialCarousel.tsx
+------------------------------------------------
+import { useEffect, useState } from "react";
+
+export default function TestimonialCarousel() {
+  const [items, setItems] = useState<{name:string;role?:string;quote:string}[]>([]);
+  const [i, setI] = useState(0);
+
+  useEffect(()=>{ (async()=>{
+    const r = await fetch("/api/content/testimonials", { credentials:"include" });
+    const d = await r.json();
+    setItems(d.items || []);
+  })(); },[]);
+
+  useEffect(()=>{
+    if (!items.length) return;
+    const t = setInterval(()=> setI(v => (v+1) % items.length), 5000);
+    return ()=> clearInterval(t);
+  }, [items]);
+
+  if (!items.length) return null;
+
+  const it = items[i];
+  return (
+    <div className="rounded-2xl border bg-white p-5 shadow-sm">
+      <div className="text-lg leading-snug">“{it.quote}”</div>
+      <div className="mt-3 text-sm text-gray-600">— {it.name}{it.role ? ` · ${it.role}` : ""}</div>
+      <div className="mt-4 flex gap-1">
+        {items.map((_, idx)=>(
+          <button key={idx} aria-label={`Go to ${idx+1}`}
+            className={`h-1.5 w-6 rounded ${idx===i ? "bg-blue-600" : "bg-gray-300"}`}
+            onClick={()=>setI(idx)} />
+        ))}
+      </div>
+    </div>
+  );
+}
+------------------------------------------------
+
+3) Mount carousel:
+- Home page under hero.
+- Services page bottom.
+Example usage:
+  <div className="mx-auto max-w-5xl px-4 py-8"><TestimonialCarousel/></div>
+
+4) Admin edit (minimal):
+- Optionally expose /admin/testimonials with simple replace-all (protected by isAdmin) if time permits.
+
+====================================================
+C) ANALYTICS: TRACK + ADMIN DASHBOARD
+====================================================
+1) Prisma model for analytics events.
+File: prisma/schema.prisma (append)
+------------------------------------------------
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  userId    String?
+  kind      String   // e.g., "page_view", "service_view", "knowledge_view", "cta_click"
+  name      String?  // e.g., service key, article slug, CTA name
+  path      String?
+  meta      Json?
+  createdAt DateTime @default(now())
+}
+------------------------------------------------
+Run:
+- npx prisma generate
+- npx prisma migrate dev -n "phase2_5_analytics_events"
+
+2) Tracking routes/middleware.
+File: server/routes/track.ts (extend existing)
+------------------------------------------------
+// Add endpoints for page and content views
+// POST /api/track/page-view { path }
+// POST /api/track/service-view { key, path }
+// POST /api/track/knowledge-view { slug, path }
+import { Router } from "express";
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
+const r = Router();
+
+r.post("/page-view", async (req, res) => {
+  const uid = (req.session as any)?.uid || null;
+  const { path } = req.body || {};
+  await prisma.analyticsEvent.create({ data: { userId: uid, kind: "page_view", path, meta: {} }});
+  res.json({ ok: true });
+});
+
+r.post("/service-view", async (req, res) => {
+  const uid = (req.session as any)?.uid || null;
+  const { key, path } = req.body || {};
+  await prisma.analyticsEvent.create({ data: { userId: uid, kind: "service_view", name: key, path, meta: {} }});
+  res.json({ ok: true });
+});
+
+r.post("/knowledge-view", async (req, res) => {
+  const uid = (req.session as any)?.uid || null;
+  const { slug, path } = req.body || {};
+  await prisma.analyticsEvent.create({ data: { userId: uid, kind: "knowledge_view", name: slug, path, meta: {} }});
+  res.json({ ok: true });
+});
+
+export default r;
+------------------------------------------------
+Ensure server/routes.ts already mounts `api.use("/track", track)`.
+
+3) Admin analytics routes (aggregations).
+File: server/routes/admin.analytics.ts
+------------------------------------------------
+import { Router } from "express";
+import { PrismaClient } from "@prisma/client";
+import isAdmin from "../middleware/isAdmin";
+const prisma = new PrismaClient();
+const r = Router(); r.use(isAdmin);
+
+// Totals snapshot
+r.get("/totals", async (_req, res) => {
+  const [users, events] = await Promise.all([
+    prisma.user.count(),
+    prisma.analyticsEvent.count()
+  ]);
+  res.json({ users, events });
+});
+
+// Last 14 days activity by day
+r.get("/activity14", async (_req, res) => {
+  const rows = await prisma.$queryRawUnsafe<any[]>(`
+    SELECT DATE("createdAt") AS d, COUNT(*) AS c
+    FROM "AnalyticsEvent"
+    WHERE "createdAt" >= NOW() - INTERVAL '14 days'
+    GROUP BY d ORDER BY d ASC
+  `);
+  res.json(rows);
+});
+
+// Top 10 services by views
+r.get("/top-services", async (_req, res) => {
+  const rows = await prisma.analyticsEvent.groupBy({
+    by: ["name"],
+    _count: { name: true },
+    where: { kind: "service_view" },
+    orderBy: { _count: { name: "desc" } },
+    take: 10
+  });
+  res.json(rows.map(r => ({ key: r.name, views: r._count.name })));
+});
+
+// CTA clicks by name (top 10)
+r.get("/cta", async (_req,res)=>{
+  const rows = await prisma.analyticsEvent.groupBy({
+    by:["name"],
+    _count:{ name:true },
+    where:{ kind:"cta_click" },
+    orderBy:{ _count:{ name:"desc" } },
+    take:10
+  });
+  res.json(rows.map(r=>({ name: r.name, clicks: r._count.name })));
+});
+
+export default r;
+------------------------------------------------
+Wire:
+- server/routes.ts → api.use("/admin/analytics", adminAnalyticsRouter)
+
+4) Client admin page (tables with simple charts-less view).
+File: client/src/pages/admin/AdminAnalytics.tsx
+------------------------------------------------
+import { useEffect, useState } from "react";
+
+export default function AdminAnalytics() {
+  const [totals, setTotals] = useState<any>(null);
+  const [activity, setActivity] = useState<any[]>([]);
+  const [topSvcs, setTopSvcs] = useState<any[]>([]);
+  const [cta, setCta] = useState<any[]>([]);
+
+  useEffect(()=>{ (async()=>{
+    const t = await fetch("/api/admin/analytics/totals", { credentials:"include" }).then(r=>r.json());
+    const a = await fetch("/api/admin/analytics/activity14", { credentials:"include" }).then(r=>r.json());
+    const s = await fetch("/api/admin/analytics/top-services", { credentials:"include" }).then(r=>r.json());
+    const c = await fetch("/api/admin/analytics/cta", { credentials:"include" }).then(r=>r.json());
+    setTotals(t); setActivity(a); setTopSvcs(s); setCta(c);
+  })(); },[]);
+
+  return (
+    <div className="mx-auto max-w-6xl p-6 space-y-8">
+      <h1 className="text-2xl font-bold">Analytics</h1>
+
+      <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="rounded border p-3"><div className="text-xs text-gray-500">Users</div><div className="text-2xl font-bold">{totals?.users ?? "…"}</div></div>
+        <div className="rounded border p-3"><div className="text-xs text-gray-500">Events</div><div className="text-2xl font-bold">{totals?.events ?? "…"}</div></div>
+      </section>
+
+      <section>
+        <h2 className="font-semibold mb-2">Activity (14 days)</h2>
+        <div className="rounded border p-3 overflow-x-auto">
+          <table className="text-sm min-w-[480px]">
+            <thead><tr><th className="text-left pr-4">Date</th><th className="text-left">Events</th></tr></thead>
+            <tbody>{activity.map((r:any)=>(<tr key={r.d}><td className="pr-4">{String(r.d).slice(0,10)}</td><td>{r.c}</td></tr>))}</tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="grid md:grid-cols-2 gap-4">
+        <div>
+          <h2 className="font-semibold mb-2">Top Services</h2>
+          <div className="rounded border p-3">
+            <ul className="text-sm space-y-1">
+              {topSvcs.map((r:any)=>(<li key={r.key} className="flex justify-between"><span>{r.key}</span><span>{r.views}</span></li>))}
+            </ul>
+          </div>
+        </div>
+        <div>
+          <h2 className="font-semibold mb-2">CTA Clicks</h2>
+          <div className="rounded border p-3">
+            <ul className="text-sm space-y-1">
+              {cta.map((r:any)=>(<li key={r.name} className="flex justify-between"><span>{r.name}</span><span>{r.clicks}</span></li>))}
+            </ul>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+------------------------------------------------
+Add route:
+- client/src/App.tsx (or router) → <Route path="/admin/analytics" component={AdminAnalytics} />
+
+5) Client-side lightweight trackers.
+- On route change (App root), POST /api/track/page-view { path: location.pathname }.
+- On Service card/modal open, POST /api/track/service-view { key, path }.
+- On Knowledge article open, POST /api/track/knowledge-view { slug, path }.
+
+Create: client/src/lib/trackClient.ts
+------------------------------------------------
+export function trackPageView() {
+  fetch("/api/track/page-view", {
+    method:"POST", credentials:"include", headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ path: location.pathname })
+  });
+}
+export function trackServiceView(key: string) {
+  fetch("/api/track/service-view", {
+    method:"POST", credentials:"include", headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ key, path: location.pathname })
+  });
+}
+export function trackKnowledgeView(slug: string) {
+  fetch("/api/track/knowledge-view", {
+    method:"POST", credentials:"include", headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ slug, path: location.pathname })
+  });
+}
+------------------------------------------------
+Mount trackPageView() in your root layout or router effect.
+
+====================================================
+D) ACCEPTANCE & QA
+====================================================
+- Badges:
+  - Seed script runs; profile page shows 🏅 badges for users who passed background checks or have progress.
+  - refreshUserBadges() awards badges automatically upon fetching.
+- Testimonials:
+  - /api/content/testimonials returns cached JSON with ETag.
+  - TestimonialCarousel renders on Home and Services.
+- Analytics Dashboard:
+  - /admin/analytics accessible to admin only.
+  - Totals > 0 after browsing a few pages.
+  - Top services and CTA clicks populate after interactions.
+- Performance:
+  - No route slowed noticeably; caching active for testimonials and knowledge/services.
+
+RETURN:
+- List files added/edited and any schema migrations performed.
+- Quick log snippet of analytics events after clicking CTAs and viewing services.

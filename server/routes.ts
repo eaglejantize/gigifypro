@@ -8,6 +8,7 @@ import { readServiceInfo } from "./content/serviceInfoStore";
 import meRouter from "./routes/me";
 import adminServiceInfoRouter from "./routes/admin.serviceInfo";
 import trackRouter from "./routes/track";
+import profileRouter from "./routes/profile";
 import { getCache, putCache } from "./utils/cache";
 
 // Stripe setup - from javascript_stripe integration
@@ -870,6 +871,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Current user / ME route
   app.use("/api/me", meRouter);
+
+  // Profile routes
+  app.use("/api/profile", profileRouter);
 
   // Admin routes
   app.use("/api/admin/service-info", adminServiceInfoRouter);
