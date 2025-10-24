@@ -84,6 +84,9 @@ Preferred communication style: Simple, everyday language.
 - Review/Like system combining social signals with optional ratings and comments
 - Messages table for in-app chat functionality
 - Notifications table for user alerts
+- Badges table storing certification/achievement definitions with icons and descriptions
+- UserBadges join table tracking user certification achievements with earned dates
+- AnalyticsEvents table for tracking user engagement (page views, service views, knowledge views, CTA clicks)
 
 **Data Relationships**
 - One-to-one: User to WorkerProfile
@@ -96,6 +99,8 @@ Preferred communication style: Simple, everyday language.
 - Admin-editable via protected CRUD endpoints with Zod validation
 - Used by InfoPopover component for inline tooltips across the platform
 - Backup maintained at server/content/serviceInfo.backup.json
+- Testimonials stored in server/content/testimonials.json with curated user success stories
+- Badge auto-awarding logic in server/services/badgeService.ts triggers certifications based on training progress
 
 ### External Dependencies
 
@@ -119,7 +124,28 @@ Preferred communication style: Simple, everyday language.
 - Make-admin script (scripts/make-admin.ts) for promoting users to admin role
 - Usage: `npx tsx scripts/make-admin.ts <email>`
 - Admin dashboard accessible at /admin/services for managing service info
+- Admin analytics dashboard at /admin/analytics showing KPIs and engagement metrics
 - Protected by isAdmin middleware and client-side role checks
+
+**Analytics & Tracking**
+- Server-side analytics tracking system with graceful failure handling
+- Tracking endpoints: /api/track/page-view, /api/track/service-view, /api/track/knowledge-view
+- CTA click tracking integrated into Hero components
+- Admin analytics API endpoint aggregating KPIs: total events, top services, top articles, top CTAs, 7-day page view trends
+- All analytics events persist to analytics_events table with user_id, event_type, metadata, and timestamps
+
+**Badge & Certification System**
+- Auto-awarding badge service refreshes certifications on profile view based on training progress
+- ProfileBadges component displays earned badges on user profiles with icons and descriptions
+- BadgePill component renders individual badge achievements with test IDs
+- Badge types: safety_verified, compliance_certified, pro_trained, elite_performer
+- Badges awarded based on article completion counts, background checks, and certifications
+
+**Social Proof & Testimonials**
+- TestimonialCarousel component displays curated success stories
+- Interval-based rotation (5 seconds) with smooth transitions
+- Testimonials cached via server endpoint with JSON content backing
+- Integrated on Services page to build trust and credibility
 
 **Knowledge Hub & Service Catalog**
 - Comprehensive catalog of 75 services across 12 categories
