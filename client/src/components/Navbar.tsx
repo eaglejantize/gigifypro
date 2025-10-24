@@ -229,6 +229,16 @@ export function Navbar() {
           </div>
         )}
       </div>
+      
+      {/* Brand Slogan Banner */}
+      <div className="bg-primary/10 border-t border-primary/20 text-center py-2 px-4">
+        <p className="text-sm text-foreground">
+          <strong className="font-bold">Learn. Earn. Get Gigified.</strong>{" "}
+          <span className="text-muted-foreground">
+            Turn everyday skills into income, independence, and freedom.
+          </span>
+        </p>
+      </div>
     </nav>
   );
 }
