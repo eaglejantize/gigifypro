@@ -1,0 +1,687 @@
+You are an expert full-stack engineer working in a Replit workspace with:
+- Frontend: Vite + React + TypeScript (client/)
+- Backend: Express + TypeScript (server/)
+- DB: Prisma + PostgreSQL (already configured)
+- Existing: Auth (session cookie), Knowledge Hub (DB + file hybrid), InfoPopover component, Store
+
+GOALS
+1) Add an ADMIN area (role = "admin") to manage:
+   - Knowledge Articles (DB-backed CRUD)
+   - Service Info (file-backed JSON editor)
+2) Add “i” InfoPopover icons to every item in the Services dropdown menu.
+3) Create a Services index page (/services) listing all services with InfoPopover and CTAs.
+
+NOTES
+- If a referenced path doesn’t exist, create it. If your project’s paths differ (e.g., Navbar file), adapt and report final paths.
+- Keep existing code; only extend.
+- Keep service info file-based for fast edits via JSON.
+
+========================================
+A) SERVER — ADMIN GUARD & USER LOOKUP
+========================================
+1) Create middleware to ensure admin access.
+File: server/middleware/isAdmin.ts
+------------------------------------------------
+import { PrismaClient } from "@prisma/client";
+import { Request, Response, NextFunction } from "express";
+const prisma = new PrismaClient();
+
+export async function isAdmin(req: Request, res: Response, next: NextFunction) {
+  try {
+    const uid = (req.session as any)?.uid;
+    if (!uid) return res.status(401).json({ error: "Unauthorized" });
+    const user = await prisma.user.findUnique({ where: { id: uid } });
+    if (!user || user.role !== "admin") return res.status(403).json({ error: "Forbidden" });
+    (req as any).user = user;
+    next();
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Admin check failed" });
+  }
+}
+export default isAdmin;
+------------------------------------------------
+
+2) (Optional) Add a convenience route to fetch current user with role.
+File: server/routes/me.ts
+------------------------------------------------
+import { Router } from "express";
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
+const r = Router();
+
+r.get("/", async (req, res) => {
+  const uid = (req.session as any)?.uid;
+  if (!uid) return res.json(null);
+  const u = await prisma.user.findUnique({ where: { id: uid }, select: { id:true, email:true, name:true, role:true }});
+  res.json(u || null);
+});
+export default r;
+------------------------------------------------
+
+Wire this (if not already) in server/routes.ts:
+------------------------------------------------
+import me from "./routes/me";
+// ...
+api.use("/me", me);
+------------------------------------------------
+
+========================================
+B) SERVER — SERVICE INFO MOVED TO JSON
+========================================
+We will store service info in JSON so the admin UI can edit it easily.
+
+1) Create a JSON data file with your existing content.
+File: server/content/serviceInfo.json
+------------------------------------------------
+{
+  "services": [
+    {
+      "key": "lawncare",
+      "label": "Lawn Care",
+      "summary": "Bring your tools or use the customer’s. Discount when using customer equipment.",
+      "expanded": "<p><strong>How it works:</strong> Choose equipment mode per booking. Using customer tools reduces hauling, speeds transit, and lowers startup costs—pass on a small discount.</p><p><strong>Before you start:</strong> Confirm tool condition and yard boundaries in chat. Take pre/post photos.</p><p><strong>Compliance:</strong> Observe noise/fuel rules; wear PPE. Use the Equipment Use Agreement.</p><p><strong>Upsells:</strong> Leaf clean-up, edging, weed control, seasonal care.</p>",
+      "recommendedGear": ["Mower/Edger or Customer Tools","PPE (glasses/ear protection)","Trash bags","Fuel can"],
+      "requirements": ["Background check","Local noise/environmental rules"],
+      "badges": ["Lawncare Basics","Safety Verified"]
+    },
+    {
+      "key": "meal-prep",
+      "label": "Meal Prep / Personal Chef",
+      "summary": "Cook in-home or deliver prepped meals. Show food-safety certs; follow local rules.",
+      "expanded": "<p><strong>Models:</strong> In-home cooking or off-site prep + delivery. Label allergens/dates; sanitize and avoid cross-contamination.</p><p><strong>Compliance:</strong> Food-handler certificates; licensed/commercial kitchen may be required for off-site prep depending on location.</p><p><strong>Business tips:</strong> Weekly menus, subscriptions, grocery add-on.</p>",
+      "recommendedGear": ["Chef jacket/hat","Waterproof apron","Food-safe containers","Cooler/thermal bags"],
+      "requirements": ["Background check","Food-handler certificate (region-dependent)"],
+      "badges": ["Meal Prep Safety Verified","Chef Giger Certified"]
+    },
+    {
+      "key": "laundry-fold",
+      "label": "Laundry & Fold",
+      "summary": "Four-bag system: Whites, Colors, Linens, Intimates (mesh wash-in).",
+      "expanded": "<p><strong>System:</strong> Customer pre-sorts into four branded bags. You keep each load separate; return folded in the same bag. Intimates remain in the mesh bag during wash/dry to protect delicates.</p><p><strong>Pricing:</strong> By bag, by pound, or subscription. Offer express and stain removal add-ons.</p><p><strong>Hygiene:</strong> Sanitize machines, use liners, and communicate allergies.</p>",
+      "recommendedGear": ["GigifyPro Laundry Bag Kit (4 bags)","Gentle detergents","Vehicle liners"],
+      "requirements": ["Background check"],
+      "badges": ["Laundry Giger Certified","Safety Verified"]
+    },
+    {
+      "key": "childcare",
+      "label": "Childcare / Emergency Childcare",
+      "summary": "Short-term, non-medical care; background check required.",
+      "expanded": "<p><strong>Scope:</strong> Short-term care, activities, meals, homework support. Follow parental instructions; keep emergency contacts ready.</p><p><strong>Safety:</strong> First Aid/CPR training recommended; follow local childcare guidelines.</p>",
+      "recommendedGear": ["ID badge","Activity kit (books/games)"],
+      "requirements": ["Background check"],
+      "badges": ["Safety Verified"]
+    },
+    {
+      "key": "handyman",
+      "label": "Handyman",
+      "summary": "Light home tasks only; use equipment agreement if using customer tools.",
+      "expanded": "<p><strong>Scope:</strong> Minor repairs, installations, assemblies. Avoid licensed trades unless you are licensed.</p><p><strong>Protection:</strong> Use Equipment Use Agreement. Wear PPE.</p>",
+      "recommendedGear": ["Basic toolkit","PPE","Stud finder","Level"],
+      "requirements": ["Background check","Local licensing for regulated tasks"],
+      "badges": ["Safety Verified"]
+    },
+    {
+      "key": "massage",
+      "label": "Massage",
+      "summary": "Licensed & insured only; upload credentials. Hygiene is paramount.",
+      "expanded": "<p><strong>Compliance:</strong> State licensure/insurance typically required. Upload documents to enable category.</p><p><strong>Setup:</strong> Clean linens, sanitization, professional conduct.</p>",
+      "recommendedGear": ["Portable table","Clean linens","Sanitizer"],
+      "requirements": ["Background check","Massage license","Insurance"],
+      "badges": ["Business Ready","Safety Verified"]
+    },
+    {
+      "key": "personal-trainer",
+      "label": "Personal Trainer",
+      "summary": "Certifications recommended. Train at home, outdoors, or gym (with permission).",
+      "expanded": "<p><strong>Compliance:</strong> NASM/ACE/ISSA recommended. Follow gym policies if on premises.</p><p><strong>Offerings:</strong> Programs, nutrition guidance (non-medical), progress tracking.</p>",
+      "recommendedGear": ["Bands/dumbbells","Timer","Mat"],
+      "requirements": ["Background check"],
+      "badges": ["Safety Verified"]
+    },
+    {
+      "key": "personal-shopper",
+      "label": "Personal Shopper",
+      "summary": "Smart routing, receipts, weekly routes, and special requests.",
+      "expanded": "<p><strong>Process:</strong> Confirm list/budget. Share receipts. Offer recurring time slots and deal-finding.</p>",
+      "recommendedGear": ["Insulated bags","Receipt envelope"],
+      "requirements": ["Background check"],
+      "badges": ["Safety Verified"]
+    },
+    {
+      "key": "maid-service",
+      "label": "Maid Service",
+      "summary": "Bring kit or use customer supplies. Room checklists, photos (if approved).",
+      "expanded": "<p><strong>Process:</strong> Room-by-room checklist; eco-friendly options. Before/after photos with consent.</p>",
+      "recommendedGear": ["Cleaning kit","Gloves","Microfiber cloths"],
+      "requirements": ["Background check"],
+      "badges": ["Safety Verified"]
+    },
+    {
+      "key": "event-planner",
+      "label": "Event Planner",
+      "summary": "Plan small events; vendor coordination. Liability coverage recommended.",
+      "expanded": "<p><strong>Scope:</strong> Birthdays, small weddings, community events. Use vendor contracts and timelines.</p>",
+      "recommendedGear": ["Planner templates","Vendor list","Checklists"],
+      "requirements": ["Background check"],
+      "badges": ["Business Ready"]
+    },
+    {
+      "key": "gift-buyer",
+      "label": "Gift Buyer",
+      "summary": "Budget-based gifting; propose options, wrap, deliver.",
+      "expanded": "<p><strong>Process:</strong> Gather preferences; propose 3 options; purchase and wrap. Option to handle delivery.</p>",
+      "recommendedGear": ["Wrapping kit","Card stock"],
+      "requirements": ["Background check"],
+      "badges": ["Safety Verified"]
+    },
+    {
+      "key": "transportation",
+      "label": "Transportation & Errands",
+      "summary": "Non-medical transport & airport runs; valid license/insurance required.",
+      "expanded": "<p><strong>Compliance:</strong> Driver license, insurance, and vehicle standards. Clarify wait times and tolls upfront.</p>",
+      "recommendedGear": ["Phone mount","Car safety kit"],
+      "requirements": ["Background check","Driver license + insurance"],
+      "badges": ["Business Ready","Safety Verified"]
+    },
+    {
+      "key": "senior-checkin",
+      "label": "Light Senior Care Check-Ins",
+      "summary": "Non-medical check-ins: meals, conversation, reminders.",
+      "expanded": "<p><strong>Scope:</strong> Companionship, light chores, wellness reminders (non-medical). Keep family contacts on file.</p>",
+      "recommendedGear": ["ID badge","Notebook/app for notes"],
+      "requirements": ["Background check"],
+      "badges": ["Safety Verified"]
+    }
+  ]
+}
+------------------------------------------------
+
+2) Create a small loader/writer helper.
+File: server/content/serviceInfoStore.ts
+------------------------------------------------
+import fs from "fs";
+import path from "path";
+
+const filePath = path.join(process.cwd(), "server", "content", "serviceInfo.json");
+
+export function readServiceInfo() {
+  const raw = fs.readFileSync(filePath, "utf8");
+  const data = JSON.parse(raw);
+  return data.services || [];
+}
+
+export function writeServiceInfo(services: any[]) {
+  const out = JSON.stringify({ services }, null, 2);
+  fs.writeFileSync(filePath, out, "utf8");
+  return true;
+}
+------------------------------------------------
+
+3) Update public routes to serve service info from JSON.
+File: server/routes/knowledge.services.ts (create or replace)
+------------------------------------------------
+import { Router } from "express";
+import { readServiceInfo } from "../content/serviceInfoStore";
+const r = Router();
+
+r.get("/", (_req, res) => {
+  const all = readServiceInfo();
+  res.json(all.map((s:any) => ({ key: s.key, label: s.label, summary: s.summary, badges: s.badges || [] })));
+});
+
+r.get("/:key", (req, res) => {
+  const all = readServiceInfo();
+  const found = all.find((s:any) => s.key === req.params.key);
+  if (!found) return res.status(404).json({ error: "Not found" });
+  res.json(found);
+});
+
+export default r;
+------------------------------------------------
+
+4) Add ADMIN routes to edit service info JSON.
+File: server/routes/admin.serviceInfo.ts
+------------------------------------------------
+import { Router } from "express";
+import isAdmin from "../middleware/isAdmin";
+import { readServiceInfo, writeServiceInfo } from "../content/serviceInfoStore";
+
+const r = Router();
+r.use(isAdmin);
+
+r.get("/", (_req, res) => {
+  res.json(readServiceInfo());
+});
+
+r.post("/upsert", (req, res) => {
+  const body = req.body || {};
+  if (!body.key || !body.label) return res.status(400).json({ error: "key and label required" });
+  const all = readServiceInfo();
+  const idx = all.findIndex((s:any)=> s.key === body.key);
+  if (idx >= 0) all[idx] = { ...all[idx], ...body };
+  else all.push(body);
+  writeServiceInfo(all);
+  res.json({ ok: true });
+});
+
+r.post("/delete", (req, res) => {
+  const { key } = req.body || {};
+  if (!key) return res.status(400).json({ error: "key required" });
+  const all = readServiceInfo().filter((s:any) => s.key !== key);
+  writeServiceInfo(all);
+  res.json({ ok: true });
+});
+
+export default r;
+------------------------------------------------
+
+5) Wire admin routes.
+Edit: server/routes.ts
+------------------------------------------------
+import adminServiceInfo from "./routes/admin.serviceInfo";
+// ...
+api.use("/admin/service-info", adminServiceInfo);
+------------------------------------------------
+
+=====================================================
+C) SERVER — ADMIN: ARTICLES CRUD (DB BACKED)
+=====================================================
+File: server/routes/admin.articles.ts
+------------------------------------------------
+import { Router } from "express";
+import { PrismaClient, ArticleCategory } from "@prisma/client";
+import isAdmin from "../middleware/isAdmin";
+const prisma = new PrismaClient();
+const r = Router();
+r.use(isAdmin);
+
+// LIST
+r.get("/", async (_req, res) => {
+  const items = await prisma.knowledgeArticle.findMany({ orderBy: { createdAt: "desc" }, include: { badges: true }});
+  res.json(items.map(a => ({ ...a, badges: a.badges.map(b=>b.name) })));
+});
+
+// GET ONE
+r.get("/:id", async (req, res) => {
+  const a = await prisma.knowledgeArticle.findUnique({ where: { id: req.params.id }, include: { badges: true }});
+  if (!a) return res.status(404).json({ error: "Not found" });
+  res.json({ ...a, badges: a.badges.map(b=>b.name) });
+});
+
+// UPSERT by slug
+r.post("/upsert", async (req, res) => {
+  const { slug, title, summary, body, category, badges = [] } = req.body || {};
+  if (!slug || !title || !summary || !body || !category) return res.status(400).json({ error: "missing fields" });
+  const created = await prisma.knowledgeArticle.upsert({
+    where: { slug },
+    update: { title, summary, body, category: category as ArticleCategory },
+    create: { slug, title, summary, body, category: category as ArticleCategory },
+  });
+  // replace badges
+  await prisma.knowledgeArticleBadge.deleteMany({ where: { articleId: created.id }});
+  for (const name of badges) {
+    await prisma.knowledgeArticleBadge.create({ data: { articleId: created.id, name } });
+  }
+  res.json({ ok: true, id: created.id });
+});
+
+// DELETE by id
+r.post("/delete", async (req, res) => {
+  const { id } = req.body || {};
+  if (!id) return res.status(400).json({ error: "id required" });
+  await prisma.knowledgeArticleBadge.deleteMany({ where: { articleId: id }});
+  await prisma.knowledgeArticle.delete({ where: { id }});
+  res.json({ ok: true });
+});
+
+export default r;
+------------------------------------------------
+
+Wire into server/routes.ts:
+------------------------------------------------
+import adminArticles from "./routes/admin.articles";
+// ...
+api.use("/admin/articles", adminArticles);
+------------------------------------------------
+
+========================================
+D) CLIENT — ADMIN PAGES (Minimal UI)
+========================================
+1) Simple admin check hook.
+File: client/src/hooks/useMe.ts
+------------------------------------------------
+import { useEffect, useState } from "react";
+export function useMe() {
+  const [me, setMe] = useState<any>(undefined);
+  useEffect(() => { (async () => {
+    const r = await fetch("/api/me", { credentials: "include" });
+    setMe(await r.json());
+  })(); }, []);
+  return me; // null or {id,email,name,role}
+}
+export default useMe;
+------------------------------------------------
+
+2) Admin layout & guard.
+File: client/src/pages/admin/AdminLayout.tsx
+------------------------------------------------
+import { Redirect } from "wouter";
+import { useMe } from "../../hooks/useMe";
+
+export default function AdminLayout({ children }: { children: any }) {
+  const me = useMe();
+  if (me === undefined) return null;
+  if (!me || me.role !== "admin") return <Redirect to="/" />;
+  return (
+    <div className="mx-auto max-w-6xl p-6 space-y-6">
+      <h1 className="text-2xl font-bold">Admin</h1>
+      <nav className="flex gap-4 text-sm">
+        <a href="/admin/articles" className="underline">Articles</a>
+        <a href="/admin/services" className="underline">Service Info</a>
+      </nav>
+      <div>{children}</div>
+    </div>
+  );
+}
+------------------------------------------------
+
+3) Articles admin (list + upsert).
+File: client/src/pages/admin/AdminArticles.tsx
+------------------------------------------------
+import { useEffect, useState } from "react";
+import AdminLayout from "./AdminLayout";
+
+export default function AdminArticles() {
+  const [items, setItems] = useState<any[]>([]);
+  const [form, setForm] = useState<any>({ slug:"", title:"", summary:"", body:"", category:"service", badges:"" });
+
+  async function refresh() {
+    const r = await fetch("/api/admin/articles", { credentials:"include" });
+    setItems(await r.json());
+  }
+  useEffect(()=>{ refresh(); },[]);
+
+  async function save() {
+    const payload = { ...form, badges: form.badges ? form.badges.split(",").map((s:string)=>s.trim()).filter(Boolean) : [] };
+    await fetch("/api/admin/articles/upsert", {
+      method:"POST", credentials:"include",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify(payload)
+    });
+    setForm({ slug:"", title:"", summary:"", body:"", category:"service", badges:"" });
+    refresh();
+  }
+  async function del(id:string) {
+    await fetch("/api/admin/articles/delete", {
+      method:"POST", credentials:"include",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ id })
+    });
+    refresh();
+  }
+
+  return (
+    <AdminLayout>
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="space-y-3">
+          <h2 className="font-semibold">Create / Update Article</h2>
+          <input className="border rounded px-2 py-1 w-full" placeholder="slug" value={form.slug} onChange={e=>setForm({...form,slug:e.target.value})}/>
+          <input className="border rounded px-2 py-1 w-full" placeholder="title" value={form.title} onChange={e=>setForm({...form,title:e.target.value})}/>
+          <textarea className="border rounded px-2 py-1 w-full" rows={3} placeholder="summary" value={form.summary} onChange={e=>setForm({...form,summary:e.target.value})}/>
+          <textarea className="border rounded px-2 py-1 w-full" rows={8} placeholder="body (HTML OK)" value={form.body} onChange={e=>setForm({...form,body:e.target.value})}/>
+          <select className="border rounded px-2 py-1 w-full" value={form.category} onChange={e=>setForm({...form,category:e.target.value})}>
+            <option value="business">business</option>
+            <option value="safety">safety</option>
+            <option value="service">service</option>
+          </select>
+          <input className="border rounded px-2 py-1 w-full" placeholder="badges (comma-separated)" value={form.badges} onChange={e=>setForm({...form,badges:e.target.value})}/>
+          <button className="border rounded px-3 py-1" onClick={save}>Save</button>
+        </div>
+        <div>
+          <h2 className="font-semibold">Articles</h2>
+          <ul className="space-y-2">
+            {items.map(a=>(
+              <li key={a.id} className="border rounded p-2 text-sm">
+                <div className="font-semibold">{a.title}</div>
+                <div className="text-gray-600">{a.slug} · {a.category}</div>
+                <div className="flex gap-2 mt-2">
+                  <a className="underline" href={`/knowledge/article/${a.slug}`} target="_blank">view</a>
+                  <button className="underline" onClick={()=>del(a.id)}>delete</button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </AdminLayout>
+  );
+}
+------------------------------------------------
+
+4) Service Info admin (JSON editor).
+File: client/src/pages/admin/AdminServices.tsx
+------------------------------------------------
+import { useEffect, useState } from "react";
+import AdminLayout from "./AdminLayout";
+
+export default function AdminServices() {
+  const [items, setItems] = useState<any[]>([]);
+  const empty = { key:"", label:"", summary:"", expanded:"", recommendedGear:"", requirements:"", badges:"" };
+  const [form, setForm] = useState<any>(empty);
+
+  async function refresh() {
+    const r = await fetch("/api/admin/service-info", { credentials:"include" });
+    setItems(await r.json());
+  }
+  useEffect(()=>{ refresh(); },[]);
+
+  async function save() {
+    const payload:any = {
+      key: form.key,
+      label: form.label,
+      summary: form.summary,
+      expanded: form.expanded,
+      recommendedGear: form.recommendedGear ? form.recommendedGear.split(",").map((s:string)=>s.trim()) : [],
+      requirements: form.requirements ? form.requirements.split(",").map((s:string)=>s.trim()) : [],
+      badges: form.badges ? form.badges.split(",").map((s:string)=>s.trim()) : [],
+    };
+    await fetch("/api/admin/service-info/upsert", {
+      method:"POST", credentials:"include",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify(payload)
+    });
+    setForm(empty);
+    refresh();
+  }
+
+  async function del(key:string) {
+    await fetch("/api/admin/service-info/delete", {
+      method:"POST", credentials:"include",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ key })
+    });
+    refresh();
+  }
+
+  function loadToForm(it:any){ 
+    setForm({
+      key: it.key, label: it.label, summary: it.summary, expanded: it.expanded,
+      recommendedGear: (it.recommendedGear||[]).join(", "),
+      requirements: (it.requirements||[]).join(", "),
+      badges: (it.badges||[]).join(", ")
+    });
+  }
+
+  return (
+    <AdminLayout>
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="space-y-3">
+          <h2 className="font-semibold">Create / Update Service</h2>
+          <input className="border rounded px-2 py-1 w-full" placeholder="key (e.g., lawncare)" value={form.key} onChange={e=>setForm({...form,key:e.target.value})}/>
+          <input className="border rounded px-2 py-1 w-full" placeholder="label" value={form.label} onChange={e=>setForm({...form,label:e.target.value})}/>
+          <textarea className="border rounded px-2 py-1 w-full" rows={2} placeholder="summary (hover)" value={form.summary} onChange={e=>setForm({...form,summary:e.target.value})}/>
+          <textarea className="border rounded px-2 py-1 w-full" rows={8} placeholder="expanded (HTML OK)" value={form.expanded} onChange={e=>setForm({...form,expanded:e.target.value})}/>
+          <input className="border rounded px-2 py-1 w-full" placeholder="recommendedGear (comma-separated)" value={form.recommendedGear} onChange={e=>setForm({...form,recommendedGear:e.target.value})}/>
+          <input className="border rounded px-2 py-1 w-full" placeholder="requirements (comma-separated)" value={form.requirements} onChange={e=>setForm({...form,requirements:e.target.value})}/>
+          <input className="border rounded px-2 py-1 w-full" placeholder="badges (comma-separated)" value={form.badges} onChange={e=>setForm({...form,badges:e.target.value})}/>
+          <button className="border rounded px-3 py-1" onClick={save}>Save</button>
+        </div>
+        <div>
+          <h2 className="font-semibold">Services</h2>
+          <ul className="space-y-2">
+            {items.map(it=>(
+              <li key={it.key} className="border rounded p-2 text-sm">
+                <div className="font-semibold">{it.label} <span className="text-gray-500">({it.key})</span></div>
+                <div className="text-gray-600 line-clamp-2">{it.summary}</div>
+                <div className="flex gap-2 mt-2">
+                  <button className="underline" onClick={()=>loadToForm(it)}>edit</button>
+                  <button className="underline" onClick={()=>del(it.key)}>delete</button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </AdminLayout>
+  );
+}
+------------------------------------------------
+
+5) Wire admin routes in client.
+Edit: client/src/App.tsx (or your router)
+------------------------------------------------
+import AdminArticles from "./pages/admin/AdminArticles";
+import AdminServices from "./pages/admin/AdminServices";
+// ...
+<Route path="/admin/articles" component={AdminArticles} />
+<Route path="/admin/services" component={AdminServices} />
+------------------------------------------------
+
+===================================================
+E) CLIENT — SERVICES DROPDOWN WITH INFO ICONS
+===================================================
+If you already have a dropdown file, update it to inject InfoPopover beside each service. If not, create:
+
+File: client/src/components/ServiceDropdown.tsx
+------------------------------------------------
+import InfoPopover from "./InfoPopover";
+import { Link } from "wouter";
+
+const items = [
+  { key:"lawncare", label:"Lawn Care" },
+  { key:"meal-prep", label:"Meal Prep / Personal Chef" },
+  { key:"laundry-fold", label:"Laundry & Fold" },
+  { key:"childcare", label:"Childcare / Emergency Childcare" },
+  { key:"handyman", label:"Handyman" },
+  { key:"massage", label:"Massage" },
+  { key:"personal-trainer", label:"Personal Trainer" },
+  { key:"personal-shopper", label:"Personal Shopper" },
+  { key:"maid-service", label:"Maid Service" },
+  { key:"event-planner", label:"Event Planner" },
+  { key:"gift-buyer", label:"Gift Buyer" },
+  { key:"transportation", label:"Transportation & Errands" },
+  { key:"senior-checkin", label:"Light Senior Care Check-Ins" }
+];
+
+export default function ServiceDropdown() {
+  return (
+    <div className="rounded-xl border bg-white p-3 shadow-sm w-80">
+      <ul className="divide-y">
+        {items.map(it=>(
+          <li key={it.key} className="py-2 flex items-center justify-between">
+            <Link href={`/services#${it.key}`} className="hover:underline">{it.label}</Link>
+            <InfoPopover serviceKey={it.key} />
+          </li>
+        ))}
+      </ul>
+      <div className="pt-3 text-right">
+        <a href="/services" className="text-sm underline">View all services</a>
+      </div>
+    </div>
+  );
+}
+------------------------------------------------
+
+Integrate into your Navbar/menu (example):
+File: client/src/components/Navbar.tsx (adjust to your structure)
+------------------------------------------------
+// import ServiceDropdown and render it in a popover/menu where your Services nav lives
+// e.g., a button that toggles <ServiceDropdown />
+------------------------------------------------
+
+=====================================
+F) CLIENT — SERVICES INDEX PAGE
+=====================================
+File: client/src/pages/Services.tsx
+------------------------------------------------
+import { useEffect, useState } from "react";
+import InfoPopover from "../components/InfoPopover";
+
+type Service = { key:string; label:string; summary:string; badges?:string[] };
+
+export default function ServicesPage() {
+  const [items, setItems] = useState<Service[]>([]);
+  useEffect(()=>{ (async()=>{
+    const r = await fetch("/api/knowledge/services", { credentials:"include" });
+    setItems(await r.json());
+  })(); },[]);
+
+  return (
+    <div className="mx-auto max-w-6xl p-6 space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">Services</h1>
+        <p className="text-gray-600">Explore categories. Hover the <span className="inline-block border rounded-full px-1 text-xs align-middle">i</span> for a quick summary, click for full details.</p>
+      </div>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {items.map(s=>(
+          <div id={s.key} key={s.key} className="rounded-xl border bg-white p-4">
+            <div className="flex items-center justify-between">
+              <div className="font-semibold">{s.label}</div>
+              <InfoPopover serviceKey={s.key} />
+            </div>
+            <p className="text-sm text-gray-700 mt-2">{s.summary}</p>
+            {s.badges?.length ? (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {s.badges.map(b=><span key={b} className="text-[11px] border rounded-full px-2 py-0.5">{b}</span>)}
+              </div>
+            ):null}
+            <div className="mt-3 flex gap-2">
+              <a href={`/post?service=${encodeURIComponent(s.key)}`} className="text-sm underline">Post this service</a>
+              <a href="/knowledge" className="text-sm underline">Learn more</a>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+------------------------------------------------
+
+Wire route:
+Edit: client/src/App.tsx (or your router)
+------------------------------------------------
+import ServicesPage from "./pages/Services";
+// ...
+<Route path="/services" component={ServicesPage} />
+------------------------------------------------
+
+=====================================
+G) BRAND SLOGAN (ensure present)
+=====================================
+Insert (if not present) under your nav in a shared layout:
+<div className="bg-blue-50 border-b border-blue-100 text-blue-900 text-center text-sm py-2">
+  <strong>Learn. Earn. Get Gigified.</strong> — Turn everyday skills into income, independence, and freedom.
+</div>
+
+=====================================
+H) BUILD/RUN & RETURN
+=====================================
+- Restart server/client if needed.
+- Visit:
+  - /services  (see all services with info icons)
+  - Services dropdown: each item shows an info icon (hover for summary, click for full)
+  - /admin/articles  (create/update DB articles)
+  - /admin/services  (edit service info JSON)
+- Ensure only admin users (role="admin") can access /admin/*.
+- Return with final file paths used and any deviations required by the repo.
