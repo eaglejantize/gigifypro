@@ -1,0 +1,70 @@
+You are an expert gig-economy business developer and technical writer working within the GigifyPro platform.
+
+GOAL:
+Build the **Knowledge Hub business guides** for the category:
+🎭 **Creative, Media & Event Services**
+
+These services empower Gigers to bring joy, creativity, and unforgettable experiences to clients through event planning, media creation, and personalized touches.
+
+SERVICES (create one entry for each):
+1) Birthday Surprise Delivery
+2) Costume & Prop Maker
+3) Custom Gift Basket Creator
+4) Event Planner
+5) Memorial & Gravesite Care
+6) Personal Videographer (Events & Special Moments)
+7) Pop-Up Party Host
+8) Proposal or Surprise Planner
+9) Social Media Moments
+
+OUTPUT EXPECTATIONS:
+For each service, create a full Knowledge Hub entry with the following fields:
+
+- **title**: Full service name
+- **summary**: 2–3 sentence quick overview for hover tooltips
+- **expanded**: Multi-section HTML-safe detailed business guide including:
+  1. How It Works — Describe how Gigers perform the service
+  2. Tools & Startup Gear — List affordable, practical equipment and supplies
+  3. Certifications & Requirements — Include background checks, business licensing, or local compliance
+  4. Safety & Best Practices — Focus on professionalism, client privacy, and respect
+  5. Pricing Model — Offer example packages and profit tips
+  6. Upsell & Business Growth — Explain how to scale or bundle services
+  7. Get Gigified Badge — Assign a creative badge name and describe what it represents
+
+- **recommendedGear**: Array of tools/supplies
+- **requirements**: Array of recommended or mandatory qualifications
+- **badges**: 1–2 badge titles related to training or excellence
+
+TONE & VOICE:
+- Inspiring, creative, and empowering — written for event planners, creators, and local artists.
+- Assume many users are talented but new to business.
+- Emphasize professionalism, presentation, and storytelling.
+- Use HTML-safe formatting (<p>, <ul>, <li>) in expanded fields.
+- Comply with general U.S. norms for independent gig work.
+
+CATEGORY-SPECIFIC NOTES:
+- **Event Planner:** Include guidance on vendor coordination, time management, and event insurance.
+- **Memorial & Gravesite Care:** Emphasize dignity, sensitivity, and documentation (before/after photos).
+- **Personal Videographer:** Mention media release forms, privacy rights, and safe data handling.
+- **Social Media Moments:** Include creative direction, phone videography tips, and quick editing apps.
+- **Costume & Prop Maker:** Note safe materials, flammability awareness, and clear customer approvals.
+- **Proposal or Surprise Planner:** Stress confidentiality, timing precision, and emotional impact.
+- **Pop-Up Party Host:** Encourage reusable decor, setup efficiency, and themed event variations.
+
+FORMAT:
+Each entry should follow this shape:
+{
+  "key": "event-planner",
+  "label": "Event Planner",
+  "summary": "Plan unforgettable celebrations, from birthdays to corporate events, connecting clients with local vendors and creative themes.",
+  "expanded": "<p><strong>How It Works:</strong> ...</p><p><strong>Tools & Startup Gear:</strong> ...</p><p><strong>Certifications & Requirements:</strong> ...</p><p><strong>Safety & Best Practices:</strong> ...</p><p><strong>Pricing Model:</strong> ...</p><p><strong>Upsell & Business Growth:</strong> ...</p><p><strong>Get Gigified Badge:</strong> ...</p>",
+  "recommendedGear": ["Planning templates", "Vendor contact list", "Decor toolkit"],
+  "requirements": ["Background check", "Event insurance (recommended)"],
+  "badges": ["Certified Event Giger", "Professional Planner"]
+}
+
+AFTER YOU FINISH:
+- Summarize recurring success themes (client satisfaction, photo rights, time management, professionalism).
+- Suggest logical cross-sells (e.g., Event Planner + Personal Videographer + Custom Gift Basket Creator).
+
+END OF INSTRUCTIONS.
