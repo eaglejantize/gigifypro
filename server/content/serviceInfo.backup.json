@@ -18,8 +18,7 @@
       "badges": [
         "Lawncare Basics",
         "Safety Verified"
-      ],
-      "category": "Outdoor & Yard Care"
+      ]
     },
     {
       "key": "meal-prep",
@@ -39,8 +38,7 @@
       "badges": [
         "Meal Prep Safety Verified",
         "Chef Giger Certified"
-      ],
-      "category": "Food & Hospitality"
+      ]
     },
     {
       "key": "laundry-fold",
@@ -58,8 +56,7 @@
       "badges": [
         "Laundry Giger Certified",
         "Safety Verified"
-      ],
-      "category": "Cleaning & Detailing"
+      ]
     },
     {
       "key": "childcare",
@@ -76,8 +73,7 @@
       ],
       "badges": [
         "Safety Verified"
-      ],
-      "category": "Family & Child Services"
+      ]
     },
     {
       "key": "handyman",
@@ -96,8 +92,7 @@
       ],
       "badges": [
         "Safety Verified"
-      ],
-      "category": "Home & Living"
+      ]
     },
     {
       "key": "massage",
@@ -117,8 +112,7 @@
       "badges": [
         "Business Ready",
         "Safety Verified"
-      ],
-      "category": "Personal Growth & Lifestyle"
+      ]
     },
     {
       "key": "personal-trainer",
@@ -135,8 +129,7 @@
       ],
       "badges": [
         "Safety Verified"
-      ],
-      "category": "Personal Growth & Lifestyle"
+      ]
     },
     {
       "key": "personal-shopper",
@@ -152,8 +145,7 @@
       ],
       "badges": [
         "Safety Verified"
-      ],
-      "category": "Errands & Transportation"
+      ]
     },
     {
       "key": "maid-service",
@@ -170,8 +162,7 @@
       ],
       "badges": [
         "Safety Verified"
-      ],
-      "category": "Cleaning & Detailing"
+      ]
     },
     {
       "key": "event-planner",
@@ -188,8 +179,7 @@
       ],
       "badges": [
         "Business Ready"
-      ],
-      "category": "Creative, Media & Event Services"
+      ]
     },
     {
       "key": "gift-buyer",
@@ -205,8 +195,7 @@
       ],
       "badges": [
         "Safety Verified"
-      ],
-      "category": "Errands & Transportation"
+      ]
     },
     {
       "key": "transportation",
@@ -224,8 +213,7 @@
       "badges": [
         "Business Ready",
         "Safety Verified"
-      ],
-      "category": "Errands & Transportation"
+      ]
     },
     {
       "key": "senior-checkin",
@@ -241,8 +229,7 @@
       ],
       "badges": [
         "Safety Verified"
-      ],
-      "category": "Senior & Care Companion"
+      ]
     },
     {
       "key": "dog-walking-sitting",
@@ -267,8 +254,7 @@
       "badges": [
         "Certified Pet Giger",
         "Safety Verified"
-      ],
-      "category": "Pet Services"
+      ]
     },
     {
       "key": "dog-yard-cleanup",
@@ -292,8 +278,7 @@
       "badges": [
         "Yard Care Pro",
         "Safety Verified"
-      ],
-      "category": "Pet Services"
+      ]
     },
     {
       "key": "pet-hair-cleanup",
@@ -318,8 +303,7 @@
       "badges": [
         "Pet Hair Specialist",
         "Safety Verified"
-      ],
-      "category": "Pet Services"
+      ]
     },
     {
       "key": "pet-taxi-dropin",
@@ -346,8 +330,7 @@
       "badges": [
         "Trusted Pet Transporter",
         "Safety Verified"
-      ],
-      "category": "Pet Services"
+      ]
     },
     {
       "key": "donation-dropoff-concierge",
@@ -372,8 +355,7 @@
       "badges": [
         "Community Impact Giger",
         "Safety Verified"
-      ],
-      "category": "Errands & Transportation"
+      ]
     },
     {
       "key": "driveway-snow-shoveling",
@@ -398,8 +380,7 @@
       "badges": [
         "Winter Warrior",
         "Safety Verified"
-      ],
-      "category": "Errands & Transportation"
+      ]
     },
     {
       "key": "errand-cluster-runs",
@@ -425,8 +406,7 @@
       "badges": [
         "Efficiency Expert",
         "Safety Verified"
-      ],
-      "category": "Errands & Transportation"
+      ]
     },
     {
       "key": "errand-scheduler-virtual",
@@ -452,8 +432,7 @@
       "badges": [
         "Master Coordinator",
         "Business Ready"
-      ],
-      "category": "Errands & Transportation"
+      ]
     },
     {
       "key": "grocery-line-waiter",
@@ -479,8 +458,7 @@
       "badges": [
         "Queue Champion",
         "Safety Verified"
-      ],
-      "category": "Errands & Transportation"
+      ]
     },
     {
       "key": "neighborhood-errand-runner",
@@ -506,8 +484,7 @@
       "badges": [
         "Neighborhood Hero",
         "Safety Verified"
-      ],
-      "category": "Errands & Transportation"
+      ]
     },
     {
       "key": "mobile-oil-change",
@@ -539,8 +516,7 @@
       "badges": [
         "Mobile Mechanic",
         "Safety Verified"
-      ],
-      "category": "Errands & Transportation"
+      ]
     },
     {
       "key": "prescription-pickup-buddy",
@@ -568,8 +544,7 @@
       "badges": [
         "Trusted Health Courier",
         "Safety Verified"
-      ],
-      "category": "Errands & Transportation"
+      ]
     },
     {
       "key": "ride-along-companion",
@@ -598,8 +573,7 @@
       "badges": [
         "Compassionate Companion",
         "Safety Verified"
-      ],
-      "category": "Errands & Transportation"
+      ]
     },
     {
       "key": "transportation-errands-general",
@@ -628,8 +602,7 @@
       "badges": [
         "Trusted Driver",
         "Safety Verified"
-      ],
-      "category": "Errands & Transportation"
+      ]
     },
     {
       "key": "artist-painter-portraits",
@@ -658,8 +631,7 @@
       "badges": [
         "Master Artist",
         "Business Ready"
-      ],
-      "category": "Art, Design & Custom Creations"
+      ]
     },
     {
       "key": "custom-clothing-designer",
@@ -688,8 +660,7 @@
       "badges": [
         "Certified Customwear Creator",
         "Business Ready"
-      ],
-      "category": "Art, Design & Custom Creations"
+      ]
     },
     {
       "key": "furniture-maker-refinisher",
@@ -721,8 +692,7 @@
       "badges": [
         "Furniture Artisan",
         "Safety Verified"
-      ],
-      "category": "Art, Design & Custom Creations"
+      ]
     },
     {
       "key": "home-decor-design-giger",
@@ -751,8 +721,7 @@
       "badges": [
         "Design Visionary",
         "Business Ready"
-      ],
-      "category": "Art, Design & Custom Creations"
+      ]
     },
     {
       "key": "upcycled-art-reclaimed",
@@ -786,8 +755,7 @@
       "badges": [
         "Eco-Creator Champion",
         "Safety Verified"
-      ],
-      "category": "Art, Design & Custom Creations"
+      ]
     },
     {
       "key": "birthday-surprise-delivery",
@@ -818,8 +786,7 @@
       "badges": [
         "Joy Bringer",
         "Safety Verified"
-      ],
-      "category": "Creative, Media & Event Services"
+      ]
     },
     {
       "key": "costume-prop-maker",
@@ -854,8 +821,7 @@
       "badges": [
         "Master Costume Crafter",
         "Safety Verified"
-      ],
-      "category": "Creative, Media & Event Services"
+      ]
     },
     {
       "key": "custom-gift-basket-creator",
@@ -888,8 +854,7 @@
       "badges": [
         "Thoughtful Curator",
         "Business Ready"
-      ],
-      "category": "Creative, Media & Event Services"
+      ]
     },
     {
       "key": "memorial-gravesite-care",
@@ -921,8 +886,7 @@
       "badges": [
         "Memorial Guardian",
         "Safety Verified"
-      ],
-      "category": "Creative, Media & Event Services"
+      ]
     },
     {
       "key": "personal-videographer",
@@ -954,8 +918,7 @@
       "badges": [
         "Memory Keeper",
         "Safety Verified"
-      ],
-      "category": "Creative, Media & Event Services"
+      ]
     },
     {
       "key": "popup-party-host",
@@ -987,8 +950,7 @@
       "badges": [
         "Instant Celebration Creator",
         "Safety Verified"
-      ],
-      "category": "Creative, Media & Event Services"
+      ]
     },
     {
       "key": "proposal-surprise-planner",
@@ -1018,8 +980,7 @@
       "badges": [
         "Perfect Moment Architect",
         "Safety Verified"
-      ],
-      "category": "Creative, Media & Event Services"
+      ]
     },
     {
       "key": "social-media-moments",
@@ -1048,8 +1009,7 @@
       "badges": [
         "Viral Content Creator",
         "Business Ready"
-      ],
-      "category": "Creative, Media & Event Services"
+      ]
     },
     {
       "key": "appliance-detailing",
@@ -1081,8 +1041,7 @@
       "badges": [
         "Appliance Specialist",
         "Safety Verified"
-      ],
-      "category": "Home & Living"
+      ]
     },
     {
       "key": "appliance-installer-basic",
@@ -1115,8 +1074,7 @@
       "badges": [
         "Appliance Pro",
         "Safety Verified"
-      ],
-      "category": "Home & Living"
+      ]
     },
     {
       "key": "closet-detox-donation",
@@ -1145,8 +1103,7 @@
       "badges": [
         "Declutter Champion",
         "Business Ready"
-      ],
-      "category": "Home & Living"
+      ]
     },
     {
       "key": "closet-system-installer",
@@ -1179,8 +1136,7 @@
       "badges": [
         "Organization Master",
         "Safety Verified"
-      ],
-      "category": "Home & Living"
+      ]
     },
     {
       "key": "compost-recycling-collector",
@@ -1212,8 +1168,7 @@
       "badges": [
         "Eco-Warrior",
         "Safety Verified"
-      ],
-      "category": "Home & Living"
+      ]
     },
     {
       "key": "declutter-coach",
@@ -1240,8 +1195,7 @@
       "badges": [
         "Clarity Creator",
         "Business Ready"
-      ],
-      "category": "Home & Living"
+      ]
     },
     {
       "key": "backyard-movie-setup",
@@ -1270,8 +1224,7 @@
       "badges": [
         "Outdoor Cinema Pro",
         "Safety Verified"
-      ],
-      "category": "Outdoor & Yard Care"
+      ]
     },
     {
       "key": "lawn-care-service",
@@ -1301,8 +1254,7 @@
       "badges": [
         "Lawn Master",
         "Safety Verified"
-      ],
-      "category": "Outdoor & Yard Care"
+      ]
     },
     {
       "key": "plant-garden-maintenance",
@@ -1334,8 +1286,7 @@
       "badges": [
         "Garden Guru",
         "Safety Verified"
-      ],
-      "category": "Outdoor & Yard Care"
+      ]
     },
     {
       "key": "storm-prep-cleanup",
@@ -1371,8 +1322,7 @@
       "badges": [
         "Storm Responder",
         "Safety Verified"
-      ],
-      "category": "Outdoor & Yard Care"
+      ]
     },
     {
       "key": "tool-share-setup",
@@ -1400,8 +1350,7 @@
       "badges": [
         "Community Builder",
         "Business Ready"
-      ],
-      "category": "Outdoor & Yard Care"
+      ]
     },
     {
       "key": "trash-can-sanitation",
@@ -1435,8 +1384,7 @@
       "badges": [
         "Sanitation Specialist",
         "Safety Verified"
-      ],
-      "category": "Outdoor & Yard Care"
+      ]
     },
     {
       "key": "declutter-sale-host",
@@ -1467,8 +1415,7 @@
       "badges": [
         "Sale Master",
         "Business Ready"
-      ],
-      "category": "Home & Living"
+      ]
     },
     {
       "key": "doorstep-laundry-pickup",
@@ -1499,8 +1446,7 @@
       "badges": [
         "Laundry Pro",
         "Safety Verified"
-      ],
-      "category": "Home & Living"
+      ]
     },
     {
       "key": "filter-battery-changer",
@@ -1530,466 +1476,6 @@
       ],
       "badges": [
         "Home Guardian",
-        "Safety Verified"
-      ],
-      "category": "Home & Living"
-    },
-    {
-      "key": "furniture-mover",
-      "label": "Furniture Mover (Local/In-Home)",
-      "category": "Home & Living",
-      "summary": "Move heavy furniture within homes or between nearby locations. Rearrange rooms, deliver purchases, help with staging, or relocate items to storage.",
-      "expanded": "<p><strong>How It Works:</strong> Provide affordable furniture moving for room rearrangements, deliveries, and storage. Protect floors and walls during moves.</p><p><strong>Tools & Startup Gear:</strong> Furniture dolly, sliders, moving straps, blankets, floor runners, safety gear, truck/van.</p><p><strong>Certifications & Requirements:</strong> Background check, business license, general liability insurance essential.</p><p><strong>Safety & Best Practices:</strong> Lift with legs not back. Use sliders. Protect flooring. Measure doorways first.</p><p><strong>Pricing Model:</strong> $50-$100/hour (2-hour minimum). Per-item $50-$200. Stair surcharge $25-$75.</p><p><strong>Upsell & Business Growth:</strong> Partner with furniture stores. Add junk removal. Offer staging packages.</p><p><strong>Get Gigified Badge:</strong> Earn <em>Furniture Pro</em> after 150 moves with zero damage claims.</p>",
-      "recommendedGear": [
-        "Furniture dolly",
-        "Sliders",
-        "Moving straps",
-        "Blankets",
-        "Floor runners",
-        "Steel-toe boots"
-      ],
-      "requirements": [
-        "Background check",
-        "Business license",
-        "General liability insurance"
-      ],
-      "badges": [
-        "Furniture Pro",
-        "Safety Verified"
-      ]
-    },
-    {
-      "key": "garage-organizer",
-      "label": "Garage Organizer",
-      "category": "Home & Living",
-      "summary": "Transform cluttered garages into organized spaces with smart storage systems, labeled zones, and efficient layouts that maximize space.",
-      "expanded": "<p><strong>How It Works:</strong> Assess garage, create layout plan, install shelving/pegboards, categorize items, label zones.</p><p><strong>Tools & Startup Gear:</strong> Measuring tape, shelving units, pegboards, storage bins, label maker, cleaning supplies.</p><p><strong>Certifications & Requirements:</strong> Background check required. No formal certification needed.</p><p><strong>Safety & Best Practices:</strong> Test wall anchors. Store chemicals safely. Create fire-safe zones.</p><p><strong>Pricing Model:</strong> $200-$500 per garage. Hourly $50-$100. Supply markup 20-30%.</p><p><strong>Upsell & Business Growth:</strong> Offer seasonal cleaning. Partner with storage companies. Add attic organization.</p><p><strong>Get Gigified Badge:</strong> Earn <em>Organization Master</em> after 75 garage transformations.</p>",
-      "recommendedGear": [
-        "Measuring tape",
-        "Shelving units",
-        "Pegboards",
-        "Storage bins",
-        "Label maker"
-      ],
-      "requirements": [
-        "Background check",
-        "Business license"
-      ],
-      "badges": [
-        "Organization Master",
-        "Business Ready"
-      ]
-    },
-    {
-      "key": "grocery-unpacker",
-      "label": "Grocery Unpacker & Organizer",
-      "category": "Home & Living",
-      "summary": "Receive grocery deliveries, unpack items, organize into pantry/fridge/freezer with rotation system, and dispose of packaging.",
-      "expanded": "<p><strong>How It Works:</strong> Meet delivery driver, unpack groceries, organize by FIFO system, dispose packaging.</p><p><strong>Tools & Startup Gear:</strong> Label maker, storage containers, cleaning spray, organizational bins.</p><p><strong>Certifications & Requirements:</strong> Background check required. Food safety awareness.</p><p><strong>Safety & Best Practices:</strong> Check expiration dates. Store perishables immediately. Sanitize surfaces.</p><p><strong>Pricing Model:</strong> $30-$60 per session. Subscription $100-$200/month for weekly service.</p><p><strong>Upsell & Business Growth:</strong> Offer meal prep coordination. Add pantry deep-clean services.</p><p><strong>Get Gigified Badge:</strong> Earn <em>Kitchen Pro</em> after 200 unpacking sessions.</p>",
-      "recommendedGear": [
-        "Label maker",
-        "Storage containers",
-        "Cleaning supplies",
-        "Food rotation labels"
-      ],
-      "requirements": [
-        "Background check",
-        "Food safety awareness"
-      ],
-      "badges": [
-        "Kitchen Pro",
-        "Safety Verified"
-      ]
-    },
-    {
-      "key": "home-inventory-specialist",
-      "label": "Home Inventory Specialist",
-      "category": "Home & Living",
-      "summary": "Document household possessions with photos, descriptions, and values for insurance purposes, estate planning, or moving preparation.",
-      "expanded": "<p><strong>How It Works:</strong> Photograph and catalog items room-by-room, create digital inventory with values, provide backup files.</p><p><strong>Tools & Startup Gear:</strong> Camera/smartphone, inventory software, measuring tape, cloud storage.</p><p><strong>Certifications & Requirements:</strong> Background check required. Professional discretion essential.</p><p><strong>Safety & Best Practices:</strong> Secure all data. Never share inventory details. Use encrypted storage.</p><p><strong>Pricing Model:</strong> $200-$600 per home based on size. Premium $800+ for estates.</p><p><strong>Upsell & Business Growth:</strong> Partner with insurance agents. Offer annual updates. Add estate planning services.</p><p><strong>Get Gigified Badge:</strong> Earn <em>Inventory Master</em> after 50 complete inventories.</p>",
-      "recommendedGear": [
-        "Camera",
-        "Inventory software",
-        "Cloud storage",
-        "Measuring tools"
-      ],
-      "requirements": [
-        "Background check",
-        "Data security awareness",
-        "Professional discretion"
-      ],
-      "badges": [
-        "Inventory Master",
-        "Business Ready"
-      ]
-    },
-    {
-      "key": "house-sitter",
-      "label": "House Sitter",
-      "category": "Home & Living",
-      "summary": "Stay in clients' homes while they travel. Maintain property, collect mail, water plants, manage deliveries, and provide security presence.",
-      "expanded": "<p><strong>How It Works:</strong> Live in home during owner absence, maintain routines, handle mail/packages, provide security.</p><p><strong>Tools & Startup Gear:</strong> Emergency contact list, home maintenance checklist, key management system.</p><p><strong>Certifications & Requirements:</strong> Background check mandatory. References essential. Bonding recommended.</p><p><strong>Safety & Best Practices:</strong> Daily check-ins with owners. Document any issues immediately. Never have guests.</p><p><strong>Pricing Model:</strong> $50-$150 per night. $300-$800 per week. Premium estates $150-$300/night.</p><p><strong>Upsell & Business Growth:</strong> Add pet care. Offer plant watering. Combine with home maintenance.</p><p><strong>Get Gigified Badge:</strong> Earn <em>Trusted Guardian</em> after 100 nights with perfect record.</p>",
-      "recommendedGear": [
-        "Emergency contact system",
-        "Home maintenance checklist",
-        "Security awareness"
-      ],
-      "requirements": [
-        "Background check",
-        "References",
-        "Bonding recommended",
-        "Never have guests"
-      ],
-      "badges": [
-        "Trusted Guardian",
-        "Safety Verified"
-      ]
-    },
-    {
-      "key": "junk-removal",
-      "label": "Junk Removal & Hauling",
-      "category": "Home & Living",
-      "summary": "Remove unwanted items, furniture, appliances, and debris. Haul to donation centers, recycling facilities, or dump with responsible disposal practices.",
-      "expanded": "<p><strong>How It Works:</strong> Assess items, provide quote, load and haul, dispose responsibly at appropriate facilities.</p><p><strong>Tools & Startup Gear:</strong> Pickup truck or trailer, dollies, straps, work gloves, disposal facility accounts.</p><p><strong>Certifications & Requirements:</strong> Background check. Business license. Vehicle insurance. Disposal permits.</p><p><strong>Safety & Best Practices:</strong> Wear protective gear. Separate recyclables. Know hazardous waste rules.</p><p><strong>Pricing Model:</strong> By volume: $150-$600 per truck load. Hourly $75-$150. Minimum charges apply.</p><p><strong>Upsell & Business Growth:</strong> Partner with realtors. Offer estate cleanouts. Add demolition services.</p><p><strong>Get Gigified Badge:</strong> Earn <em>Hauling Pro</em> after removing 100 tons responsibly.</p>",
-      "recommendedGear": [
-        "Truck/trailer",
-        "Dollies",
-        "Straps",
-        "Work gloves",
-        "Disposal facility accounts"
-      ],
-      "requirements": [
-        "Background check",
-        "Business license",
-        "Vehicle insurance",
-        "Disposal permits"
-      ],
-      "badges": [
-        "Hauling Pro",
-        "Safety Verified"
-      ]
-    },
-    {
-      "key": "lightbulb-changer",
-      "label": "Lightbulb Changer & Fixture Service",
-      "category": "Home & Living",
-      "summary": "Replace hard-to-reach bulbs, clean fixtures, install smart bulbs, and perform basic lighting maintenance for homes with high ceilings.",
-      "expanded": "<p><strong>How It Works:</strong> Visit homes to replace bulbs in high/difficult locations, clean fixtures, install smart lighting.</p><p><strong>Tools & Startup Gear:</strong> Extension ladder (12-16ft), bulb variety kit, cleaning supplies, smart bulb options.</p><p><strong>Certifications & Requirements:</strong> Background check. Ladder safety training. Never perform electrical wiring.</p><p><strong>Safety & Best Practices:</strong> Always use stable ladder. Turn off power at switch. Test new bulbs immediately.</p><p><strong>Pricing Model:</strong> $40-$80 per visit. Bulb cost + 30% markup. Subscription $25-$50/month for checks.</p><p><strong>Upsell & Business Growth:</strong> Offer fixture replacement. Add smart home integration. Create maintenance plans.</p><p><strong>Get Gigified Badge:</strong> Earn <em>Lighting Specialist</em> after 300 service calls.</p>",
-      "recommendedGear": [
-        "Extension ladder",
-        "Bulb variety",
-        "Cleaning supplies",
-        "Smart bulbs",
-        "Ladder stabilizer"
-      ],
-      "requirements": [
-        "Background check",
-        "Ladder safety",
-        "Never do electrical wiring"
-      ],
-      "badges": [
-        "Lighting Specialist",
-        "Safety Verified"
-      ]
-    },
-    {
-      "key": "mattress-flipper",
-      "label": "Mattress Flipper & Rotator",
-      "category": "Home & Living",
-      "summary": "Flip and rotate heavy mattresses on scheduled intervals to extend lifespan. Offer seasonal reminders and subscription service.",
-      "expanded": "<p><strong>How It Works:</strong> Visit homes quarterly to flip/rotate mattresses per manufacturer specs, set reminder stickers.</p><p><strong>Tools & Startup Gear:</strong> Mattress handles/straps, furniture sliders, reminder stickers, scheduling software.</p><p><strong>Certifications & Requirements:</strong> Background check. Proper lifting technique knowledge. No formal certification needed.</p><p><strong>Safety & Best Practices:</strong> Lift with legs. Use mattress handles. Work with partner for king sizes.</p><p><strong>Pricing Model:</strong> $25-$50 per mattress. Subscription $100-$200/year for 4 visits. Multi-bed discounts.</p><p><strong>Upsell & Business Growth:</strong> Add mattress cleaning. Offer bed frame tightening. Bundle with other home tasks.</p><p><strong>Get Gigified Badge:</strong> Earn <em>Mattress Pro</em> after 400 flips with perfect scheduling.</p>",
-      "recommendedGear": [
-        "Mattress handles",
-        "Furniture sliders",
-        "Reminder stickers",
-        "Scheduling app"
-      ],
-      "requirements": [
-        "Background check",
-        "Proper lifting techniques"
-      ],
-      "badges": [
-        "Mattress Pro",
-        "Safety Verified"
-      ]
-    },
-    {
-      "key": "move-in-cleaning",
-      "label": "Move-In/Move-Out Cleaning",
-      "category": "Home & Living",
-      "summary": "Deep clean empty properties between tenants or for new homeowners. Focus on appliances, fixtures, floors, and overlooked areas.",
-      "expanded": "<p><strong>How It Works:</strong> Clean vacant properties top-to-bottom: appliances, cabinets, floors, fixtures, windows.</p><p><strong>Tools & Startup Gear:</strong> Professional cleaning supplies, vacuum, mop, ladder, scrapers, protective gear.</p><p><strong>Certifications & Requirements:</strong> Background check. Business license. Liability insurance recommended.</p><p><strong>Safety & Best Practices:</strong> Ventilate well. Use proper chemicals. Document pre-existing damage.</p><p><strong>Pricing Model:</strong> $200-$600 based on square footage. $0.15-$0.30 per sq ft typical.</p><p><strong>Upsell & Business Growth:</strong> Partner with property managers. Offer carpet cleaning. Add painting touch-ups.</p><p><strong>Get Gigified Badge:</strong> Earn <em>Cleaning Pro</em> after 100 move-outs with 95% satisfaction.</p>",
-      "recommendedGear": [
-        "Cleaning supplies",
-        "Vacuum",
-        "Mop",
-        "Ladder",
-        "Scrapers",
-        "PPE"
-      ],
-      "requirements": [
-        "Background check",
-        "Business license",
-        "Liability insurance"
-      ],
-      "badges": [
-        "Cleaning Pro",
-        "Safety Verified"
-      ]
-    },
-    {
-      "key": "murphy-bed-installer",
-      "label": "Murphy Bed & Space-Saving Installer",
-      "category": "Home & Living",
-      "summary": "Install murphy beds, fold-down desks, and space-saving furniture. Follow manufacturer instructions for safe, functional installations.",
-      "expanded": "<p><strong>How It Works:</strong> Install pre-purchased murphy beds and space-saving furniture per manufacturer specs.</p><p><strong>Tools & Startup Gear:</strong> Power drill, level, stud finder, measuring tape, socket set, safety gear.</p><p><strong>Certifications & Requirements:</strong> Background check. No contractor license for assembly. Follow instructions exactly.</p><p><strong>Safety & Best Practices:</strong> Find studs for wall-mounting. Test balance and function. Verify safety mechanisms.</p><p><strong>Pricing Model:</strong> $200-$500 per murphy bed. $100-$300 for fold-down furniture. Time-based $50-$100/hour.</p><p><strong>Upsell & Business Growth:</strong> Partner with furniture retailers. Offer closet systems. Add general assembly.</p><p><strong>Get Gigified Badge:</strong> Earn <em>Space Saver</em> after 50 installations with zero safety issues.</p>",
-      "recommendedGear": [
-        "Power drill",
-        "Level",
-        "Stud finder",
-        "Measuring tape",
-        "Socket set"
-      ],
-      "requirements": [
-        "Background check",
-        "Follow manufacturer instructions exactly",
-        "Wall-mounting expertise"
-      ],
-      "badges": [
-        "Space Saver",
-        "Safety Verified"
-      ]
-    },
-    {
-      "key": "package-receiver",
-      "label": "Package Receiver & Organizer",
-      "category": "Home & Living",
-      "summary": "Accept deliveries during work hours, organize packages in designated area, photograph delivery confirmations, and notify homeowners.",
-      "expanded": "<p><strong>How It Works:</strong> Be present during delivery windows, accept packages, photograph them, organize in home, notify owner.</p><p><strong>Tools & Startup Gear:</strong> Smartphone for photos, notification system, package log, storage area setup.</p><p><strong>Certifications & Requirements:</strong> Background check mandatory. Bonding recommended for valuable packages.</p><p><strong>Safety & Best Practices:</strong> Photo every delivery. Log tracking numbers. Never open packages. Secure in designated area.</p><p><strong>Pricing Model:</strong> $20-$40 per delivery window. Monthly subscription $100-$250 for regular service.</p><p><strong>Upsell & Business Growth:</strong> Add package opening/setup. Offer return processing. Bundle with other errands.</p><p><strong>Get Gigified Badge:</strong> Earn <em>Delivery Guardian</em> after 500 packages with perfect record.</p>",
-      "recommendedGear": [
-        "Smartphone",
-        "Package log system",
-        "Notification app",
-        "Camera"
-      ],
-      "requirements": [
-        "Background check",
-        "Bonding recommended",
-        "Never open packages",
-        "Photo documentation"
-      ],
-      "badges": [
-        "Delivery Guardian",
-        "Safety Verified"
-      ]
-    },
-    {
-      "key": "pantry-organizer",
-      "label": "Pantry Organizer",
-      "category": "Home & Living",
-      "summary": "Organize pantries with labeled containers, FIFO rotation system, inventory tracking, and space-maximizing storage solutions.",
-      "expanded": "<p><strong>How It Works:</strong> Empty pantry, clean shelves, install organizers, categorize items, label containers, implement rotation system.</p><p><strong>Tools & Startup Gear:</strong> Storage containers, label maker, shelf liners, organizational bins, inventory app.</p><p><strong>Certifications & Requirements:</strong> Background check. No formal certification. Food safety awareness helpful.</p><p><strong>Safety & Best Practices:</strong> Check expiration dates. Separate allergens. Store heavy items low. Create zones.</p><p><strong>Pricing Model:</strong> $150-$400 per pantry. Supply markup 25-35%. Hourly $50-$100.</p><p><strong>Upsell & Business Growth:</strong> Add kitchen cabinets. Offer seasonal refreshes. Create meal planning integration.</p><p><strong>Get Gigified Badge:</strong> Earn <em>Pantry Pro</em> after 100 organization projects.</p>",
-      "recommendedGear": [
-        "Storage containers",
-        "Label maker",
-        "Shelf liners",
-        "Organizational bins"
-      ],
-      "requirements": [
-        "Background check",
-        "Food safety awareness"
-      ],
-      "badges": [
-        "Pantry Pro",
-        "Business Ready"
-      ]
-    },
-    {
-      "key": "picture-hanger",
-      "label": "Picture Hanger & Art Installer",
-      "category": "Home & Living",
-      "summary": "Hang pictures, mirrors, shelves, and artwork with proper anchors, level placement, and gallery-quality presentation.",
-      "expanded": "<p><strong>How It Works:</strong> Measure and mark placement, find studs, install proper anchors, hang items level, arrange gallery walls.</p><p><strong>Tools & Startup Gear:</strong> Laser level, stud finder, variety of anchors/hooks, measuring tape, hammer, drill.</p><p><strong>Certifications & Requirements:</strong> Background check. No formal certification. Know weight limits for anchors.</p><p><strong>Safety & Best Practices:</strong> Use appropriate anchors for weight. Find studs for heavy items. Protect walls during installation.</p><p><strong>Pricing Model:</strong> $50-$150 per visit. Per-item $15-$40. Gallery wall packages $200-$400.</p><p><strong>Upsell & Business Growth:</strong> Offer art placement consultation. Add shelf installation. Partner with interior designers.</p><p><strong>Get Gigified Badge:</strong> Earn <em>Hanging Expert</em> after 300 installations perfectly level.</p>",
-      "recommendedGear": [
-        "Laser level",
-        "Stud finder",
-        "Anchor variety",
-        "Measuring tape",
-        "Hammer",
-        "Drill"
-      ],
-      "requirements": [
-        "Background check",
-        "Know anchor weight limits",
-        "Wall type awareness"
-      ],
-      "badges": [
-        "Hanging Expert",
-        "Safety Verified"
-      ]
-    },
-    {
-      "key": "plant-watering",
-      "label": "Plant Watering & Care Service",
-      "category": "Home & Living",
-      "summary": "Water indoor plants on schedule while owners travel or work. Check soil moisture, adjust based on season, report plant health.",
-      "expanded": "<p><strong>How It Works:</strong> Visit homes to water plants per schedule, check moisture levels, prune dead leaves, rotate for light.</p><p><strong>Tools & Startup Gear:</strong> Watering can, moisture meter, pruning shears, plant food, care log.</p><p><strong>Certifications & Requirements:</strong> Background check. Basic plant knowledge. No formal certification needed.</p><p><strong>Safety & Best Practices:</strong> Check soil before watering. Respect plant-specific needs. Document any issues immediately.</p><p><strong>Pricing Model:</strong> $20-$40 per visit. Weekly subscription $80-$150/month. Plant count affects pricing.</p><p><strong>Upsell & Business Growth:</strong> Add fertilizing service. Offer repotting. Provide plant diagnosis. Bundle with pet care.</p><p><strong>Get Gigified Badge:</strong> Earn <em>Plant Guardian</em> after 500 visits with 98% plant survival.</p>",
-      "recommendedGear": [
-        "Watering can",
-        "Moisture meter",
-        "Pruning shears",
-        "Plant food",
-        "Care log"
-      ],
-      "requirements": [
-        "Background check",
-        "Basic plant knowledge",
-        "Respect plant-specific needs"
-      ],
-      "badges": [
-        "Plant Guardian",
-        "Safety Verified"
-      ]
-    },
-    {
-      "key": "seasonal-decorating",
-      "label": "Seasonal Decorating Service",
-      "category": "Home & Living",
-      "summary": "Install and remove holiday decorations, seasonal displays, and themed arrangements. Store items between seasons for repeat clients.",
-      "expanded": "<p><strong>How It Works:</strong> Install seasonal decor (lights, wreaths, displays), photograph setup, safely remove and store for next year.</p><p><strong>Tools & Startup Gear:</strong> Ladder, light hangers, storage containers, labeling system, installation hardware.</p><p><strong>Certifications & Requirements:</strong> Background check. Ladder safety essential. Electrical safety for lights.</p><p><strong>Safety & Best Practices:</strong> Use outdoor-rated lights. Secure ladder properly. Never overload circuits. Photo placement for next year.</p><p><strong>Pricing Model:</strong> Installation $150-$500. Removal $100-$300. Storage service +$50-$150/season.</p><p><strong>Upsell & Business Growth:</strong> Offer year-round seasonal changes. Add landscape lighting. Provide custom displays.</p><p><strong>Get Gigified Badge:</strong> Earn <em>Seasonal Pro</em> after 200 installations with perfect safety record.</p>",
-      "recommendedGear": [
-        "Ladder",
-        "Light hangers",
-        "Storage containers",
-        "Labels",
-        "Installation hardware"
-      ],
-      "requirements": [
-        "Background check",
-        "Ladder safety",
-        "Electrical safety for outdoor lights"
-      ],
-      "badges": [
-        "Seasonal Pro",
-        "Safety Verified"
-      ]
-    },
-    {
-      "key": "smart-home-helper",
-      "label": "Smart Home Helper",
-      "category": "Home & Living",
-      "summary": "Install and configure smart home devices like thermostats, cameras, doorbells, locks, and voice assistants for non-technical clients.",
-      "expanded": "<p><strong>How It Works:</strong> Install smart devices, connect to WiFi, configure apps, train clients on use, troubleshoot issues.</p><p><strong>Tools & Startup Gear:</strong> Screwdriver set, smartphone/tablet, WiFi analyzer, power drill, device manuals.</p><p><strong>Certifications & Requirements:</strong> Background check. Tech proficiency. No electrical license for battery devices. Know when to refer electrician.</p><p><strong>Safety & Best Practices:</strong> Never do electrical wiring. Secure WiFi networks. Enable two-factor authentication. Protect privacy settings.</p><p><strong>Pricing Model:</strong> $75-$150 per device setup. Package deals $300-$600 for whole-home. Training $50-$100/hour.</p><p><strong>Upsell & Business Growth:</strong> Offer ongoing support. Add home automation routines. Provide security audits.</p><p><strong>Get Gigified Badge:</strong> Earn <em>Smart Home Pro</em> after 150 device setups with 95% client satisfaction.</p>",
-      "recommendedGear": [
-        "Screwdriver set",
-        "Smartphone",
-        "WiFi analyzer",
-        "Power drill",
-        "Device variety knowledge"
-      ],
-      "requirements": [
-        "Background check",
-        "Tech proficiency",
-        "Never do electrical wiring",
-        "Security awareness"
-      ],
-      "badges": [
-        "Smart Home Pro",
-        "Safety Verified"
-      ]
-    },
-    {
-      "key": "smoke-alarm-tester",
-      "label": "Smoke Alarm Tester & Maintainer",
-      "category": "Home & Living",
-      "summary": "Test smoke and CO detectors, replace batteries, verify functionality, document compliance, and recommend replacements for expired units.",
-      "expanded": "<p><strong>How It Works:</strong> Test all detectors monthly/quarterly, replace batteries, clean units, document test dates, recommend replacements.</p><p><strong>Tools & Startup Gear:</strong> Testing spray, ladder, replacement batteries (9V, AA), cleaning brush, documentation log.</p><p><strong>Certifications & Requirements:</strong> Background check. Know local fire codes. Never disable detectors. Understand 10-year replacement rule.</p><p><strong>Safety & Best Practices:</strong> Test every unit. Replace batteries immediately if dead. Note detector age. Recommend upgrades to interconnected systems.</p><p><strong>Pricing Model:</strong> $30-$60 per visit. Subscription $120-$200/year quarterly. Battery costs + markup.</p><p><strong>Upsell & Business Growth:</strong> Bundle with filter changes. Add CO detector installation. Offer fire extinguisher checks.</p><p><strong>Get Gigified Badge:</strong> Earn <em>Safety Guardian</em> after 300 tests with 100% functional rate.</p>",
-      "recommendedGear": [
-        "Testing spray",
-        "Ladder",
-        "Batteries (9V, AA)",
-        "Cleaning brush",
-        "Documentation log"
-      ],
-      "requirements": [
-        "Background check",
-        "Know local fire codes",
-        "Never disable detectors",
-        "10-year replacement awareness"
-      ],
-      "badges": [
-        "Safety Guardian",
-        "Safety Verified"
-      ]
-    },
-    {
-      "key": "storage-unit-organizer",
-      "label": "Storage Unit Organizer",
-      "category": "Home & Living",
-      "summary": "Organize storage units with labeled boxes, shelving systems, inventory lists, and accessible layouts for easy retrieval.",
-      "expanded": "<p><strong>How It Works:</strong> Unload unit, install shelving, categorize items, create inventory, arrange for accessibility, label everything.</p><p><strong>Tools & Startup Gear:</strong> Shelving units, storage boxes, label maker, dolly, inventory software, measuring tape.</p><p><strong>Certifications & Requirements:</strong> Background check. No formal certification. Physical capability for lifting and organizing.</p><p><strong>Safety & Best Practices:</strong> Place heavy items low. Create aisles for access. Use climate-appropriate storage. Inventory photos.</p><p><strong>Pricing Model:</strong> $200-$600 per unit based on size. Hourly $50-$100. Supply markup 25-35%.</p><p><strong>Upsell & Business Growth:</strong> Offer seasonal reorganization. Add moving services. Create digital inventory apps.</p><p><strong>Get Gigified Badge:</strong> Earn <em>Storage Master</em> after organizing 75 units with comprehensive inventories.</p>",
-      "recommendedGear": [
-        "Shelving units",
-        "Storage boxes",
-        "Label maker",
-        "Dolly",
-        "Inventory software"
-      ],
-      "requirements": [
-        "Background check",
-        "Physical capability",
-        "Organizational skills"
-      ],
-      "badges": [
-        "Storage Master",
-        "Business Ready"
-      ]
-    },
-    {
-      "key": "tv-mounter",
-      "label": "TV Mounter & Cable Concealer",
-      "category": "Home & Living",
-      "summary": "Mount TVs on walls, conceal cables, configure tilt/swivel, and ensure proper height and viewing angles for optimal entertainment.",
-      "expanded": "<p><strong>How It Works:</strong> Mount TV on wall per specs, conceal cables in wall or raceways, configure devices, optimize viewing angle.</p><p><strong>Tools & Startup Gear:</strong> Stud finder, power drill, TV mounts (various sizes), cable management, level, socket set.</p><p><strong>Certifications & Requirements:</strong> Background check. No electrical license for HDMI cables. Know when to refer electrician for outlets.</p><p><strong>Safety & Best Practices:</strong> Always mount to studs. Use appropriate anchors. Test mount before releasing TV. Cable concealment must meet code.</p><p><strong>Pricing Model:</strong> $150-$400 per TV based on size. Cable concealment +$75-$150. Soundbar mounting +$50-$100.</p><p><strong>Upsell & Business Growth:</strong> Add surround sound setup. Offer smart TV configuration. Partner with electronics retailers.</p><p><strong>Get Gigified Badge:</strong> Earn <em>Mounting Master</em> after 200 TV installs with zero falls.</p>",
-      "recommendedGear": [
-        "Stud finder",
-        "Power drill",
-        "TV mounts",
-        "Cable management",
-        "Level",
-        "Socket set"
-      ],
-      "requirements": [
-        "Background check",
-        "Mount to studs always",
-        "Know code for cable concealment"
-      ],
-      "badges": [
-        "Mounting Master",
-        "Safety Verified"
-      ]
-    },
-    {
-      "key": "window-treatment-installer",
-      "label": "Window Treatment Installer",
-      "category": "Home & Living",
-      "summary": "Install blinds, curtains, shades, and shutters with precise measurements, level mounting, and professional finishing for polished appearance.",
-      "expanded": "<p><strong>How It Works:</strong> Measure windows, mount brackets level, install treatments, adjust for function, ensure smooth operation.</p><p><strong>Tools & Startup Gear:</strong> Laser level, drill, measuring tape, brackets and hardware, stud finder, pencil.</p><p><strong>Certifications & Requirements:</strong> Background check. No formal certification. Precision and attention to detail essential.</p><p><strong>Safety & Best Practices:</strong> Measure twice, install once. Use anchors in drywall. Ensure child safety features on cordless options.</p><p><strong>Pricing Model:</strong> $50-$150 per window. Complex treatments $150-$300. Whole-house packages $500-$1500.</p><p><strong>Upsell & Business Growth:</strong> Partner with window treatment retailers. Offer motorization upgrades. Add smart home integration.</p><p><strong>Get Gigified Badge:</strong> Earn <em>Window Pro</em> after 250 window treatments installed perfectly level.</p>",
-      "recommendedGear": [
-        "Laser level",
-        "Drill",
-        "Measuring tape",
-        "Stud finder",
-        "Brackets",
-        "Hardware variety"
-      ],
-      "requirements": [
-        "Background check",
-        "Precision skills",
-        "Child safety awareness"
-      ],
-      "badges": [
-        "Window Pro",
         "Safety Verified"
       ]
     }

@@ -92,9 +92,10 @@ Preferred communication style: Simple, everyday language.
 
 **File-Based Storage**
 - Service info stored in JSON format at server/content/serviceInfo.json
-- Contains 13 service guides with summaries, detailed descriptions, gear recommendations, requirements, and badges
+- Contains 75 comprehensive service guides across 12 categories with summaries, detailed descriptions, gear recommendations, requirements, and badges
 - Admin-editable via protected CRUD endpoints with Zod validation
 - Used by InfoPopover component for inline tooltips across the platform
+- Backup maintained at server/content/serviceInfo.backup.json
 
 ### External Dependencies
 
@@ -119,6 +120,13 @@ Preferred communication style: Simple, everyday language.
 - Usage: `npx tsx scripts/make-admin.ts <email>`
 - Admin dashboard accessible at /admin/services for managing service info
 - Protected by isAdmin middleware and client-side role checks
+
+**Knowledge Hub & Service Catalog**
+- Comprehensive catalog of 75 services across 12 categories
+- Categories: Home & Living (30), Errands & Transportation (13), Creative/Media/Event Services (9), Outdoor & Yard Care (7), Art/Design/Custom Creations (5), Pet Services (4), Cleaning & Detailing (2), Personal Growth & Lifestyle (2), Food & Hospitality (1), Family & Child Services (1), Senior & Care Companion (1)
+- Each service guide includes: How It Works, Tools & Startup Gear, Certifications & Requirements, Safety & Best Practices, Pricing Model, Upsell & Business Growth, Get Gigified Badge
+- Service guides designed for first-time gig workers with practical business advice
+- Emphasis on compliance, safety, cross-selling opportunities, and scalable business models
 
 **Additional Services**
 - Google Fonts CDN for Inter and JetBrains Mono font families
