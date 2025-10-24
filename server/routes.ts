@@ -656,6 +656,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Knowledge Hub: Articles
+  app.get("/api/knowledge/articles", async (req, res) => {
+    try {
+      const articles = await storage.getAllArticles();
+      res.json(articles);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/knowledge/articles/:slug", async (req, res) => {
+    try {
+      const article = await storage.getArticleBySlug(req.params.slug);
+      if (!article) {
+        return res.status(404).json({ message: "Article not found" });
+      }
+      res.json(article);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/knowledge/sections/:section", async (req, res) => {
+    try {
+      const articles = await storage.getArticlesBySection(req.params.section);
+      res.json(articles);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Knowledge Hub: Badges
+  app.get("/api/knowledge/badges", async (req, res) => {
+    try {
+      const badges = await storage.getAllBadges();
+      res.json(badges);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/knowledge/my-badges", async (req, res) => {
+    try {
+      const userId = (req as any).session?.uid;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const userBadges = await storage.getUserBadges(userId);
+      res.json(userBadges);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Knowledge Hub: Progress
+  app.get("/api/knowledge/my-progress", async (req, res) => {
+    try {
+      const userId = (req as any).session?.uid;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const progress = await storage.getUserProgress(userId);
+      res.json(progress);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/knowledge/complete/:articleId", async (req, res) => {
+    try {
+      const userId = (req as any).session?.uid;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const progress = await storage.markArticleComplete(userId, req.params.articleId);
+      res.json(progress);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
