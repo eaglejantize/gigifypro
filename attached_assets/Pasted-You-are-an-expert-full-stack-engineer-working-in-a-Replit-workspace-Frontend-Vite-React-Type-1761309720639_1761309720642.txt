@@ -1,0 +1,249 @@
+You are an expert full-stack engineer working in a Replit workspace:
+- Frontend: Vite + React + TypeScript (client/)
+- Backend: Express + TypeScript (server/)
+- Existing: Navbar/Layout + pages, Auth, Services, Knowledge
+
+GOAL
+Add a compelling, site-wide Call To Action around the slogan:
+**“Learn. Earn. Get Gigified.” — Turn everyday skills into income, independence, and freedom.**
+Actions: “Offer Services”, “Post a Task”, “Get Gigified”.
+
+Deliverables:
+1) Reusable <CtaBanner /> component placed under the navbar (global).
+2) Hero CTAs on the Home page.
+3) Sticky mobile CTA bar.
+4) Minimal click tracking API: POST /api/track/cta-click.
+
+========================================
+A) SERVER — CTA Click Tracking Endpoint
+========================================
+Create file: server/routes/track.ts
+------------------------------------------------
+import { Router } from "express";
+const r = Router();
+
+// POST /api/track/cta-click  { name, path }
+r.post("/cta-click", (req, res) => {
+  const { name, path } = req.body || {};
+  console.log(`[CTA] click: ${name || "unknown"} from ${path || "-"}`);
+  // In future: save to DB or analytics
+  res.json({ ok: true });
+});
+
+export default r;
+------------------------------------------------
+
+Wire route into API:
+Edit file: server/routes.ts
+------------------------------------------------
+import { Router } from "express";
+import auth from "./routes/auth";
+import store from "./routes/store";
+import checkout from "./routes/checkout";
+import knowledge from "./routes/knowledge.index";
+import me from "./routes/me";
+import track from "./routes/track"; // <-- add
+
+const api = Router();
+api.use("/auth", auth);
+api.use("/store", store);
+api.use("/checkout", checkout);
+api.use("/knowledge", knowledge);
+api.use("/me", me);
+api.use("/track", track); // <-- add
+export default api;
+------------------------------------------------
+
+========================================
+B) CLIENT — CTA helpers
+========================================
+Create file: client/src/lib/track.ts
+------------------------------------------------
+export async function trackCta(name: string) {
+  try {
+    await fetch("/api/track/cta-click", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, path: location.pathname })
+    });
+  } catch { /* no-op */ }
+}
+------------------------------------------------
+
+Create file: client/src/components/CtaBanner.tsx
+------------------------------------------------
+import { trackCta } from "../lib/track";
+
+export default function CtaBanner() {
+  return (
+    <div className="bg-blue-50 border-b border-blue-100 text-blue-900">
+      <div className="mx-auto max-w-7xl px-4 py-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="text-center md:text-left">
+          <div className="font-semibold">Learn. Earn. Get Gigified.</div>
+          <div className="text-sm text-blue-800">
+            Turn everyday skills into income, independence, and freedom.
+          </div>
+        </div>
+        <div className="flex flex-wrap justify-center gap-2">
+          <a
+            href="/post?type=offer"
+            className="rounded-lg border border-blue-300 bg-white px-3 py-1.5 text-sm hover:bg-blue-100"
+            onClick={() => trackCta("banner_offer_services")}
+          >
+            Offer Services
+          </a>
+          <a
+            href="/post?type=request"
+            className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700"
+            onClick={() => trackCta("banner_post_task")}
+          >
+            Post a Task
+          </a>
+          <a
+            href="/knowledge"
+            className="rounded-lg border border-blue-300 bg-white px-3 py-1.5 text-sm hover:bg-blue-100"
+            onClick={() => trackCta("banner_get_gigified")}
+          >
+            Get Gigified
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+------------------------------------------------
+
+Insert banner under your navbar (global layout):
+Edit the shared layout or navbar file (choose the one that wraps all pages):
+- If you have: client/src/components/Navbar.tsx, also open the component that renders below it (e.g., App.tsx/Layout).
+- Add: <CtaBanner /> directly under the navbar.
+
+Example (client/src/App.tsx or your root layout component):
+------------------------------------------------
+// ...existing imports
+import CtaBanner from "./components/CtaBanner";
+
+export default function AppRoot() {
+  return (
+    <>
+      {/* existing <Navbar /> here */}
+      <CtaBanner />
+      {/* rest of your routes/outlet */}
+    </>
+  );
+}
+------------------------------------------------
+
+========================================
+C) CLIENT — Home Hero CTAs
+========================================
+If you have a Home/Landing page (e.g., client/src/pages/Home.tsx), add a hero with the slogan + CTAs:
+
+Create or edit: client/src/pages/Home.tsx
+------------------------------------------------
+import { trackCta } from "../lib/track";
+
+export default function Home() {
+  return (
+    <div className="mx-auto max-w-7xl px-4 py-10">
+      <h1 className="text-4xl font-extrabold">GigifyPro</h1>
+      <p className="mt-2 text-lg text-gray-700">
+        <strong>Learn. Earn. Get Gigified.</strong> — When you’re Gigified, you set your schedule, grow your brand, and even build a team.
+      </p>
+      <div className="mt-6 flex flex-wrap gap-3">
+        <a
+          href="/post?type=offer"
+          className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+          onClick={() => trackCta("hero_offer_services")}
+        >
+          Offer Services
+        </a>
+        <a
+          href="/post?type=request"
+          className="rounded-lg border border-gray-300 px-4 py-2 hover:bg-gray-50"
+          onClick={() => trackCta("hero_post_task")}
+        >
+          Post a Task
+        </a>
+        <a
+          href="/knowledge"
+          className="rounded-lg border border-gray-300 px-4 py-2 hover:bg-gray-50"
+          onClick={() => trackCta("hero_get_gigified")}
+        >
+          Get Gigified
+        </a>
+      </div>
+      <div className="mt-4 text-sm text-gray-600">
+        New? Explore <a className="underline" href="/services" onClick={() => trackCta("hero_view_services")}>Services</a> or read the{" "}
+        <a className="underline" href="/knowledge" onClick={() => trackCta("hero_view_knowledge")}>Knowledge Hub</a>.
+      </div>
+    </div>
+  );
+}
+------------------------------------------------
+
+(If routing differs, just ensure the home route renders this component.)
+
+========================================
+D) CLIENT — Sticky Mobile CTA Bar
+========================================
+Create file: client/src/components/MobileCtaBar.tsx
+------------------------------------------------
+import { useEffect, useState } from "react";
+import { trackCta } from "../lib/track";
+
+export default function MobileCtaBar() {
+  const [show, setShow] = useState(true);
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY || 0;
+      setShow(y < 120 || y > 600); // hide mid-scroll, show near top/bottom
+    };
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  return (
+    <div className={`fixed inset-x-0 bottom-0 z-40 border-t bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 p-2 md:hidden transition
+      ${show ? "" : "translate-y-24"}`}>
+      <div className="mx-auto flex max-w-lg items-center justify-center gap-2">
+        <a
+          href="/post?type=request"
+          className="flex-1 rounded-lg bg-blue-600 px-3 py-2 text-center text-white text-sm font-medium"
+          onClick={() => trackCta("mobile_post_task")}
+        >
+          Post a Task
+        </a>
+        <a
+          href="/post?type=offer"
+          className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-center text-sm font-medium"
+          onClick={() => trackCta("mobile_offer_services")}
+        >
+          Offer Services
+        </a>
+      </div>
+    </div>
+  );
+}
+------------------------------------------------
+
+Mount it once near the root (so it appears on all pages for mobile):
+Edit the same root layout used above (e.g., client/src/App.tsx):
+------------------------------------------------
+import MobileCtaBar from "./components/MobileCtaBar";
+// ...
+<MobileCtaBar />
+------------------------------------------------
+
+========================================
+E) QUICK QA / ACCEPTANCE
+========================================
+- Start server/client as usual.
+- Visit Home and any page: confirm the slogan banner with three CTAs appears under the navbar.
+- On mobile viewport, a sticky CTA bar appears at the bottom (Post a Task / Offer Services).
+- Click any CTA; server logs should print: [CTA] click: <name> from <path>.
+- Ensure routes exist (/post, /knowledge, /services). If not, keep links but add TODO notes.
+
+Return with:
+- Final file paths used if they differed.
+- Confirmation that banner renders, hero CTAs work, and mobile sticky bar shows.

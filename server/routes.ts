@@ -7,6 +7,7 @@ import Stripe from "stripe";
 import { readServiceInfo } from "./content/serviceInfoStore";
 import meRouter from "./routes/me";
 import adminServiceInfoRouter from "./routes/admin.serviceInfo";
+import trackRouter from "./routes/track";
 
 // Stripe setup - from javascript_stripe integration
 const stripe = process.env.STRIPE_SECRET_KEY
@@ -774,6 +775,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Admin routes
   app.use("/api/admin/service-info", adminServiceInfoRouter);
+
+  // Tracking routes
+  app.use("/api/track", trackRouter);
 
   const httpServer = createServer(app);
   return httpServer;
