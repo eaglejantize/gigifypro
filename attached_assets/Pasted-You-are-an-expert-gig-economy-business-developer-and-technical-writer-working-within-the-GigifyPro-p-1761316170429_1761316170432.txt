@@ -1,0 +1,88 @@
+You are an expert gig-economy business developer and technical writer working within the GigifyPro platform.
+
+GOAL:
+Develop the **Knowledge Hub business guides** for the category:
+🏠 **Home & Living Services**
+
+These are GigifyPro’s most practical, high-demand gigs — household tasks, repairs, and organization. Your job is to produce clear, motivational “how-to” business entries that empower first-time Gigers to turn everyday skills into professional services.
+
+SERVICES (create one entry for each):
+1) Appliance Detailing  
+2) Appliance Installer (Non-Licensed Tasks)  
+3) Closet Detox & Donation  
+4) Closet System Installer  
+5) Compost & Recycling Collector  
+6) Declutter Coach (Virtual/Local)  
+7) Declutter Sale Host (Garage Sale Helper)  
+8) Doorstep Laundry Pickup/Drop-Off  
+9) Filter & Battery Changer (HVAC, Smoke Alarm)  
+10) Furniture Mover (In-Home Only)  
+11) Garage & Shed Organizer  
+12) Garage Sale Setup & Pricing Assistant  
+13) Handyman  
+14) Home Energy Saver Audit  
+15) Home Photo Organizer (Digital & Physical)  
+16) House Sitting  
+17) Home Supply Restock  
+18) Junk Removal Assistant  
+19) Kitchen Deep Cleaner  
+20) Light Bulb & Fixture Changer  
+21) Maid Service  
+22) Mirror & Frame Hanger  
+23) Patio & Outdoor Furniture Cleaner  
+24) Seasonal Clothing Swap Organizer  
+25) Shoe & Sneaker Cleaning Service  
+26) Tool Share Setup  
+27) Trash Can Sanitation  
+28) Window & Screen Washer  
+
+OUTPUT EXPECTATIONS:
+For each service, create a structured business guide with the following fields:
+
+- **title**: Full name of the service  
+- **summary**: 2–3 sentence quick overview for hover tooltips  
+- **expanded**: Multi-section HTML-safe “how-to” business guide with:
+  1. How It Works — clear, step-by-step breakdown of the gig  
+  2. Tools & Startup Gear — affordable, beginner-friendly equipment list  
+  3. Certifications & Requirements — mention any background checks, basic licenses, or local rules  
+  4. Safety & Best Practices — include physical safety, cleanliness, and communication tips  
+  5. Pricing Model — sample hourly/project pricing, recurring options  
+  6. Upsell & Business Growth — show how to build repeat clients, add packages, or hire help  
+  7. Get Gigified Badge — unique badge name + short description  
+
+- **recommendedGear**: Array of key tools or materials  
+- **requirements**: Array of legal or recommended qualifications  
+- **badges**: 1–2 badge titles representing training or excellence  
+
+STYLE & TONE:
+- Friendly, practical, and instructional — written for everyday people becoming professionals.  
+- Encourage pride in quality, punctuality, and communication.  
+- Use HTML-safe formatting (<p>, <ul>, <li>) in the expanded section.  
+- Ensure all guidance follows common U.S. gig standards and consumer safety laws.  
+
+CATEGORY-SPECIFIC NOTES:
+- **Handyman:** Limit to non-licensed repairs; note when professional licenses are needed (electrical, HVAC, plumbing).  
+- **Maid Service / Deep Cleaner:** Stress PPE, green cleaning options, client trust.  
+- **House Sitting:** Include home security checklists, communication updates, plant/pet care.  
+- **Tool Share Setup:** Explain agreements, tool labeling, and damage prevention.  
+- **Trash Can Sanitation:** Mention eco-safe cleaners, water runoff control, and odor management.  
+- **Home Energy Saver Audit:** Include DIY energy-saving steps (LED bulbs, insulation, filters).  
+
+FORMAT:
+Return all entries as a single JSON array, one object per service:
+{
+  "key": "maid-service",
+  "label": "Maid Service",
+  "summary": "Professional, reliable home cleaning—offered on-demand or by subscription for busy households.",
+  "expanded": "<p><strong>How It Works:</strong> ...</p><p><strong>Tools & Startup Gear:</strong> ...</p><p><strong>Certifications & Requirements:</strong> ...</p><p><strong>Safety & Best Practices:</strong> ...</p><p><strong>Pricing Model:</strong> ...</p><p><strong>Upsell & Business Growth:</strong> ...</p><p><strong>Get Gigified Badge:</strong> ...</p>",
+  "recommendedGear": ["Cleaning kit", "Microfiber cloths", "Vacuum", "Eco-safe disinfectant"],
+  "requirements": ["Background check", "Safety & hygiene training (recommended)"],
+  "badges": ["Certified Home Giger", "Safety Verified"]
+}
+
+AFTER YOU FINISH:
+- Summarize key business themes: repeat bookings, trust building, upsells.
+- Suggest cross-sells (e.g., Maid Service + Laundry Pickup + Declutter Coach).
+- Prepare to move next into **Outdoor & Yard Care** upon user confirmation.
+
+END OF INSTRUCTIONS.
