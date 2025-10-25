@@ -203,6 +203,12 @@ export function Navbar() {
                 Learn
               </Button>
             </Link>
+            <Link href="/community" data-testid="link-community-mobile">
+              <Button variant="ghost" className="w-full justify-start" onClick={() => setMobileMenuOpen(false)}>
+                <Users className="w-4 h-4 mr-2" />
+                Community
+              </Button>
+            </Link>
             {user ? (
               <>
                 <Link href={`/profile/${user.id}`} data-testid="link-profile-mobile">
