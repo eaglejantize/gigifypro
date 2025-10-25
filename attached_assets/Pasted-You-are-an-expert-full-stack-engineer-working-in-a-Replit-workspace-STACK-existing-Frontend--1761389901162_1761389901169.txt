@@ -1,0 +1,246 @@
+You are an expert full-stack engineer working in a Replit workspace.
+
+STACK (existing):
+- Frontend: Vite + React + TypeScript (client/)
+- Backend: Express + TypeScript (server/)
+- DB: Prisma + PostgreSQL
+- Current features: Auth, Services + Knowledge Hub, InfoPopover, Admin basics, CTA tracking, analytics, testimonials
+
+LAUNCH SPRINT GOALS
+A) Payments (Stripe test-mode) — client checkout + server payments API
+B) Stripe Connect (Express accounts) — gig worker onboarding (test-mode)
+C) Legal: Terms, Privacy, Refunds, Cookie notice
+D) Security hardening: Helmet, rate limiting, secure cookies, CORS
+E) SEO + PWA basics: sitemap, robots, manifest + icons
+F) Admin: simple payments/payouts snapshot
+
+=====================================
+A) PAYMENTS — STRIPE TEST INTEGRATION
+=====================================
+1) ENV
+- Add to .env.example (do not commit secrets):
+  TESTING_STRIPE_SECRET_KEY=sk_test_xxx
+  TESTING_VITE_STRIPE_PUBLIC_KEY=pk_test_xxx
+  STRIPE_WEBHOOK_SECRET=whsec_xxx
+  PLATFORM_FEE_PERCENT=12
+  MIN_CHARGE_USD=25
+  MIN_BLOCK_MINUTES=30
+- Ensure client uses import.meta.env.VITE_* for public key:
+  VITE_STRIPE_PUBLIC_KEY should be wired to TESTING_VITE_STRIPE_PUBLIC_KEY in Replit Secrets.
+
+2) Prisma — Booking payment fields (if not present):
+- Add/extend Booking model: paymentIntentId String?, amountCents Int?, currency String? @default("usd"), paid Boolean @default(false), paymentStatus String? (e.g., requires_payment_method/succeeded), feePercent Int? (default from env), applicationFeeCents Int? (computed).
+- npx prisma generate && npx prisma migrate dev -n "launch_payments_fields"
+
+3) Server: Stripe client + helpers
+File: server/services/stripe.ts
+------------------------------------------------
+import Stripe from "stripe";
+export const stripe = new Stripe(process.env.TESTING_STRIPE_SECRET_KEY as string, { apiVersion: "2024-06-20" } as any);
+export const CURRENCY = "usd";
+export function usdToCents(v:number){ return Math.round(v*100); }
+export function centsToUsd(c:number){ return (c/100).toFixed(2); }
+------------------------------------------------
+
+4) Server: payments routes
+File: server/routes/payments.ts
+------------------------------------------------
+import { Router } from "express";
+import { PrismaClient } from "@prisma/client";
+import { stripe, usdToCents } from "../services/stripe";
+const prisma = new PrismaClient();
+const r = Router();
+
+/**
+ * POST /api/payments/create-intent
+ * body: { bookingId: string, blocks: number, hourlyUsd?: number, anchorUsd?: number }
+ * Pricing: anchor of $25 per 30 min (from env); workers may set rates; compute amount safely.
+ */
+r.post("/create-intent", async (req, res) => {
+  const uid = (req.session as any)?.uid;
+  if (!uid) return res.status(401).json({ error: "Unauthorized" });
+
+  const { bookingId, blocks = 1, hourlyUsd, anchorUsd } = req.body || {};
+  const booking = await prisma.booking.findUnique({ where: { id: bookingId }, include: { worker: true, client: true }});
+  if (!booking) return res.status(404).json({ error: "Booking not found" });
+
+  const minBlock = Number(process.env.MIN_BLOCK_MINUTES || 30);
+  const minCharge = Number(process.env.MIN_CHARGE_USD || 25);
+  const feePercent = Number(process.env.PLATFORM_FEE_PERCENT || 12);
+
+  // Compute price: prefer hourly * time else anchor
+  const minutes = blocks * minBlock;
+  const base = hourlyUsd ? (hourlyUsd/60)*minutes : (anchorUsd || minCharge) * (minutes/minBlock);
+  const amountCents = usdToCents(Math.max(base, minCharge));
+  const applicationFeeCents = Math.round(amountCents * (feePercent/100));
+
+  // Create PI (no Connect transfer here yet; step B will upgrade)
+  const pi = await stripe.paymentIntents.create({
+    amount: amountCents,
+    currency: "usd",
+    automatic_payment_methods: { enabled: true },
+    metadata: { bookingId, workerId: booking.workerId, clientId: booking.clientId, minutes: String(minutes) }
+  });
+
+  await prisma.booking.update({
+    where: { id: bookingId },
+    data: {
+      amountCents, currency: "usd", feePercent,
+      applicationFeeCents, paymentIntentId: pi.id, paymentStatus: pi.status
+    }
+  });
+
+  res.json({ clientSecret: pi.client_secret, amountCents, feePercent, applicationFeeCents, status: pi.status });
+});
+
+/**
+ * Webhook to confirm succeeded payments
+ */
+r.post("/webhook", async (req, res) => {
+  const sig = req.headers["stripe-signature"] as string;
+  const secret = process.env.STRIPE_WEBHOOK_SECRET as string;
+  let event:any;
+  try {
+    const raw = (req as any).rawBody; // ensure raw body middleware is used
+    const Stripe = require("stripe");
+    event = Stripe.webhooks.constructEvent(raw, sig, secret);
+  } catch (err:any) {
+    console.error("Webhook signature verify failed", err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+  if (event.type === "payment_intent.succeeded") {
+    const pi = event.data.object;
+    const bookingId = pi.metadata?.bookingId;
+    if (bookingId) {
+      await prisma.booking.update({
+        where: { id: bookingId },
+        data: { paid: true, paymentStatus: "succeeded" }
+      });
+    }
+  }
+  res.json({ received: true });
+});
+
+export default r;
+------------------------------------------------
+
+5) Server: add raw body for webhook + mount routes
+- In server entry (e.g., server/index.ts): before app.use(express.json()), add:
+  app.post("/api/payments/webhook", express.raw({ type: "application/json" }), paymentsWebhookHandler);
+  For other routes keep express.json().
+- Alternatively, in routes.ts, mount payments and ensure webhook uses raw. Keep consistent.
+
+6) Client: Stripe Elements checkout
+- Add dependency: @stripe/stripe-js @stripe/react-stripe-js
+- Create page: client/src/pages/Checkout.tsx with a CardElement Payment form that calls /api/payments/create-intent then confirms using confirmCardPayment.
+- Route: /checkout/:bookingId
+- After success: show receipt with amount and “Go to Dashboard”.
+
+============================================
+B) STRIPE CONNECT — GIGER ONBOARDING (TEST)
+============================================
+1) Prisma: add worker Connect fields
+- On Worker/User model: stripeAccountId String?; payoutsEnabled Boolean? @default(false)
+
+2) Server: routes for onboarding links
+File: server/routes/connect.ts
+------------------------------------------------
+import { Router } from "express";
+import { PrismaClient } from "@prisma/client";
+import { stripe } from "../services/stripe";
+const prisma = new PrismaClient(); const r = Router();
+
+r.post("/onboard", async (req,res)=>{
+  const uid = (req.session as any)?.uid;
+  if (!uid) return res.status(401).json({ error: "Unauthorized" });
+  const user = await prisma.user.findUnique({ where: { id: uid }});
+  if (!user) return res.status(404).json({ error: "User not found" });
+
+  let accountId = user.stripeAccountId || null;
+  if (!accountId) {
+    const acct = await stripe.accounts.create({ type: "express", email: user.email });
+    accountId = acct.id;
+    await prisma.user.update({ where: { id: uid }, data: { stripeAccountId: accountId }});
+  }
+  const origin = `${req.protocol}://${req.get("host")}`;
+  const link = await stripe.accountLinks.create({
+    account: accountId,
+    refresh_url: `${origin}/connect/refresh`,
+    return_url: `${origin}/connect/return`,
+    type: "account_onboarding"
+  });
+  res.json({ url: link.url });
+});
+
+r.get("/status", async (req,res)=>{
+  const uid = (req.session as any)?.uid;
+  if (!uid) return res.json({ connected:false });
+  const user = await prisma.user.findUnique({ where: { id: uid }});
+  if (!user?.stripeAccountId) return res.json({ connected:false });
+  const acct = await stripe.accounts.retrieve(user.stripeAccountId);
+  res.json({ connected: !!acct.charges_enabled, payoutsEnabled: !!acct.payouts_enabled });
+});
+
+export default r;
+------------------------------------------------
+- Mount: api.use("/connect", connectRouter)
+
+3) Client: simple “Get Paid (Connect)” button on Worker Dashboard
+- Calls POST /api/connect/onboard and redirects to returned URL.
+- Show /api/connect/status on load.
+
+4) NOTE: For first launch, we’ll **capture funds to platform** (no transfer). After test, we can add `transfer_data` for destination charges to the worker account and set `application_fee_amount`.
+
+================================================
+C) LEGAL PAGES + COOKIE NOTICE
+================================================
+Create:
+- client/src/pages/legal/Terms.tsx
+- client/src/pages/legal/Privacy.tsx
+- client/src/pages/legal/Refunds.tsx
+Use concise site policies (placeholders ok; mark TODO for lawyer review). Link them in footer.
+
+Add simple cookie consent:
+- client/src/components/CookieNotice.tsx storing a localStorage flag; display banner once.
+
+========================================
+D) SECURITY HARDENING (EXPRESS)
+========================================
+- Add helmet: npm i helmet
+- Add express-rate-limit: npm i express-rate-limit
+- Configure:
+  - app.set("trust proxy", 1)
+  - Session cookies: secure in production, sameSite:"lax", httpOnly:true
+  - Rate-limit /api/auth/*, /api/payments/*, /api/connect/*, /api/track/*
+  - CORS: only allow same-origin and your preview domain if needed.
+
+========================================
+E) SEO + PWA BASICS
+========================================
+1) Public files:
+- client/public/robots.txt (allow; disallow /admin/)
+- client/public/sitemap.xml (generate with routes: /, /services, /knowledge, /store, /legal/*)
+- client/public/manifest.webmanifest (name, icons you already added)
+
+2) Add default meta tags:
+- client/index.html: title template, description, og:title/description/image fallback
+
+========================================
+F) ADMIN — PAYMENTS SNAPSHOT
+========================================
+- Create /api/admin/payments/summary (admin only): total bookings, paid bookings, total processed amount (test-mode).
+- Admin page: client/src/pages/admin/AdminPayments.tsx — simple totals + last 20 bookings table.
+
+========================================
+QA / ACCEPTANCE
+========================================
+- You can create a test booking, open /checkout/:bookingId, pay with Stripe test card 4242 4242 4242 4242.
+- Webhook marks booking paid.
+- Worker dashboard shows Connect status; onboarding link functions (test-mode).
+- Legal pages linked in footer; cookie notice appears once.
+- Security: headers from Helmet present; rate limiter logs.
+- SEO/PWA files exist and validate.
+
+RETURN:
+- List of files added/edited, env vars required, and any manual steps (webhook URL setup).
+- Instructions to test end-to-end in Stripe test-mode.
