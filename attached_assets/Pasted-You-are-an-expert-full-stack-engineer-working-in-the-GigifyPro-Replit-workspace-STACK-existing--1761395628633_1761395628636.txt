@@ -1,0 +1,548 @@
+You are an expert full-stack engineer working in the GigifyPro Replit workspace.
+
+STACK (existing):
+- Vite + React + TS (client/)
+- Express + TS (server/)
+- Prisma + PostgreSQL
+- Auth + roles (user/admin), Knowledge Hub, Services, InfoPopover, Analytics
+
+GOAL:
+Implement a **Public Discourse** system (“Digital Town Square”) where users can:
+- Post ideas, questions, success stories, and how-tos
+- Comment and reply
+- React (Like/Insightful/Helpful)
+- Tag posts by **Service** (e.g., #lawn-care) and **Topic** (Ideas, Service Tips, Show & Tell, Neighborhood)
+- View feeds (Latest / Hot / Following / Service)
+- Report content; Admins moderate
+- Basic reputation (karma) from reactions/accepted answers
+- Safe text (sanitized Markdown) + rate limits + spam controls
+
+Deliverables (code + DB + pages + APIs) with acceptance checklist at the end.
+
+====================================================
+A) PRISMA SCHEMA (MODELS)
+====================================================
+File: prisma/schema.prisma (append)
+------------------------------------------------
+model Topic {
+  id        String   @id @default(cuid())
+  key       String   @unique   // "ideas", "service-tips", "show-tell", "neighborhood"
+  name      String
+  createdAt DateTime @default(now())
+  posts     Post[]
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  authorId  String
+  title     String
+  bodyMd    String   // markdown
+  bodyHtml  String   // sanitized HTML (server-generated)
+  serviceKey String? // e.g., "lawn-care" (optional)
+  topicId   String
+  score     Int      @default(0)
+  views     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author    User     @relation(fields: [authorId], references: [id])
+  topic     Topic    @relation(fields: [topicId], references: [id])
+  comments  Comment[]
+  reactions Reaction[]
+  reports   Report[]
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  postId    String
+  authorId  String
+  parentId  String?  // threaded replies
+  bodyMd    String
+  bodyHtml  String
+  score     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post      Post     @relation(fields: [postId], references: [id])
+  author    User     @relation(fields: [authorId], references: [id])
+  reactions Reaction[]
+}
+
+enum ReactionKind {
+  LIKE
+  HELPFUL
+  INSIGHTFUL
+}
+
+model Reaction {
+  id        String        @id @default(cuid())
+  userId    String
+  postId    String?
+  commentId String?
+  kind      ReactionKind
+  createdAt DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id])
+  post      Post?     @relation(fields: [postId], references: [id])
+  comment   Comment?  @relation(fields: [commentId], references: [id])
+
+  @@unique([userId, postId, kind])
+  @@unique([userId, commentId, kind])
+}
+
+model Follow {
+  id        String   @id @default(cuid())
+  followerId String
+  serviceKey String?  // follow a service
+  userId    String?   // follow a user
+  createdAt DateTime @default(now())
+
+  follower  User     @relation(fields: [followerId], references: [id])
+}
+
+model Report {
+  id        String   @id @default(cuid())
+  reporterId String
+  postId    String?
+  commentId String?
+  reason    String
+  createdAt DateTime @default(now())
+  status    ReportStatus @default(PENDING)
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  ACTIONED
+}
+
+model Reputation {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  karma     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id])
+}
+------------------------------------------------
+Run:
+- npx prisma generate
+- npx prisma migrate dev -n "community_discourse_v1"
+
+Seed Topics:
+File: server/scripts/seedTopics.ts
+------------------------------------------------
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
+async function run() {
+  const topics = [
+    { key: "ideas", name: "Ideas" },
+    { key: "service-tips", name: "Service Tips" },
+    { key: "show-tell", name: "Show & Tell" },
+    { key: "neighborhood", name: "Neighborhood" }
+  ];
+  for (const t of topics) await prisma.topic.upsert({ where: { key: t.key }, update: t, create: t });
+  console.log("✅ Seeded topics");
+}
+run().finally(()=>process.exit(0));
+------------------------------------------------
+Run once:
+- npx ts-node server/scripts/seedTopics.ts
+
+====================================================
+B) SERVER — UTILS (Markdown sanitize + hot score)
+====================================================
+File: server/utils/markdown.ts
+------------------------------------------------
+import DOMPurify from "isomorphic-dompurify";
+import { marked } from "marked";
+export function mdToSafeHtml(md: string) {
+  const raw = marked.parse(md || "", { mangle:false, headerIds:false }) as string;
+  return DOMPurify.sanitize(raw, { USE_PROFILES: { html: true } });
+}
+------------------------------------------------
+Dependencies:
+- npm i marked isomorphic-dompurify
+
+File: server/utils/hot.ts
+------------------------------------------------
+export function hotScore(upvotes: number, ageHours: number) {
+  // Simple "hot" rank: weighted by time decay
+  return Math.round(upvotes * 1000 / Math.pow(1 + ageHours, 1.5));
+}
+------------------------------------------------
+
+====================================================
+C) SERVER — ROUTES (CRUD, reactions, reports, feeds)
+====================================================
+File: server/routes/community.ts
+------------------------------------------------
+import { Router } from "express";
+import { PrismaClient, ReactionKind } from "@prisma/client";
+import { mdToSafeHtml } from "../utils/markdown";
+import { hotScore } from "../utils/hot";
+const prisma = new PrismaClient();
+const r = Router();
+
+// Auth guard
+function needAuth(req:any,res:any,next:any){ if(!req.session?.uid) return res.status(401).json({error:"Unauthorized"}); next(); }
+
+// Create Post
+r.post("/posts", needAuth, async (req,res)=>{
+  const { title, bodyMd, serviceKey, topicKey } = req.body||{};
+  const topic = await prisma.topic.findUnique({ where: { key: topicKey || "ideas" }});
+  if (!title || !bodyMd || !topic) return res.status(400).json({ error:"Missing fields" });
+  const html = mdToSafeHtml(bodyMd);
+  const p = await prisma.post.create({
+    data: { title, bodyMd, bodyHtml: html, serviceKey: serviceKey || null, topicId: topic.id, authorId: req.session.uid }
+  });
+  res.json(p);
+});
+
+// Get Post
+r.get("/posts/:id", async (req,res)=>{
+  const p = await prisma.post.findUnique({ where:{ id:req.params.id }, include:{ author:true }});
+  if(!p) return res.status(404).json({error:"Not found"});
+  await prisma.post.update({ where:{ id:p.id }, data:{ views: { increment: 1 }}});
+  res.json(p);
+});
+
+// List/Feed
+r.get("/posts", async (req,res)=>{
+  const { mode="latest", serviceKey, topicKey, cursor, take="20" } = req.query as any;
+  const takeNum = Math.min(50, Number(take)||20);
+  const where:any = {};
+  if (serviceKey) where.serviceKey = serviceKey;
+  if (topicKey) {
+    const t = await prisma.topic.findUnique({ where:{ key: String(topicKey)}});
+    if (t) where.topicId = t.id;
+  }
+  const posts = await prisma.post.findMany({
+    where,
+    orderBy: mode==="hot" ? { score:"desc" } : { createdAt:"desc" },
+    take: takeNum,
+    skip: cursor ? 1 : 0,
+    ...(cursor ? { cursor: { id: String(cursor) }} : {})
+  });
+  res.json(posts);
+});
+
+// React (post/comment)
+r.post("/react", needAuth, async (req,res)=>{
+  const { targetType, targetId, kind } = req.body||{};
+  if (!["post","comment"].includes(targetType)) return res.status(400).json({error:"Invalid target"});
+  const k = (kind||"LIKE").toUpperCase();
+  if (!Object.keys(ReactionKind).includes(k)) return res.status(400).json({error:"Invalid kind"});
+  let created;
+  if (targetType==="post") {
+    created = await prisma.reaction.upsert({
+      where: { userId_postId_kind: { userId: req.session.uid, postId: targetId, kind: k as any } },
+      update: {},
+      create: { userId: req.session.uid, postId: targetId, kind: k as any }
+    });
+    // bump post score & author karma
+    const post = await prisma.post.findUnique({ where:{ id: targetId }});
+    if (post) {
+      const up = await prisma.reaction.count({ where:{ postId: targetId }});
+      const ageH = (Date.now()-post.createdAt.getTime())/3600000;
+      const score = hotScore(up, ageH);
+      await prisma.post.update({ where:{ id: targetId }, data:{ score }});
+      await prisma.reputation.upsert({
+        where: { userId: post.authorId },
+        create: { userId: post.authorId, karma: 1 },
+        update: { karma: { increment: 1 } }
+      });
+    }
+  } else {
+    created = await prisma.reaction.upsert({
+      where: { userId_commentId_kind: { userId: req.session.uid, commentId: targetId, kind: k as any } },
+      update: {},
+      create: { userId: req.session.uid, commentId: targetId, kind: k as any }
+    });
+    const c = await prisma.comment.findUnique({ where:{ id: targetId }});
+    if (c) {
+      await prisma.reputation.upsert({
+        where: { userId: c.authorId },
+        create: { userId: c.authorId, karma: 1 },
+        update: { karma: { increment: 1 } }
+      });
+    }
+  }
+  res.json({ ok:true, created });
+});
+
+// Comment create
+r.post("/comments", needAuth, async (req,res)=>{
+  const { postId, parentId, bodyMd } = req.body||{};
+  if (!postId || !bodyMd) return res.status(400).json({ error:"Missing fields" });
+  const html = mdToSafeHtml(bodyMd);
+  const c = await prisma.comment.create({ data: { postId, parentId: parentId || null, authorId: req.session.uid, bodyMd, bodyHtml: html }});
+  res.json(c);
+});
+
+// Report
+r.post("/reports", needAuth, async (req,res)=>{
+  const { postId, commentId, reason } = req.body||{};
+  if (!reason || (!postId && !commentId)) return res.status(400).json({ error:"Missing fields" });
+  const rep = await prisma.report.create({ data: { reporterId: req.session.uid, postId: postId || null, commentId: commentId || null, reason }});
+  res.json(rep);
+});
+
+export default r;
+------------------------------------------------
+Wire routes:
+- server/routes.ts → api.use("/community", communityRouter)
+
+====================================================
+D) SERVER — ADMIN MODERATION
+====================================================
+File: server/routes/admin.community.ts
+------------------------------------------------
+import { Router } from "express";
+import { PrismaClient } from "@prisma/client";
+import isAdmin from "../middleware/isAdmin";
+const prisma = new PrismaClient();
+const r = Router(); r.use(isAdmin);
+
+// list reports
+r.get("/reports", async (_req,res)=>{
+  const rows = await prisma.report.findMany({ where:{ status: "PENDING" }, orderBy:{ createdAt:"desc" }, take:100 });
+  res.json(rows);
+});
+
+// action a report
+r.post("/reports/action", async (req,res)=>{
+  const { id, action } = req.body||{}; // "dismiss" | "remove-post" | "remove-comment"
+  const rep = await prisma.report.update({ where:{ id }, data:{ status: "REVIEWED" }});
+  if (action === "remove-post" && rep.postId) await prisma.post.delete({ where:{ id: rep.postId }});
+  if (action === "remove-comment" && rep.commentId) await prisma.comment.delete({ where:{ id: rep.commentId }});
+  res.json({ ok:true });
+});
+
+export default r;
+------------------------------------------------
+Wire:
+- server/routes.ts → api.use("/admin/community", adminCommunityRouter)
+
+====================================================
+E) SECURITY / RATE LIMITS (COMMUNITY)
+====================================================
+- If not already, apply express-rate-limit to:
+  - POST /api/community/posts (e.g., 10/min)
+  - POST /api/community/comments (30/min)
+  - POST /api/community/react (60/min)
+  - POST /api/community/reports (20/min)
+
+====================================================
+F) CLIENT — UI PAGES & COMPONENTS
+====================================================
+1) Components
+File: client/src/components/MarkdownEditor.tsx
+------------------------------------------------
+import { useState } from "react";
+export default function MarkdownEditor({ value, onChange, placeholder="" }:{ value:string; onChange:(v:string)=>void; placeholder?:string }) {
+  return (
+    <textarea value={value} onChange={e=>onChange(e.target.value)}
+      placeholder={placeholder}
+      className="w-full min-h-[140px] border rounded-lg p-3 font-mono text-sm" />
+  );
+}
+------------------------------------------------
+
+File: client/src/components/ReactionBar.tsx
+------------------------------------------------
+export default function ReactionBar({ targetType, targetId }:{ targetType:"post"|"comment"; targetId:string }) {
+  async function ping(kind:string){
+    await fetch("/api/community/react", { method:"POST", credentials:"include", headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ targetType, targetId, kind }) });
+  }
+  return (
+    <div className="flex gap-2 text-xs">
+      <button onClick={()=>ping("LIKE")} className="rounded border px-2 py-0.5">👍 Like</button>
+      <button onClick={()=>ping("HELPFUL")} className="rounded border px-2 py-0.5">✅ Helpful</button>
+      <button onClick={()=>ping("INSIGHTFUL")} className="rounded border px-2 py-0.5">💡 Insightful</button>
+    </div>
+  );
+}
+------------------------------------------------
+
+2) Pages
+File: client/src/pages/community/CommunityHome.tsx
+------------------------------------------------
+import { useEffect, useState } from "react";
+import { Link } from "wouter";
+
+export default function CommunityHome(){
+  const [posts, setPosts] = useState<any[]>([]);
+  const [mode, setMode] = useState<"latest"|"hot">("latest");
+  const [topicKey, setTopicKey] = useState<string>("");
+  const [serviceKey, setServiceKey] = useState<string>("");
+
+  async function load(){
+    const qs = new URLSearchParams({ mode, ...(topicKey?{topicKey}:{}) , ...(serviceKey?{serviceKey}:{}) });
+    const r = await fetch(`/api/community/posts?${qs}`, { credentials:"include" });
+    setPosts(await r.json());
+  }
+  useEffect(()=>{ load(); },[mode, topicKey, serviceKey]);
+
+  return (
+    <div className="mx-auto max-w-6xl p-6 space-y-6">
+      <div className="flex flex-wrap items-center gap-3">
+        <select value={mode} onChange={e=>setMode(e.target.value as any)} className="border rounded px-2 py-1 text-sm">
+          <option value="latest">Latest</option>
+          <option value="hot">Hot</option>
+        </select>
+        <input className="border rounded px-2 py-1 text-sm" placeholder="Filter by service key (e.g., lawn-care)" value={serviceKey} onChange={e=>setServiceKey(e.target.value)} />
+        <select value={topicKey} onChange={e=>setTopicKey(e.target.value)} className="border rounded px-2 py-1 text-sm">
+          <option value="">All Topics</option>
+          <option value="ideas">Ideas</option>
+          <option value="service-tips">Service Tips</option>
+          <option value="show-tell">Show & Tell</option>
+          <option value="neighborhood">Neighborhood</option>
+        </select>
+        <a href="/community/new" className="ml-auto rounded bg-blue-600 text-white px-3 py-1.5 text-sm">New Post</a>
+      </div>
+      <ul className="space-y-3">
+        {posts.map(p=>(
+          <li key={p.id} className="rounded border p-3 hover:bg-gray-50">
+            <Link href={`/community/post/${p.id}`}><div className="font-semibold">{p.title}</div></Link>
+            <div className="text-xs text-gray-500">{new Date(p.createdAt).toLocaleString()} · {p.serviceKey ? `#${p.serviceKey}` : ''}</div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+------------------------------------------------
+
+File: client/src/pages/community/NewPost.tsx
+------------------------------------------------
+import { useState } from "react";
+import MarkdownEditor from "../../components/MarkdownEditor";
+
+export default function NewPost(){
+  const [title, setTitle] = useState("");
+  const [serviceKey, setServiceKey] = useState("");
+  const [topicKey, setTopicKey] = useState("ideas");
+  const [bodyMd, setBodyMd] = useState("");
+
+  async function submit(){
+    const r = await fetch("/api/community/posts", { method:"POST", credentials:"include", headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ title, serviceKey: serviceKey||null, topicKey, bodyMd }) });
+    if (r.ok) { const p = await r.json(); location.href = `/community/post/${p.id}`; }
+  }
+  return (
+    <div className="mx-auto max-w-3xl p-6 space-y-4">
+      <h1 className="text-2xl font-bold">New Post</h1>
+      <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Title" className="w-full border rounded p-2" />
+      <div className="flex gap-2">
+        <input value={serviceKey} onChange={e=>setServiceKey(e.target.value)} placeholder="Service key (optional)" className="flex-1 border rounded p-2" />
+        <select value={topicKey} onChange={e=>setTopicKey(e.target.value)} className="border rounded p-2">
+          <option value="ideas">Ideas</option>
+          <option value="service-tips">Service Tips</option>
+          <option value="show-tell">Show & Tell</option>
+          <option value="neighborhood">Neighborhood</option>
+        </select>
+      </div>
+      <MarkdownEditor value={bodyMd} onChange={setBodyMd} placeholder="Share your idea, question, or story in Markdown…" />
+      <button onClick={submit} className="rounded bg-blue-600 text-white px-4 py-2">Publish</button>
+    </div>
+  );
+}
+------------------------------------------------
+
+File: client/src/pages/community/PostDetail.tsx
+------------------------------------------------
+import { useEffect, useState } from "react";
+import MarkdownEditor from "../../components/MarkdownEditor";
+import ReactionBar from "../../components/ReactionBar";
+
+export default function PostDetail({ params }:{ params:{ id:string }}) {
+  const [post, setPost] = useState<any>(null);
+  const [comments, setComments] = useState<any[]>([]);
+  const [md, setMd] = useState("");
+  async function load(){
+    const p = await fetch(`/api/community/posts/${params.id}`, { credentials:"include" }).then(r=>r.json());
+    setPost(p);
+  }
+  async function addComment(){
+    await fetch("/api/community/comments", { method:"POST", credentials:"include", headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ postId: params.id, bodyMd: md }) });
+    setMd(""); loadComments();
+  }
+  async function loadComments(){
+    const r = await fetch(`/api/community/posts/${params.id}/comments`, { credentials:"include" });
+    setComments(await r.json());
+  }
+  useEffect(()=>{ load(); loadComments(); },[params.id]);
+
+  if (!post) return <div className="p-6">Loading…</div>;
+  return (
+    <div className="mx-auto max-w-3xl p-6 space-y-6">
+      <div className="rounded border bg-white p-4">
+        <h1 className="text-xl font-bold">{post.title}</h1>
+        <div className="text-xs text-gray-500">{new Date(post.createdAt).toLocaleString()} · {post.serviceKey?`#${post.serviceKey}`:''}</div>
+        <div className="prose" dangerouslySetInnerHTML={{ __html: post.bodyHtml }} />
+        <div className="mt-3"><ReactionBar targetType="post" targetId={post.id} /></div>
+      </div>
+
+      <section>
+        <h2 className="font-semibold">Comments</h2>
+        <div className="space-y-3">
+          {comments.map(c=>(
+            <div key={c.id} className="rounded border p-3">
+              <div className="prose" dangerouslySetInnerHTML={{ __html: c.bodyHtml }} />
+              <div className="mt-2"><ReactionBar targetType="comment" targetId={c.id}/></div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4">
+          <MarkdownEditor value={md} onChange={setMd} placeholder="Write a helpful comment…" />
+          <button onClick={addComment} className="mt-2 rounded bg-blue-600 text-white px-3 py-1.5">Post Comment</button>
+        </div>
+      </section>
+    </div>
+  );
+}
+------------------------------------------------
+
+Add comments list endpoint:
+- server/routes/community.ts → add:
+r.get("/posts/:id/comments", async (req,res)=>{
+  const rows = await prisma.comment.findMany({ where:{ postId: req.params.id, parentId: null }, orderBy:{ createdAt:"asc" }});
+  res.json(rows);
+});
+
+3) Router wiring
+- client/src/App.tsx (or router):
+  <Route path="/community" component={CommunityHome}/>
+  <Route path="/community/new" component={NewPost}/>
+  <Route path="/community/post/:id" component={PostDetail}/>
+
+====================================================
+G) TRUST & SAFETY COPY (FOOTER LINK)
+====================================================
+- Add a page client/src/pages/legal/CommunityGuidelines.tsx with clear rules:
+  - Be respectful; no harassment/hate.
+  - No illegal services or unsafe advice.
+  - Disclose sponsored content, if any.
+  - Use service tags accurately.
+  - Violations can lead to removal or bans.
+- Link it from footer and the New Post page (small note: “By posting, you agree to Community Guidelines.”)
+
+====================================================
+H) ACCEPTANCE CHECKLIST
+====================================================
+- Create a post under "Ideas" with #lawn-care tag → appears in Latest and Hot (hot may lag until reactions).
+- React “Helpful” to a post → author karma increments; post score recalculates; Hot feed reorders.
+- Add a comment and react to it → comment author karma increments.
+- Report a comment → visible in /api/admin/community/reports; action remove works.
+- Rate limits apply to post/comment/react/report endpoints.
+- Markdown is sanitized; images/links rendered safely.
+- Community Guidelines page visible.
+
+Return:
+- Files added/edited; migration name; any deviations.
+- Sample curl calls (create post, react, report).
+- Short note confirming Hot feed changes with reactions/time.

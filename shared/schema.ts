@@ -33,6 +33,8 @@ export const badgeTypeEnum = pgEnum("badge_type", [
   "handy_essentials",
   "companion_care"
 ]);
+export const reactionKindEnum = pgEnum("reaction_kind", ["LIKE", "HELPFUL", "INSIGHTFUL"]);
+export const reportStatusEnum = pgEnum("report_status", ["PENDING", "REVIEWED", "ACTIONED"]);
 
 // Users table
 export const users = pgTable("users", {
@@ -251,6 +253,81 @@ export const analyticsEvents = pgTable("analytics_events", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Community: Topics
+export const topics = pgTable("topics", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  key: text("key").notNull().unique(),
+  name: text("name").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Community: Posts
+export const posts = pgTable("posts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  authorId: varchar("author_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  bodyMd: text("body_md").notNull(),
+  bodyHtml: text("body_html").notNull(),
+  serviceKey: text("service_key"),
+  topicId: varchar("topic_id").notNull().references(() => topics.id),
+  score: integer("score").notNull().default(0),
+  views: integer("views").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Community: Comments
+export const comments: ReturnType<typeof pgTable<"comments", any>> = pgTable("comments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  postId: varchar("post_id").notNull().references(() => posts.id, { onDelete: "cascade" }),
+  authorId: varchar("author_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  parentId: varchar("parent_id"),
+  bodyMd: text("body_md").notNull(),
+  bodyHtml: text("body_html").notNull(),
+  score: integer("score").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Community: Reactions
+export const reactions = pgTable("reactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  postId: varchar("post_id").references(() => posts.id, { onDelete: "cascade" }),
+  commentId: varchar("comment_id").references(() => comments.id, { onDelete: "cascade" }),
+  kind: reactionKindEnum("kind").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Community: Follows
+export const follows = pgTable("follows", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  followerId: varchar("follower_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  serviceKey: text("service_key"),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Community: Reports
+export const reports = pgTable("reports", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  reporterId: varchar("reporter_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  postId: varchar("post_id").references(() => posts.id, { onDelete: "cascade" }),
+  commentId: varchar("comment_id").references(() => comments.id, { onDelete: "cascade" }),
+  reason: text("reason").notNull(),
+  status: reportStatusEnum("status").notNull().default("PENDING"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Community: Reputation
+export const reputations = pgTable("reputations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().unique().references(() => users.id, { onDelete: "cascade" }),
+  karma: integer("karma").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   workerProfile: one(workerProfiles, {
@@ -424,6 +501,89 @@ export const trainingProgressRelations = relations(trainingProgress, ({ one }) =
   }),
 }));
 
+export const topicsRelations = relations(topics, ({ many }) => ({
+  posts: many(posts),
+}));
+
+export const postsRelations = relations(posts, ({ one, many }) => ({
+  author: one(users, {
+    fields: [posts.authorId],
+    references: [users.id],
+  }),
+  topic: one(topics, {
+    fields: [posts.topicId],
+    references: [topics.id],
+  }),
+  comments: many(comments),
+  reactions: many(reactions),
+  reports: many(reports),
+}));
+
+export const commentsRelations = relations(comments, ({ one, many }) => ({
+  post: one(posts, {
+    fields: [comments.postId],
+    references: [posts.id],
+  }),
+  author: one(users, {
+    fields: [comments.authorId],
+    references: [users.id],
+  }),
+  parent: one(comments, {
+    fields: [comments.parentId],
+    references: [comments.id],
+  }),
+  reactions: many(reactions),
+  reports: many(reports),
+}));
+
+export const reactionsRelations = relations(reactions, ({ one }) => ({
+  user: one(users, {
+    fields: [reactions.userId],
+    references: [users.id],
+  }),
+  post: one(posts, {
+    fields: [reactions.postId],
+    references: [posts.id],
+  }),
+  comment: one(comments, {
+    fields: [reactions.commentId],
+    references: [comments.id],
+  }),
+}));
+
+export const followsRelations = relations(follows, ({ one }) => ({
+  follower: one(users, {
+    fields: [follows.followerId],
+    references: [users.id],
+  }),
+  user: one(users, {
+    fields: [follows.userId],
+    references: [users.id],
+  }),
+}));
+
+export const reportsRelations = relations(reports, ({ one }) => ({
+  reporter: one(users, {
+    fields: [reports.reporterId],
+    references: [users.id],
+  }),
+  post: one(posts, {
+    fields: [reports.postId],
+    references: [posts.id],
+  }),
+  comment: one(comments, {
+    fields: [reports.commentId],
+    references: [comments.id],
+  }),
+}));
+
+export const reputationsRelations = relations(reputations, ({ one }) => ({
+  user: one(users, {
+    fields: [reputations.userId],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -513,6 +673,44 @@ export const insertTrainingProgressSchema = createInsertSchema(trainingProgress)
   createdAt: true,
 });
 
+export const insertTopicSchema = createInsertSchema(topics).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertPostSchema = createInsertSchema(posts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCommentSchema = createInsertSchema(comments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertReactionSchema = createInsertSchema(reactions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertFollowSchema = createInsertSchema(follows).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertReportSchema = createInsertSchema(reports).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertReputationSchema = createInsertSchema(reputations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -564,3 +762,24 @@ export type InsertUserBadge = z.infer<typeof insertUserBadgeSchema>;
 
 export type TrainingProgress = typeof trainingProgress.$inferSelect;
 export type InsertTrainingProgress = z.infer<typeof insertTrainingProgressSchema>;
+
+export type Topic = typeof topics.$inferSelect;
+export type InsertTopic = z.infer<typeof insertTopicSchema>;
+
+export type Post = typeof posts.$inferSelect;
+export type InsertPost = z.infer<typeof insertPostSchema>;
+
+export type Comment = typeof comments.$inferSelect;
+export type InsertComment = z.infer<typeof insertCommentSchema>;
+
+export type Reaction = typeof reactions.$inferSelect;
+export type InsertReaction = z.infer<typeof insertReactionSchema>;
+
+export type Follow = typeof follows.$inferSelect;
+export type InsertFollow = z.infer<typeof insertFollowSchema>;
+
+export type Report = typeof reports.$inferSelect;
+export type InsertReport = z.infer<typeof insertReportSchema>;
+
+export type Reputation = typeof reputations.$inferSelect;
+export type InsertReputation = z.infer<typeof insertReputationSchema>;
