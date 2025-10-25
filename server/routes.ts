@@ -8,9 +8,11 @@ import { readServiceInfo } from "./content/serviceInfoStore";
 import meRouter from "./routes/me";
 import adminServiceInfoRouter from "./routes/admin.serviceInfo";
 import adminAnalyticsRouter from "./routes/admin.analytics";
+import adminCommunityRouter from "./routes/admin.community";
 import trackRouter from "./routes/track";
 import profileRouter from "./routes/profile";
 import testimonialsRouter from "./routes/testimonials";
+import communityRouter from "./routes/community";
 import { getCache, putCache } from "./utils/cache";
 
 // Stripe setup - from javascript_stripe integration
@@ -886,6 +888,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Testimonials route
   app.use("/api/testimonials", testimonialsRouter);
+
+  // Community routes
+  app.use("/api/community", communityRouter);
+  app.use("/api/admin/community", adminCommunityRouter);
 
   const httpServer = createServer(app);
   return httpServer;
