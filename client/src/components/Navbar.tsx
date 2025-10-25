@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Bell, Menu, X, Briefcase, MessageSquare, LayoutDashboard, Settings, LogOut, User, BookOpen } from "lucide-react";
+import { Bell, Menu, X, Briefcase, MessageSquare, LayoutDashboard, Settings, LogOut, User, BookOpen, Users } from "lucide-react";
 import { useState } from "react";
 
 export function Navbar() {
@@ -78,6 +78,16 @@ export function Navbar() {
                 className="font-medium"
               >
                 Learn
+              </Button>
+            </Link>
+            <Link href="/community" data-testid="link-community">
+              <Button
+                variant={isActive("/community") || location.startsWith("/community/") ? "default" : "ghost"}
+                size="sm"
+                className="font-medium"
+              >
+                <Users className="w-4 h-4 mr-1" />
+                Community
               </Button>
             </Link>
           </div>

@@ -27,6 +27,9 @@ import ArticleDetail from "@/pages/ArticleDetail";
 import Services from "@/pages/Services";
 import AdminServices from "@/pages/admin/AdminServices";
 import AdminAnalytics from "@/pages/AdminAnalytics";
+import CommunityHome from "@/pages/community/CommunityHome";
+import NewPost from "@/pages/community/NewPost";
+import PostDetail from "@/pages/community/PostDetail";
 
 function Router() {
   return (
@@ -48,6 +51,9 @@ function Router() {
       <Route path="/knowledge" component={KnowledgeHub} />
       <Route path="/knowledge/article/:slug" component={ArticleDetail} />
       <Route path="/services" component={Services} />
+      <Route path="/community" component={CommunityHome} />
+      <Route path="/community/new" component={NewPost} />
+      <Route path="/community/post/:id" component={PostDetail} />
       <Route path="/admin/services" component={AdminServices} />
       <Route path="/admin/analytics" component={AdminAnalytics} />
       <Route component={NotFound} />
