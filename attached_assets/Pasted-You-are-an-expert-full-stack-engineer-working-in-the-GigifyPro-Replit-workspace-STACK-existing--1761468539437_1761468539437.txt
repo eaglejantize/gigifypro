@@ -1,0 +1,547 @@
+You are an expert full-stack engineer working in the GigifyPro Replit workspace.
+
+STACK (existing):
+- Frontend: Vite + React + TypeScript (client/)
+- Backend: Express + TypeScript (server/)
+- DB: Prisma + PostgreSQL
+- Auth with sessions (user/admin)
+Goal: Build a modern social “town square” called **G-Square** with posts, media, comments, reactions, local/national feeds, moderation, seeds, and visible links.
+
+========================
+A) PRISMA SCHEMA MODELS
+========================
+Edit prisma/schema.prisma (add if missing; keep other models untouched):
+
+model GPost {
+  id          String   @id @default(cuid())
+  authorId    String
+  title       String?
+  bodyMd      String
+  bodyHtml    String
+  mediaUrl    String?
+  category    String?     // e.g. "lawn-care"
+  hashtags    String[]     // e.g. ["#Wins","#Tips"]
+  location    String?      // "90210" or "Nashville, TN"
+  visibility  GVisibility  @default(NATIONAL)
+  score       Int          @default(0)   // hot score (decays over time)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  author      User         @relation(fields: [authorId], references: [id])
+  comments    GComment[]
+  reactions   GReaction[]
+}
+
+model GComment {
+  id        String   @id @default(cuid())
+  postId    String
+  authorId  String
+  parentId  String?
+  bodyMd    String
+  bodyHtml  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post      GPost    @relation(fields: [postId], references: [id])
+  author    User     @relation(fields: [authorId], references: [id])
+  reactions GReaction[]
+}
+
+enum GReactionKind {
+  LIKE
+  HELPFUL
+  INSIGHTFUL
+}
+
+model GReaction {
+  id        String        @id @default(cuid())
+  userId    String
+  postId    String?
+  commentId String?
+  kind      GReactionKind
+  createdAt DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id])
+  post      GPost?    @relation(fields: [postId], references: [id])
+  comment   GComment? @relation(fields: [commentId], references: [id])
+
+  @@unique([userId, postId, kind])
+  @@unique([userId, commentId, kind])
+}
+
+enum GVisibility {
+  NATIONAL
+  LOCAL
+}
+
+model GReport {
+  id        String   @id @default(cuid())
+  reporterId String
+  postId    String?
+  commentId String?
+  reason    String
+  status    GReportStatus @default(PENDING)
+  createdAt DateTime @default(now())
+}
+
+enum GReportStatus {
+  PENDING
+  REVIEWED
+  ACTIONED
+}
+
+model Reputation {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  karma     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+Run:
+- npx prisma generate
+- npx prisma migrate dev -n "gsquare_v1"
+
+========================
+B) SERVER UTILITIES
+========================
+Create server/utils/markdown.ts:
+------------------------------------------------
+import DOMPurify from "isomorphic-dompurify";
+import { marked } from "marked";
+export function mdToSafeHtml(md: string) {
+  const raw = marked.parse(md || "", { mangle:false, headerIds:false }) as string;
+  return DOMPurify.sanitize(raw, { USE_PROFILES: { html: true } });
+}
+------------------------------------------------
+npm i marked isomorphic-dompurify
+
+Create server/utils/hotScore.ts:
+------------------------------------------------
+export function hotScore(upvotes:number, createdAt: Date){
+  const ageH = Math.max(1, (Date.now() - createdAt.getTime())/3600000);
+  return Math.round((upvotes * 1000) / Math.pow(ageH, 1.5));
+}
+------------------------------------------------
+
+========================
+C) SERVER ROUTES (API)
+========================
+Create server/routes/gsquare.ts:
+------------------------------------------------
+import { Router } from "express";
+import { PrismaClient, GReactionKind } from "@prisma/client";
+import { mdToSafeHtml } from "../utils/markdown";
+import { hotScore } from "../utils/hotScore";
+const prisma = new PrismaClient();
+const r = Router();
+
+// Auth guard
+function needAuth(req:any,res:any,next:any){ if(!req.session?.uid) return res.status(401).json({error:"Unauthorized"}); next(); }
+
+// Create post
+r.post("/posts", needAuth, async (req,res)=>{
+  const { title, bodyMd, mediaUrl, category, hashtags=[], location, visibility="NATIONAL" } = req.body||{};
+  if (!bodyMd) return res.status(400).json({error:"bodyMd required"});
+  const bodyHtml = mdToSafeHtml(bodyMd);
+  const post = await prisma.gPost.create({
+    data: { authorId: req.session.uid, title, bodyMd, bodyHtml, mediaUrl, category, hashtags, location, visibility }
+  });
+  res.json(post);
+});
+
+// List feed
+r.get("/posts", async (req,res)=>{
+  const { mode="latest", category, tag, near, visibility, take="20", cursor } = req.query as any;
+  const takeNum = Math.min(50, Number(take)||20);
+  const where:any = {};
+  if (category) where.category = String(category);
+  if (visibility) where.visibility = String(visibility);
+  if (tag) where.hashtags = { has: String(tag) };
+  if (near && (!visibility || visibility==="LOCAL")) { where.visibility = "LOCAL"; }
+
+  const posts = await prisma.gPost.findMany({
+    where,
+    orderBy: mode==="hot" ? { score:"desc" } : { createdAt:"desc" },
+    take: takeNum,
+    skip: cursor ? 1 : 0,
+    ...(cursor ? { cursor: { id: String(cursor) }} : {}),
+    include: { author:true }
+  });
+  res.json(posts);
+});
+
+// Single post
+r.get("/posts/:id", async (req,res)=>{
+  const post = await prisma.gPost.findUnique({ where:{ id: req.params.id }});
+  if (!post) return res.status(404).json({error:"Not found"});
+  res.json(post);
+});
+
+// Comments list
+r.get("/posts/:id/comments", async (req,res)=>{
+  const rows = await prisma.gComment.findMany({ where:{ postId: req.params.id, parentId: null }, orderBy:{ createdAt:"asc" }});
+  res.json(rows);
+});
+
+// Add comment
+r.post("/comments", needAuth, async (req,res)=>{
+  const { postId, parentId, bodyMd } = req.body||{};
+  if (!postId || !bodyMd) return res.status(400).json({error:"Missing fields"});
+  const bodyHtml = mdToSafeHtml(bodyMd);
+  const c = await prisma.gComment.create({ data:{ postId, parentId: parentId||null, authorId: req.session.uid, bodyMd, bodyHtml }});
+  res.json(c);
+});
+
+// React (post/comment)
+r.post("/react", needAuth, async (req,res)=>{
+  const { targetType, targetId, kind="LIKE" } = req.body||{};
+  const k = String(kind).toUpperCase();
+  if (!["post","comment"].includes(targetType)) return res.status(400).json({error:"Invalid targetType"});
+  if (!Object.keys(GReactionKind).includes(k)) return res.status(400).json({error:"Invalid kind"});
+
+  if (targetType==="post") {
+    await prisma.gReaction.upsert({
+      where:{ userId_postId_kind:{ userId: req.session.uid, postId: targetId, kind: k as any }},
+      create:{ userId: req.session.uid, postId: targetId, kind: k as any },
+      update:{}
+    });
+    // recompute score
+    const post = await prisma.gPost.findUnique({ where:{ id: targetId }});
+    if (post){
+      const up = await prisma.gReaction.count({ where:{ postId: targetId }});
+      const score = hotScore(up, post.createdAt);
+      await prisma.gPost.update({ where:{ id: targetId }, data:{ score }});
+      // karma
+      await prisma.reputation.upsert({
+        where:{ userId: post.authorId },
+        create:{ userId: post.authorId, karma: 1 },
+        update:{ karma: { increment: 1 } }
+      });
+    }
+  } else {
+    await prisma.gReaction.upsert({
+      where:{ userId_commentId_kind:{ userId: req.session.uid, commentId: targetId, kind: k as any }},
+      create:{ userId: req.session.uid, commentId: targetId, kind: k as any },
+      update:{}
+    });
+  }
+  res.json({ ok: true });
+});
+
+// Report content
+r.post("/report", needAuth, async (req,res)=>{
+  const { postId, commentId, reason } = req.body||{};
+  if (!reason || (!postId && !commentId)) return res.status(400).json({error:"Missing fields"});
+  const rep = await prisma.gReport.create({ data:{ reporterId: req.session.uid, postId: postId||null, commentId: commentId||null, reason }});
+  res.json(rep);
+});
+
+export default r;
+------------------------------------------------
+
+Create server/routes/admin.gsquare.ts:
+------------------------------------------------
+import { Router } from "express";
+import { PrismaClient } from "@prisma/client";
+import isAdmin from "../middleware/isAdmin";
+const prisma = new PrismaClient();
+const r = Router(); r.use(isAdmin);
+
+// list pending
+r.get("/reports", async (_req,res)=>{
+  const rows = await prisma.gReport.findMany({ where:{ status: "PENDING" }, orderBy:{ createdAt:"desc" }, take:100 });
+  res.json(rows);
+});
+
+// action
+r.post("/reports/action", async (req,res)=>{
+  const { id, action } = req.body||{};
+  const rep = await prisma.gReport.update({ where:{ id }, data:{ status: "REVIEWED" }});
+  if (action === "remove-post" && rep.postId) await prisma.gPost.delete({ where:{ id: rep.postId }});
+  if (action === "remove-comment" && rep.commentId) await prisma.gComment.delete({ where:{ id: rep.commentId }});
+  res.json({ ok:true });
+});
+
+export default r;
+------------------------------------------------
+
+Mount in server/routes.ts:
+------------------------------------------------
+// imports
+import gsquare from "./routes/gsquare";
+import adminGSquare from "./routes/admin.gsquare";
+// mounts
+api.use("/gsquare", gsquare);
+api.use("/admin/gsquare", adminGSquare);
+------------------------------------------------
+
+Optional: apply express-rate-limit to /api/gsquare POST endpoints.
+
+========================
+D) CLIENT UI (PAGES)
+========================
+Create client/src/pages/gsquare/components/ReactionBar.tsx:
+------------------------------------------------
+export default function ReactionBar({ type, id }:{ type:"post"|"comment"; id:string }){
+  async function fire(kind:string){
+    await fetch("/api/gsquare/react", {
+      method:"POST", credentials:"include",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ targetType: type, targetId: id, kind })
+    });
+  }
+  return (
+    <div className="flex gap-2 text-xs">
+      <button onClick={()=>fire("LIKE")} className="rounded border px-2 py-0.5">❤️ Support</button>
+      <button onClick={()=>fire("HELPFUL")} className="rounded border px-2 py-0.5">✅ Helpful</button>
+      <button onClick={()=>fire("INSIGHTFUL")} className="rounded border px-2 py-0.5">💡 Insightful</button>
+    </div>
+  );
+}
+------------------------------------------------
+
+Create client/src/pages/gsquare/components/PostCard.tsx:
+------------------------------------------------
+import ReactionBar from "./ReactionBar";
+export default function PostCard({ p }:{ p:any }){
+  return (
+    <article className="rounded-xl border bg-white p-4 shadow-sm">
+      {p.title ? <h3 className="font-semibold">{p.title}</h3> : null}
+      <div className="text-xs text-gray-500 mb-2">{new Date(p.createdAt).toLocaleString()} · {p.category ? `#${p.category}` : ""} {p.hashtags?.map((h:string)=>h).join(" ")}</div>
+      {p.mediaUrl ? <img src={p.mediaUrl} alt="" className="mb-3 rounded" /> : null}
+      <div className="prose" dangerouslySetInnerHTML={{ __html: p.bodyHtml }} />
+      <div className="mt-3"><ReactionBar type="post" id={p.id}/></div>
+      <a href={`/gsquare/post/${p.id}`} className="mt-3 inline-block text-sm text-blue-700">View & comment →</a>
+    </article>
+  );
+}
+------------------------------------------------
+
+Create client/src/pages/gsquare/GSquareHome.tsx:
+------------------------------------------------
+import { useEffect, useState } from "react";
+import PostCard from "./components/PostCard";
+
+export default function GSquareHome(){
+  const [posts, setPosts] = useState<any[]>([]);
+  const [mode, setMode] = useState<"latest"|"hot">("latest");
+  const [category, setCategory] = useState("");
+  const [tag, setTag] = useState("");
+  const [visibility, setVisibility] = useState<"NATIONAL"|"LOCAL"|"">("");
+
+  async function load(){
+    const qs = new URLSearchParams({
+      mode, ...(category?{category}:{}) , ...(tag?{tag}:{}) , ...(visibility?{visibility}:{})
+    });
+    const r = await fetch(`/api/gsquare/posts?${qs}`, { credentials:"include" });
+    setPosts(await r.json());
+  }
+  useEffect(()=>{ load(); },[mode, category, tag, visibility]);
+
+  return (
+    <div className="mx-auto max-w-5xl p-6 space-y-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <select value={mode} onChange={e=>setMode(e.target.value as any)} className="border rounded px-2 py-1 text-sm">
+          <option value="latest">Latest</option>
+          <option value="hot">Hot</option>
+        </select>
+        <input placeholder="Category (e.g., lawn-care)" value={category} onChange={e=>setCategory(e.target.value)} className="border rounded px-2 py-1 text-sm"/>
+        <input placeholder="#Hashtag" value={tag} onChange={e=>setTag(e.target.value)} className="border rounded px-2 py-1 text-sm"/>
+        <select value={visibility} onChange={e=>setVisibility(e.target.value as any)} className="border rounded px-2 py-1 text-sm">
+          <option value="">All</option>
+          <option value="LOCAL">Local</option>
+          <option value="NATIONAL">Nationwide</option>
+        </select>
+        <a href="/gsquare/new" className="ml-auto rounded bg-blue-600 text-white px-3 py-1.5 text-sm">New Post</a>
+      </div>
+
+      <div className="grid gap-3">
+        {posts.map(p => <PostCard key={p.id} p={p} />)}
+      </div>
+    </div>
+  );
+}
+------------------------------------------------
+
+Create client/src/pages/gsquare/GSquareNewPost.tsx:
+------------------------------------------------
+import { useState } from "react";
+
+export default function GSquareNewPost(){
+  const [title, setTitle] = useState("");
+  const [bodyMd, setBodyMd] = useState("");
+  const [category, setCategory] = useState("");
+  const [hashtags, setHashtags] = useState("");
+  const [visibility, setVisibility] = useState<"NATIONAL"|"LOCAL">("NATIONAL");
+
+  async function submit(){
+    const r = await fetch("/api/gsquare/posts", {
+      method:"POST", credentials:"include", headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ title, bodyMd, category, hashtags: hashtags?hashtags.split(" ").filter(Boolean):[], visibility })
+    });
+    if (r.ok){ const p = await r.json(); location.href = `/gsquare/post/${p.id}`; }
+  }
+
+  return (
+    <div className="mx-auto max-w-3xl p-6 space-y-3">
+      <h1 className="text-2xl font-bold">Create a post</h1>
+      <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Title (optional)" className="w-full border rounded p-2"/>
+      <textarea value={bodyMd} onChange={e=>setBodyMd(e.target.value)} placeholder="Share your idea, win, or tip…" className="w-full border rounded p-2 min-h-[160px]"/>
+      <div className="flex gap-2">
+        <input value={category} onChange={e=>setCategory(e.target.value)} placeholder="Category (e.g., lawn-care)" className="flex-1 border rounded p-2"/>
+        <input value={hashtags} onChange={e=>setHashtags(e.target.value)} placeholder="#hashtags separated by space" className="flex-1 border rounded p-2"/>
+      </div>
+      <div className="flex items-center gap-3">
+        <label className="text-sm">Visibility</label>
+        <select value={visibility} onChange={e=>setVisibility(e.target.value as any)} className="border rounded p-1 text-sm">
+          <option value="NATIONAL">Nationwide</option>
+          <option value="LOCAL">Local</option>
+        </select>
+      </div>
+      <button onClick={submit} className="rounded bg-blue-600 text-white px-4 py-2">Publish</button>
+    </div>
+  );
+}
+------------------------------------------------
+
+Create client/src/pages/gsquare/GSquarePostDetail.tsx:
+------------------------------------------------
+import { useEffect, useState } from "react";
+import ReactionBar from "./components/ReactionBar";
+
+export default function GSquarePostDetail({ params }:{ params:{ id:string } }){
+  const [post, setPost] = useState<any>(null);
+  const [comments, setComments] = useState<any[]>([]);
+  const [bodyMd, setBodyMd] = useState("");
+
+  async function load(){
+    const p = await fetch(`/api/gsquare/posts/${params.id}`, { credentials:"include" }).then(r=>r.json());
+    setPost(p);
+    const c = await fetch(`/api/gsquare/posts/${params.id}/comments`, { credentials:"include" }).then(r=>r.json());
+    setComments(c);
+  }
+  async function addComment(){
+    await fetch("/api/gsquare/comments", {
+      method:"POST", credentials:"include", headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ postId: params.id, bodyMd })
+    });
+    setBodyMd(""); load();
+  }
+  useEffect(()=>{ load(); },[params.id]);
+
+  if (!post) return <div className="p-6">Loading…</div>;
+  return (
+    <div className="mx-auto max-w-3xl p-6 space-y-5">
+      <article className="rounded border bg-white p-4">
+        {post.title ? <h1 className="text-xl font-bold">{post.title}</h1> : null}
+        <div className="text-xs text-gray-500">{new Date(post.createdAt).toLocaleString()} · {post.category?`#${post.category}`:""}</div>
+        <div className="prose" dangerouslySetInnerHTML={{ __html: post.bodyHtml }} />
+        <div className="mt-3"><ReactionBar type="post" id={post.id}/></div>
+      </article>
+
+      <section>
+        <h2 className="font-semibold">Comments</h2>
+        <div className="space-y-3">
+          {comments.map(c=>(
+            <div key={c.id} className="rounded border bg-white p-3">
+              <div className="prose" dangerouslySetInnerHTML={{ __html: c.bodyHtml }} />
+              <div className="mt-2"><ReactionBar type="comment" id={c.id}/></div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4">
+          <textarea value={bodyMd} onChange={e=>setBodyMd(e.target.value)} className="w-full border rounded p-2 min-h-[120px]" placeholder="Write a helpful reply…"/>
+          <button onClick={addComment} className="mt-2 rounded bg-blue-600 text-white px-3 py-1.5">Post Comment</button>
+        </div>
+      </section>
+    </div>
+  );
+}
+------------------------------------------------
+
+========================
+E) ROUTER + NAV LINKS
+========================
+Update client/src/App.tsx (or router) to add:
+<Route path="/gsquare" component={GSquareHome}/>
+<Route path="/gsquare/new" component={GSquareNewPost}/>
+<Route path="/gsquare/post/:id" component={GSquarePostDetail}/>
+
+Update Navbar component to include a visible link **G-Square** → /gsquare (add a small “new” badge if you like).
+
+========================
+F) SEED DEMO CONTENT
+========================
+Create server/scripts/seedGSquare.ts:
+------------------------------------------------
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
+const names = ["Alex","Jordan","Taylor","Riley","Casey","Morgan","Quinn","Reese","Drew","Avery","Parker","Sky"];
+function rand<T>(a:T[]){ return a[Math.floor(Math.random()*a.length)]}
+
+async function run(){
+  // ensure a few demo users exist
+  for (const n of names) {
+    await prisma.user.upsert({
+      where:{ email: `${n.toLowerCase()}@demo.local` },
+      update:{},
+      create:{ email: `${n.toLowerCase()}@demo.local`, name: n }
+    });
+  }
+  const users = await prisma.user.findMany({ where:{ email: { endsWith: "@demo.local" }}});
+
+  const cats = ["lawn-care","cleaning","fitness","meal-prep","handyman"];
+  const tags = ["#Wins","#Tips","#HowIGigify","#CommunityImpact","#Ideas"];
+
+  const posts:any[] = [];
+  for (let i=0;i<60;i++){
+    const u = rand(users);
+    const created = new Date(Date.now() - Math.random()*365*24*3600*1000);
+    posts.push({
+      authorId: u.id,
+      title: Math.random()<0.5 ? "Small win from today" : null,
+      bodyMd: "Started with one client — now I have three weekly! **Consistency wins.**",
+      bodyHtml: "<p>Started with one client — now I have three weekly! <strong>Consistency wins.</strong></p>",
+      category: rand(cats),
+      hashtags: [rand(tags)],
+      visibility: Math.random()<0.3 ? "LOCAL" : "NATIONAL",
+      createdAt: created
+    });
+  }
+  for (const p of posts) await prisma.gPost.create({ data: p });
+
+  console.log(`✅ Seeded ${posts.length} community posts`);
+}
+run().finally(()=>process.exit(0));
+------------------------------------------------
+Run:
+- npx ts-node server/scripts/seedGSquare.ts
+
+========================
+G) BUILD TAG & HEALTH
+========================
+If missing, create client/src/components/BuildTag.tsx and mount at app root to show “GP Build • <timestamp>”.
+Add/confirm server health route server/routes/health.ts GET /api/health returns { ok:true } and mount it.
+
+========================
+H) ACCEPTANCE / VERIFY
+========================
+- npx prisma generate
+- npx prisma migrate dev -n "gsquare_v1"
+- npx ts-node server/scripts/seedGSquare.ts
+- Restart dev server/client.
+
+Print a **verification report** that includes:
+1) Edited/created file paths.
+2) Mounted routes list showing /api/gsquare and /api/admin/gsquare.
+3) Counts: total gPosts and gComments.
+4) The BuildTag timestamp (copy the value).
+5) Clickable URLs to test:
+   /gsquare
+   /gsquare/new
+   /gsquare/post/<first-post-id>
+
+Done. Show any TODOs or missing env vars.
