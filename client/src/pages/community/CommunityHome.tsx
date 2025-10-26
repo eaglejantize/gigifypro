@@ -3,12 +3,15 @@ import { Link } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Plus, TrendingUp, Clock, Globe, MapPin, Hash, Image } from "lucide-react";
+import { Plus, TrendingUp, Clock, Globe, MapPin, Hash, Image, Send } from "lucide-react";
 import { useState, useEffect } from "react";
 import { apiGet } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient } from "@/lib/queryClient";
 
 type Post = {
   id: string;
@@ -24,11 +27,16 @@ type Post = {
 };
 
 export default function CommunityHome() {
+  const { toast } = useToast();
   const [mode, setMode] = useState<"latest" | "hot">("latest");
   const [topicKey, setTopicKey] = useState<string>("all");
   const [serviceKey, setServiceKey] = useState<string>("");
   const [visibility, setVisibility] = useState<string>("all");
   const [locationFilter, setLocationFilter] = useState<string>("");
+  
+  // Quick post state
+  const [quickPostText, setQuickPostText] = useState("");
+  const [isPosting, setIsPosting] = useState(false);
 
   // Clear location filter when switching away from LOCAL visibility
   useEffect(() => {
@@ -36,6 +44,60 @@ export default function CommunityHome() {
       setLocationFilter("");
     }
   }, [visibility]);
+
+  async function handleQuickPost() {
+    if (!quickPostText.trim()) {
+      toast({
+        title: "Empty post",
+        description: "Please write something to share",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsPosting(true);
+    try {
+      const response = await fetch("/api/community/posts", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: quickPostText.substring(0, 100), // Use first 100 chars as title
+          topicKey: "ideas",
+          bodyMd: quickPostText,
+          visibility: "NATIONAL",
+          serviceKey: null,
+          mediaUrl: null,
+          hashtags: [],
+          location: null,
+        }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Posted!",
+          description: "Your thought has been shared with G-Square",
+        });
+        setQuickPostText("");
+        queryClient.invalidateQueries({ queryKey: ["/api/community/posts"] });
+      } else {
+        const error = await response.json();
+        toast({
+          title: "Failed to post",
+          description: error.error || "Something went wrong",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to post. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPosting(false);
+    }
+  }
 
   const { data: posts, isLoading } = useQuery<Post[]>({
     queryKey: ["/api/community/posts", mode, topicKey, serviceKey, visibility, locationFilter],
@@ -53,22 +115,45 @@ export default function CommunityHome() {
     <div className="min-h-screen bg-background py-8">
       <div className="max-w-6xl mx-auto px-4 space-y-6">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold" data-testid="text-community-title">
-              G-Square
-            </h1>
-            <p className="text-muted-foreground">
-              Your digital town square—share ideas, connect locally, and grow together
-            </p>
-          </div>
-          <Link href="/community/new">
-            <Button size="lg" data-testid="button-new-post">
-              <Plus className="w-4 h-4 mr-2" />
-              New Post
-            </Button>
-          </Link>
+        <div>
+          <h1 className="text-3xl font-bold" data-testid="text-community-title">
+            G-Square
+          </h1>
+          <p className="text-muted-foreground">
+            Your digital town square—share ideas, connect locally, and grow together
+          </p>
         </div>
+
+        {/* Quick Post */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="space-y-3">
+              <Textarea
+                placeholder="What's on your mind? Share your thoughts with G-Square..."
+                value={quickPostText}
+                onChange={(e) => setQuickPostText(e.target.value)}
+                className="min-h-[100px] resize-none"
+                data-testid="textarea-quick-post"
+              />
+              <div className="flex items-center justify-between gap-2">
+                <Link href="/community/new">
+                  <Button variant="ghost" size="sm" data-testid="button-advanced-post">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Advanced options
+                  </Button>
+                </Link>
+                <Button 
+                  onClick={handleQuickPost} 
+                  disabled={isPosting || !quickPostText.trim()}
+                  data-testid="button-quick-post"
+                >
+                  <Send className="w-4 h-4 mr-2" />
+                  {isPosting ? "Posting..." : "Post"}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Filters */}
         <Card>
