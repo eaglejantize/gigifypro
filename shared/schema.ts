@@ -35,6 +35,7 @@ export const badgeTypeEnum = pgEnum("badge_type", [
 ]);
 export const reactionKindEnum = pgEnum("reaction_kind", ["LIKE", "HELPFUL", "INSIGHTFUL"]);
 export const reportStatusEnum = pgEnum("report_status", ["PENDING", "REVIEWED", "ACTIONED"]);
+export const visibilityEnum = pgEnum("visibility", ["NATIONAL", "LOCAL"]);
 
 // Users table
 export const users = pgTable("users", {
@@ -271,6 +272,10 @@ export const posts = pgTable("posts", {
   title: text("title").notNull(),
   bodyMd: text("body_md").notNull(),
   bodyHtml: text("body_html").notNull(),
+  mediaUrl: text("media_url"),
+  hashtags: text("hashtags").array().default(sql`ARRAY[]::text[]`),
+  location: text("location"),
+  visibility: visibilityEnum("visibility").notNull().default("NATIONAL"),
   serviceKey: text("service_key"),
   topicId: varchar("topic_id").notNull().references(() => topics.id),
   score: integer("score").notNull().default(0),
