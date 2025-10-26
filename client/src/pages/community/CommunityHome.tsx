@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, TrendingUp, Clock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Plus, TrendingUp, Clock, Globe, MapPin, Hash, Image } from "lucide-react";
 import { useState } from "react";
 import { apiGet } from "@/lib/api";
 
@@ -13,6 +14,10 @@ type Post = {
   id: string;
   title: string;
   serviceKey: string | null;
+  mediaUrl: string | null;
+  hashtags: string[];
+  location: string | null;
+  visibility: "NATIONAL" | "LOCAL";
   score: number;
   views: number;
   createdAt: string;
@@ -22,13 +27,15 @@ export default function CommunityHome() {
   const [mode, setMode] = useState<"latest" | "hot">("latest");
   const [topicKey, setTopicKey] = useState<string>("all");
   const [serviceKey, setServiceKey] = useState<string>("");
+  const [visibility, setVisibility] = useState<string>("all");
 
   const { data: posts, isLoading } = useQuery<Post[]>({
-    queryKey: ["/api/community/posts", mode, topicKey, serviceKey],
+    queryKey: ["/api/community/posts", mode, topicKey, serviceKey, visibility],
     queryFn: () => {
       const params = new URLSearchParams({ mode });
       if (topicKey && topicKey !== "all") params.append("topicKey", topicKey);
       if (serviceKey) params.append("serviceKey", serviceKey);
+      if (visibility && visibility !== "all") params.append("visibility", visibility);
       return apiGet(`/api/community/posts?${params}`);
     },
   });
@@ -60,7 +67,7 @@ export default function CommunityHome() {
             <CardTitle className="text-lg">Filters</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Feed</label>
                 <Select value={mode} onValueChange={(v) => setMode(v as any)}>
@@ -78,6 +85,30 @@ export default function CommunityHome() {
                       <div className="flex items-center gap-2">
                         <TrendingUp className="w-4 h-4" />
                         Hot
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Visibility</label>
+                <Select value={visibility} onValueChange={setVisibility}>
+                  <SelectTrigger data-testid="select-visibility">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="NATIONAL">
+                      <div className="flex items-center gap-2">
+                        <Globe className="w-4 h-4" />
+                        National
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="LOCAL">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4" />
+                        Local
                       </div>
                     </SelectItem>
                   </SelectContent>
@@ -128,19 +159,57 @@ export default function CommunityHome() {
             </>
           ) : posts && posts.length > 0 ? (
             posts.map((post) => (
-              <Link key={post.id} href={`/community/post/${post.id}`}>
-                <Card className="hover-elevate cursor-pointer" data-testid={`card-post-${post.id}`}>
-                  <CardHeader>
-                    <CardTitle className="text-xl">{post.title}</CardTitle>
-                    <CardDescription className="flex items-center gap-4 text-xs">
-                      <span>{new Date(post.createdAt).toLocaleDateString()}</span>
-                      {post.serviceKey && <span className="text-primary">#{post.serviceKey}</span>}
-                      <span>{post.views} views</span>
-                      <span>{post.score} score</span>
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
-              </Link>
+              <Card key={post.id} className="hover-elevate" data-testid={`card-post-${post.id}`}>
+                <CardHeader>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <Link href={`/community/post/${post.id}`}>
+                        <CardTitle className="text-xl cursor-pointer hover:text-primary">
+                          {post.title}
+                        </CardTitle>
+                      </Link>
+                      <CardDescription className="flex flex-wrap items-center gap-3 text-xs mt-2">
+                        <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                        {post.visibility === "LOCAL" ? (
+                          <Badge variant="outline" className="gap-1">
+                            <MapPin className="w-3 h-3" />
+                            Local
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="gap-1">
+                            <Globe className="w-3 h-3" />
+                            National
+                          </Badge>
+                        )}
+                        {post.location && (
+                          <span className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3" />
+                            {post.location}
+                          </span>
+                        )}
+                        {post.serviceKey && (
+                          <span className="text-primary">#{post.serviceKey}</span>
+                        )}
+                        <span>{post.views} views</span>
+                        <span>{post.score} score</span>
+                      </CardDescription>
+                    </div>
+                    {post.mediaUrl && (
+                      <Image className="w-4 h-4 text-muted-foreground" />
+                    )}
+                  </div>
+                  {post.hashtags && post.hashtags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {post.hashtags.map((tag, idx) => (
+                        <Badge key={idx} variant="secondary" className="text-xs gap-1">
+                          <Hash className="w-3 h-3" />
+                          {tag.replace('#', '')}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </CardHeader>
+              </Card>
             ))
           ) : (
             <Card>

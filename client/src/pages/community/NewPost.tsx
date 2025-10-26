@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import MarkdownEditor from "@/components/MarkdownEditor";
+import { Globe, MapPin } from "lucide-react";
 
 export default function NewPost() {
   const [, setLocation] = useLocation();
@@ -14,6 +15,10 @@ export default function NewPost() {
   const [serviceKey, setServiceKey] = useState("");
   const [topicKey, setTopicKey] = useState("ideas");
   const [bodyMd, setBodyMd] = useState("");
+  const [mediaUrl, setMediaUrl] = useState("");
+  const [hashtags, setHashtags] = useState("");
+  const [location, setLocationInput] = useState("");
+  const [visibility, setVisibility] = useState<"NATIONAL" | "LOCAL">("NATIONAL");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit() {
@@ -28,6 +33,12 @@ export default function NewPost() {
 
     setIsSubmitting(true);
     try {
+      const hashtagsArray = hashtags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter((tag) => tag.length > 0)
+        .map((tag) => tag.startsWith("#") ? tag : `#${tag}`);
+
       const response = await fetch("/api/community/posts", {
         method: "POST",
         credentials: "include",
@@ -37,6 +48,10 @@ export default function NewPost() {
           serviceKey: serviceKey.trim() || null,
           topicKey,
           bodyMd,
+          mediaUrl: mediaUrl.trim() || null,
+          hashtags: hashtagsArray,
+          location: location.trim() || null,
+          visibility,
         }),
       });
 
@@ -105,6 +120,31 @@ export default function NewPost() {
               </div>
 
               <div className="space-y-2">
+                <label className="text-sm font-medium">Visibility</label>
+                <Select value={visibility} onValueChange={(v) => setVisibility(v as "NATIONAL" | "LOCAL")}>
+                  <SelectTrigger data-testid="select-post-visibility">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NATIONAL">
+                      <div className="flex items-center gap-2">
+                        <Globe className="w-4 h-4" />
+                        National
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="LOCAL">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4" />
+                        Local
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
                 <label className="text-sm font-medium">Service Tag (Optional)</label>
                 <Input
                   placeholder="e.g., lawn-care, dog-walking"
@@ -113,6 +153,36 @@ export default function NewPost() {
                   data-testid="input-post-service-tag"
                 />
               </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Location (Optional)</label>
+                <Input
+                  placeholder="e.g., 90210 or Nashville, TN"
+                  value={location}
+                  onChange={(e) => setLocationInput(e.target.value)}
+                  data-testid="input-post-location"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Media URL (Optional)</label>
+              <Input
+                placeholder="https://example.com/image.jpg or video URL"
+                value={mediaUrl}
+                onChange={(e) => setMediaUrl(e.target.value)}
+                data-testid="input-post-media"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Hashtags (Optional)</label>
+              <Input
+                placeholder="e.g., success, tips, neighborhood (comma-separated)"
+                value={hashtags}
+                onChange={(e) => setHashtags(e.target.value)}
+                data-testid="input-post-hashtags"
+              />
             </div>
 
             <div className="space-y-2">
