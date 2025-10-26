@@ -9,7 +9,7 @@ const storeProducts = [
     name: "Navy Polo - G PRO",
     description: "Professional navy blue polo with embroidered 'G PRO' over the left chest. Premium fabric, corporate style.",
     imageUrl: "/store/navy-polo.png",
-    category: "shirt" as const,
+    category: "apparel" as const,
     priceCents: 3499,
     variants: [
       { name: "Small", priceCents: 3499, sku: "POLO-NAVY-S" },
@@ -24,7 +24,7 @@ const storeProducts = [
     name: "Charcoal Polo - G PRO",
     description: "Sophisticated charcoal gray polo with embroidered 'G PRO' over the left chest. Breathable, professional grade.",
     imageUrl: "/store/charcoal-polo.png",
-    category: "shirt" as const,
+    category: "apparel" as const,
     priceCents: 3499,
     variants: [
       { name: "Small", priceCents: 3499, sku: "POLO-CHAR-S" },
@@ -39,7 +39,7 @@ const storeProducts = [
     name: "White Polo - G PRO",
     description: "Crisp white polo with navy 'G PRO' embroidery over the left chest. Classic, clean, professional.",
     imageUrl: "/store/white-polo.png",
-    category: "shirt" as const,
+    category: "apparel" as const,
     priceCents: 3499,
     variants: [
       { name: "Small", priceCents: 3499, sku: "POLO-WHITE-S" },
@@ -56,7 +56,7 @@ const storeProducts = [
     name: "White Tee - G PRO",
     description: "Premium white cotton t-shirt with 'G PRO' printed over the left chest. Comfortable, corporate casual.",
     imageUrl: "/store/white-tee.png",
-    category: "shirt" as const,
+    category: "apparel" as const,
     priceCents: 2499,
     variants: [
       { name: "Small", priceCents: 2499, sku: "TEE-WHITE-GPRO-S" },
@@ -73,7 +73,7 @@ const storeProducts = [
     name: "Black Tee - GIGIFYPRO",
     description: "Bold black cotton t-shirt with 'GIGIFYPRO' printed across the chest in modern typography. Stylish and professional.",
     imageUrl: "/store/black-tee.png",
-    category: "shirt" as const,
+    category: "apparel" as const,
     priceCents: 2499,
     variants: [
       { name: "Small", priceCents: 2499, sku: "TEE-BLACK-FULL-S" },
@@ -88,7 +88,7 @@ const storeProducts = [
     name: "Gray Tee - GIGIFYPRO",
     description: "Heather gray cotton t-shirt with 'GIGIFYPRO' printed across the chest. Clean, corporate style with modern appeal.",
     imageUrl: "/store/gray-tee.png",
-    category: "shirt" as const,
+    category: "apparel" as const,
     priceCents: 2499,
     variants: [
       { name: "Small", priceCents: 2499, sku: "TEE-GRAY-FULL-S" },
@@ -124,13 +124,13 @@ const storeProducts = [
     ],
   },
   
-  // Professional Gear
+  // Professional Gear & Tools
   {
     slug: "laundry-bag-kit",
-    name: "GigifyPro Laundry Bag Kit",
-    description: "Professional 4-bag system: Whites, Colors, Linens, and Intimates (mesh wash-in). Prevents mix-ups and keeps loads organized. Essential for Laundry Giger certification.",
-    imageUrl: "/store/laundry-kit.jpg",
-    category: "gear" as const,
+    name: "G PRO Laundry Bag Kit",
+    description: "Professional 4-bag system: Whites, Colors, Linens, and Intimates (mesh wash-in). Prevents mix-ups and keeps loads organized. Durable, washable mesh construction with G PRO branding. Essential for Laundry Giger certification and professional home service workers.",
+    imageUrl: "@assets/generated_images/G_PRO_Laundry_Bag_Kit_eceb2b1e.png",
+    category: "tools_kits" as const,
     priceCents: 3999,
     variants: [
       { name: "4-Bag Set", priceCents: 3999, sku: "LAUNDRY-KIT-4" },
@@ -138,10 +138,10 @@ const storeProducts = [
   },
   {
     slug: "chef-jacket",
-    name: "GigifyPro Chef Jacket",
-    description: "Professional double-breasted chef jacket with GigifyPro logo. Breathable fabric, stain-resistant. Perfect for personal chefs and meal prep gigers.",
-    imageUrl: "/store/chef-jacket.jpg",
-    category: "gear" as const,
+    name: "G PRO Chef Jacket",
+    description: "Professional double-breasted chef jacket with embroidered navy blue 'G PRO' logo on left chest. Breathable, stain-resistant fabric. Perfect for personal chefs, meal prep professionals, and catering gigers. Premium quality construction for daily professional use.",
+    imageUrl: "@assets/generated_images/G_PRO_Chef_Jacket_b7643ecf.png",
+    category: "apparel" as const,
     priceCents: 4999,
     variants: [
       { name: "Small", priceCents: 4999, sku: "CHEF-JACKET-S" },
@@ -153,13 +153,39 @@ const storeProducts = [
   },
   {
     slug: "chef-hat",
-    name: "GigifyPro Chef Hat",
-    description: "Classic white chef toque with embroidered GigifyPro monogram. Professional appearance for meal prep and personal chef services.",
-    imageUrl: "/store/chef-hat.jpg",
-    category: "hat" as const,
+    name: "G PRO Chef Hat",
+    description: "Classic white chef toque with embroidered navy blue 'G PRO' logo on front. Professional appearance for meal prep, personal chef services, and catering. One size fits most with adjustable band for secure, comfortable fit.",
+    imageUrl: "@assets/generated_images/G_PRO_Chef_Hat_68e80db3.png",
+    category: "apparel" as const,
     priceCents: 1999,
     variants: [
       { name: "One Size", priceCents: 1999, sku: "CHEF-HAT-ONE" },
+    ],
+  },
+  {
+    slug: "cleaning-apron",
+    name: "G PRO Cleaning Apron",
+    description: "Professional navy blue cleaning apron with printed white 'G PRO' logo on chest. Durable, water-resistant fabric with adjustable neck strap and front pocket for supplies. Perfect for housekeeping, cleaning services, and professional home care workers.",
+    imageUrl: "@assets/generated_images/G_PRO_Cleaning_Apron_71965aeb.png",
+    category: "apparel" as const,
+    priceCents: 2499,
+    variants: [
+      { name: "One Size", priceCents: 2499, sku: "APRON-CLEAN-ONE" },
+    ],
+  },
+  {
+    slug: "safety-jacket",
+    name: "G PRO Reflective Safety Jacket",
+    description: "High-visibility safety jacket in bright yellow-green with reflective 'G PRO' logo on back and silver reflective strips. ANSI Class 2 compliant. Essential for outdoor workers, delivery drivers, moving services, and any gig requiring roadside visibility. Water-resistant, durable construction.",
+    imageUrl: "@assets/generated_images/G_PRO_Safety_Jacket_794ba0d0.png",
+    category: "safety_gear" as const,
+    priceCents: 5999,
+    variants: [
+      { name: "Small", priceCents: 5999, sku: "SAFETY-JACKET-S" },
+      { name: "Medium", priceCents: 5999, sku: "SAFETY-JACKET-M" },
+      { name: "Large", priceCents: 5999, sku: "SAFETY-JACKET-L" },
+      { name: "XL", priceCents: 5999, sku: "SAFETY-JACKET-XL" },
+      { name: "2XL", priceCents: 6299, sku: "SAFETY-JACKET-2XL" },
     ],
   },
 ];

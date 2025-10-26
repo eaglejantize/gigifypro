@@ -1,0 +1,63 @@
+You are an expert full-stack engineer, brand designer, and product strategist working within the GigifyPro Replit workspace.
+
+PROJECT: GigifyPro (Modern Gig-Economy Ecosystem)
+
+GOAL:
+Implement the following upgrades across the **UI, Store, Explore, Knowledge Hub, and Community/Social system** to prepare for final launch.
+
+====================================================
+A) BRAND + STORE INTEGRATION
+====================================================
+1. Add visible **GigifyPro (“G Pro” or “Gigabyte Pro”) logos** to homepage hero images and relevant people’s clothing.
+
+   - Overlay logo on:
+     • Worker shirts (home hero section)
+     • Chef hat and chef jacket
+     • Cleaning apron
+   - Generate two versions:
+     • “G Pro” text-based (bold, modern)
+     • Circular “G” emblem variant for embroidery overlays.
+
+2. Create and add the following **branded store products**:
+   - Chef Hat (with embroidered G Pro logo)
+   - Chef Jacket (with embroidered G Pro logo)
+   - Cleaning Apron (with printed G Pro logo)
+   - Reflective Safety Jacket (with reflective G Pro logo)
+   - Laundry Bag Kit (proprietary GigifyPro-branded kit)
+     • Includes: whites bag, colors bag, linens bag, washable intimates mesh bag.
+     • Add product copy describing professional home service utility and durability.
+
+3. Update the **Store Page UI**:
+   - Categorize as: “Apparel”, “Safety Gear”, “Tools & Kits”
+   - Each product card: image, description, price, availability, “Add to Cart” button.
+
+4. For placeholder items, generate temporary mock images with logo overlays in `client/public/store/`.
+   (Mark these with `// TODO replace with final product photos`.)
+
+====================================================
+B) EXPLORE PAGE REDESIGN (Professional Discovery Engine)
+====================================================
+1. Create a new Explore UI and API:
+   - Search by **Category**, **Service Type**, and **Geographical Area (zip, city, state)**.
+   - Sort filters: 
+     - Top Ranked (default)
+     - Highest Rated
+     - Price Low–High / High–Low
+     - Most Recent
+
+2. KPI Metrics visible under each provider listing:
+   - Services Completed (count)
+   - Avg Rating
+   - Response Time
+   - GigifyPro Score (computed by AI)
+   - Member Since
+
+3. Ranking Algorithm (AI-Assisted Recommendation System):
+   Define KPIs for score weighting:
+   - Review Quality (40%)
+   - Completed Jobs (25%)
+   - Response Time (15%)
+   - Cancellations (10%)
+   - Repeat Clients (10%)
+
+   Compute:

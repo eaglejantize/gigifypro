@@ -12,7 +12,7 @@ export const bookingStatusEnum = pgEnum("booking_status", [
   "completed",
   "cancelled"
 ]);
-export const productCategoryEnum = pgEnum("product_category", ["shirt", "hat", "car_sign", "gear"]);
+export const productCategoryEnum = pgEnum("product_category", ["apparel", "safety_gear", "tools_kits", "shirt", "hat", "car_sign", "gear"]);
 export const orderStatusEnum = pgEnum("order_status", ["pending", "paid", "cancelled"]);
 export const knowledgeSectionEnum = pgEnum("knowledge_section", [
   "getting_started",
@@ -56,6 +56,9 @@ export const workerProfiles = pgTable("worker_profiles", {
   hourlyRate: decimal("hourly_rate", { precision: 10, scale: 2 }).notNull().default("25.00"),
   responseTimeMinutes: integer("response_time_minutes").default(60),
   verified: boolean("verified").notNull().default(false),
+  completedJobs: integer("completed_jobs").notNull().default(0),
+  cancelledJobs: integer("cancelled_jobs").notNull().default(0),
+  repeatClients: integer("repeat_clients").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
