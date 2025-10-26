@@ -9,7 +9,12 @@ import { Search, SlidersHorizontal, Loader2 } from "lucide-react";
 import type { ServiceListing, WorkerProfile } from "@shared/schema";
 
 type ListingWithWorker = ServiceListing & {
-  worker?: WorkerProfile & { user?: { name: string; avatar: string | null } };
+  worker?: WorkerProfile & { 
+    user?: { name: string; avatar: string | null };
+    completedJobs?: number;
+    gigScore?: number;
+    createdAt?: Date | string;
+  };
   likeCount?: number;
   avgRating?: number;
   reviewCount?: number;
@@ -151,6 +156,9 @@ export default function Feed() {
                 responseTime={listing.worker?.responseTimeMinutes || 30}
                 verified={listing.worker?.verified || false}
                 badge={listing.avgRating && listing.avgRating >= 4.8 ? "Top Rated" : undefined}
+                completedJobs={listing.worker?.completedJobs}
+                gigScore={listing.worker?.gigScore}
+                memberSince={listing.worker?.createdAt}
               />
             ))}
           </div>

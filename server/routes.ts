@@ -237,6 +237,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Listing endpoints
   app.get("/api/listings", async (req, res) => {
     try {
+      const { calculateWorkerGigScore } = await import("./utils/gigScoreAlgorithm");
       const listings = await storage.getAllListings();
       
       // Enrich listings with worker data
@@ -256,11 +257,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ? ratings.reduce((a, b) => a + b, 0) / ratings.length 
             : 0;
           
+          const gigScore = workerProfile ? calculateWorkerGigScore({
+            avgRating,
+            reviewCount: ratings.length,
+            completedJobs: workerProfile.completedJobs || 0,
+            responseTimeMinutes: workerProfile.responseTimeMinutes,
+            cancelledJobs: workerProfile.cancelledJobs || 0,
+            repeatClients: workerProfile.repeatClients || 0,
+          }) : 0;
+          
           return {
             ...listing,
             worker: workerProfile ? {
               ...workerProfile,
-              user: user ? { name: user.name, avatar: user.avatar } : null
+              user: user ? { name: user.name, avatar: user.avatar } : null,
+              gigScore,
             } : null,
             likeCount,
             avgRating,
