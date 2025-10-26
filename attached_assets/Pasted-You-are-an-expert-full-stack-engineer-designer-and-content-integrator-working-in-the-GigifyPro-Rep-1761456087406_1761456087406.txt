@@ -1,0 +1,202 @@
+You are an expert full-stack engineer, designer, and content integrator working in the GigifyPro Replit workspace (Vite + React + TS in client/, Express + TS in server/, Prisma + PostgreSQL).
+
+OBJECTIVE
+Re-implement the following (from a rollback state) exactly and visibly:
+A) Branding on hero + merch, and add branded products to the store
+B) Explore page (worker discovery) with ranking (GigScore), filters, sorts, and KPIs
+C) Knowledge Hub restructuring into clear categories with “business setup” separated from “service guides”
+D) Social/community: modernized experience (“G-Square”) with posts, media, comments, local/national filter
+E) Seeds for store, posts, and demo workers so pages are not empty
+F) A visible build/version tag + debug/health endpoints and a final verification report
+
+Keep edits incremental and safe. If files exist, update; otherwise create. Report all added/edited paths.
+
+====================================================
+0) PREP & FLAGS
+====================================================
+- Ensure .env.example has:
+  VITE_DISABLE_CACHE=1
+  PARTNER_FEE_PERCENT=15
+  PLATFORM_FEE_PERCENT=12
+  MIN_CHARGE_USD=25
+  MIN_BLOCK_MINUTES=30
+- In client code, if a simple fetch memo exists, bypass caching when VITE_DISABLE_CACHE=1.
+
+Create visible build tag:
+File: client/src/components/BuildTag.tsx
+------------------------------------------------
+export default function BuildTag(){
+  const ts = new Date().toLocaleString();
+  return <div className="fixed bottom-2 right-2 z-50 rounded bg-black/75 text-white text-xs px-2 py-1">GP Build · {ts}</div>;
+}
+------------------------------------------------
+Mount <BuildTag/> at the root app layout (e.g., App.tsx) so it appears on every page.
+
+====================================================
+A) BRAND + STORE
+====================================================
+1) Assets (placeholders ok, with “G Pro” logo overlay). Add to:
+client/public/store/
+- chef-hat.png
+- chef-jacket.png
+- cleaning-apron.png
+- reflective-jacket.png
+- laundry-bag-kit.png
+Add hero person overlays (if hero uses public images):
+client/public/hero/
+- worker-shirt.png (logo overlay)
+- chef-hat-logo.png
+- chef-jacket-logo.png
+- cleaning-apron-logo.png
+
+2) Home hero: ensure workers’ shirts show the G Pro logo (overlay image or CSS background). Update the home hero component to reference the new hero assets. Add a small “Shop the look” link → /store.
+
+3) Store schema & seeds:
+- Prisma Product model (if missing): id, key, name, category, priceCents, image, desc, createdAt.
+- Categories: "Apparel", "Safety Gear", "Tools & Kits".
+- Seed script (server/scripts/seedStore.ts) upserts:
+  - chef_hat (Apparel) → chef-hat.png
+  - chef_jacket (Apparel) → chef-jacket.png
+  - cleaning_apron (Apparel) → cleaning-apron.png
+  - reflective_jacket (Safety Gear) → reflective-jacket.png
+  - laundry_bag_kit (Tools & Kits) → laundry-bag-kit.png (describe 1x whites, 1x colors, 1x linens, 1x washable intimates mesh bag)
+Add/ensure Store page at client/src/pages/Store.tsx renders categories, image, price, CTA.
+
+====================================================
+B) EXPLORE (WORKER DISCOVERY) WITH RANKING
+====================================================
+Create/verify UI page at client/src/pages/Explore.tsx with:
+- Filters: Category, Service, Location (zip/city/state)
+- Sort: Top Ranked (default), Highest Rated, Price Low–High, Price High–Low, Most Recent
+- Cards show: Name, Service(s), Price, Services Completed, Avg Rating, Response Time, Repeat Clients %, Cancels %, Member Since, **GigScore** and “Elite” badge if score ≥ 90.
+
+API + ranking:
+File: server/routes/explore.ts
+- GET /api/explore/top?category=&service=&zip=&city=&state=&sort=&page=
+- Ranking KPIs (weights):
+  Review Quality (40%), Completed Jobs (25%), Response Time (15%), Repeat Clients (10%), Cancellations (−10%)
+  score = reviews*0.4 + completions*0.25 + response*0.15 + repeat*0.1 - cancels*0.1
+  Normalize to 0–100 → GigScore; elite = score ≥ 90.
+- Return paginated results (20/page) with all KPI fields.
+
+Mount routes in server/routes.ts: api.use("/explore", explore)
+
+Nav link: Navbar → “Explore” → /explore
+
+====================================================
+C) KNOWLEDGE HUB RESTRUCTURE
+====================================================
+Goal: Separate “business setup” items from “service knowledge” items; add skill/growth sections.
+
+Create/verify Knowledge Hub page at client/src/pages/KnowledgeHub.tsx with tabs:
+1) Business Setup & Compliance
+   - Verified Identity
+   - Background Check
+   - Safety Certification
+   - Business Ready (Licensing, Insurance, LLC/EIN Setup)
+   - Gigify UI Training
+2) Skill & Service Training
+   - Service guides (existing 75)
+   - Culinary Safety, Lawn Care Basics, Shop Pro, etc.
+3) Skill Builder Sessions
+   - Communication, Customer Service, Growth Marketing
+4) Partner Integrations (Monetized)
+   - LLC, EIN, Business License, Insurance. Button → calls /api/partners/order-setup (stub) with PARTNER_FEE_PERCENT markup.
+
+Back end:
+- Create server/routes/partners.ts with POST /api/partners/order-setup { type } → stores a stub “order” row with fee markup.
+- Ensure knowledge data maps correctly to the 4 tabs (reuse existing JSON; add a categorization map if needed).
+
+Nav link: Navbar → “Knowledge” → /knowledge
+
+====================================================
+D) SOCIAL / COMMUNITY REVAMP (“G-Square”)
+====================================================
+Rename the Community area to “G-Square” (modern social style).
+Features:
+- Post text, photo, short video; threaded comments; reactions (🔥 Support, 💡 Insightful, ✅ Helpful)
+- Local/National visibility toggle per post
+- Topics (tags): #BusinessIdeas, #Wins, #CommunityImpact, #HowIGigify
+- Follow users (optional v1: placeholder)
+- Modern card layout
+
+Pages:
+client/src/pages/gsquare/GSquareHome.tsx
+client/src/pages/gsquare/NewPost.tsx
+client/src/pages/gsquare/PostDetail.tsx
+
+API:
+Use server/routes/community.ts (or create with these endpoints):
+- POST /api/gsquare/posts { title, bodyMd, media?, serviceKey?, topicKey?, visibility:"local"|"national" }
+- GET /api/gsquare/posts?mode=latest|hot&topicKey=&serviceKey=&near=zipOrCity&take=&cursor=
+- GET /api/gsquare/posts/:id
+- POST /api/gsquare/comments
+- POST /api/gsquare/react
+- POST /api/gsquare/report
+- Local filter: if visibility="local", include when near parameter roughly matches (zip/city) or leave as demo toggle.
+
+Admin moderation:
+- /api/admin/gsquare/reports (list)
+- /api/admin/gsquare/reports/action (remove post/comment, mark reviewed)
+
+Mount:
+server/routes.ts → api.use("/gsquare", gsquareRouter); api.use("/admin/gsquare", adminGSquareRouter)
+
+Nav link: Navbar → “G-Square” → /gsquare
+
+====================================================
+E) SEEDS (VISIBLE DEMO CONTENT)
+====================================================
+Create/verify scripts and run them:
+- server/scripts/seedStore.ts → 5 products above (upsert)
+- server/scripts/seedGSquare.ts → 12 demo users + ~120 posts over last year (varied topics, some local/national; include 10–15 posts with images)
+- server/scripts/seedExploreDemo.ts → 20 demo workers with KPIs (completions, ratings, response time, repeat %, cancels %, price). Ensure Explore returns non-empty results.
+
+Run sequence:
+- npx prisma generate
+- npx prisma migrate dev -n "rebuild_after_rollback"
+- npx ts-node server/scripts/seedStore.ts
+- npx ts-node server/scripts/seedGSquare.ts
+- npx ts-node server/scripts/seedExploreDemo.ts
+
+====================================================
+F) NAVBAR & ROUTER WIRING
+====================================================
+- Navbar links (client/src/components/Navbar.tsx):
+  Home (/), Explore (/explore), Knowledge (/knowledge), Store (/store), G-Square (/gsquare)
+- Router (client/src/App.tsx or routes file) must register:
+  /explore → Explore
+  /knowledge → KnowledgeHub
+  /store → Store
+  /gsquare → GSquareHome
+  /gsquare/new → NewPost
+  /gsquare/post/:id → PostDetail
+
+====================================================
+G) DEBUG, HEALTH & VERIFICATION
+====================================================
+Add routes:
+server/routes/health.ts → GET /api/health → { ok:true, ts }
+server/routes/debug.ts → GET /api/debug/counts → { users, products, workers, services, posts } AND GET /api/debug/routes → mounted route list
+Mount both under /api.
+
+Temporarily disable caching so we see live data:
+- If server/utils/cache.ts exists, export: export const CACHE_DISABLED = true
+- Knowledge/testimonials routes: if CACHE_DISABLED → set Cache-Control: no-store and bypass cache
+
+====================================================
+H) ACCEPTANCE CHECKLIST (PRINT AT END)
+====================================================
+1) Print list of added/edited files.
+2) Confirm mounted routes: /api/explore, /api/partners, /api/gsquare, /api/admin/gsquare, /api/content/testimonials, /api/health, /api/debug/*.
+3) Show counts from /api/debug/counts (non-zero for products, workers, posts).
+4) Show the exact BuildTag timestamp rendered (so we know the client rebuilt).
+5) Output clickable URLs for manual check:
+   /explore
+   /knowledge
+   /store
+   /gsquare
+
+Finally, restart server/client and remind the operator to hard-refresh (Cmd/Ctrl+Shift+R) on each of those pages.
+
+END OF INSTRUCTIONS.
