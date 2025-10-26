@@ -13,6 +13,8 @@ import trackRouter from "./routes/track";
 import profileRouter from "./routes/profile";
 import testimonialsRouter from "./routes/testimonials";
 import communityRouter from "./routes/community";
+import healthRouter from "./routes/health";
+import debugRouter from "./routes/debug";
 import { getCache, putCache } from "./utils/cache";
 
 // Stripe setup - from javascript_stripe integration
@@ -909,6 +911,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Community routes
   app.use("/api/community", communityRouter);
   app.use("/api/admin/community", adminCommunityRouter);
+
+  // Health and debug endpoints
+  app.use("/api/health", healthRouter);
+  app.use("/api/debug", debugRouter);
 
   const httpServer = createServer(app);
   return httpServer;
