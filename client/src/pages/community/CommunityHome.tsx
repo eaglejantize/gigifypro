@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Plus, TrendingUp, Clock, Globe, MapPin, Hash, Image } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { apiGet } from "@/lib/api";
 
 type Post = {
@@ -28,14 +28,23 @@ export default function CommunityHome() {
   const [topicKey, setTopicKey] = useState<string>("all");
   const [serviceKey, setServiceKey] = useState<string>("");
   const [visibility, setVisibility] = useState<string>("all");
+  const [locationFilter, setLocationFilter] = useState<string>("");
+
+  // Clear location filter when switching away from LOCAL visibility
+  useEffect(() => {
+    if (visibility !== "LOCAL") {
+      setLocationFilter("");
+    }
+  }, [visibility]);
 
   const { data: posts, isLoading } = useQuery<Post[]>({
-    queryKey: ["/api/community/posts", mode, topicKey, serviceKey, visibility],
+    queryKey: ["/api/community/posts", mode, topicKey, serviceKey, visibility, locationFilter],
     queryFn: () => {
       const params = new URLSearchParams({ mode });
       if (topicKey && topicKey !== "all") params.append("topicKey", topicKey);
       if (serviceKey) params.append("serviceKey", serviceKey);
       if (visibility && visibility !== "all") params.append("visibility", visibility);
+      if (locationFilter) params.append("location", locationFilter);
       return apiGet(`/api/community/posts?${params}`);
     },
   });
@@ -141,6 +150,26 @@ export default function CommunityHome() {
                 />
               </div>
             </div>
+
+            {visibility === "LOCAL" && (
+              <div className="space-y-2 pt-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  Location Filter
+                </label>
+                <Input
+                  placeholder="e.g., 90210 or Nashville, TN"
+                  value={locationFilter}
+                  onChange={(e) => setLocationFilter(e.target.value)}
+                  data-testid="input-location-filter"
+                />
+                {locationFilter && (
+                  <p className="text-xs text-muted-foreground">
+                    Filtering by location: {locationFilter}
+                  </p>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 

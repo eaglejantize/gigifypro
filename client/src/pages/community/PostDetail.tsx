@@ -9,13 +9,17 @@ import MarkdownEditor from "@/components/MarkdownEditor";
 import ReactionBar from "@/components/ReactionBar";
 import { useState } from "react";
 import { apiGet } from "@/lib/api";
-import { Eye, MessageSquare, Calendar } from "lucide-react";
+import { Eye, MessageSquare, Calendar, Globe, MapPin, Hash } from "lucide-react";
 
 type Post = {
   id: string;
   title: string;
   bodyHtml: string;
   serviceKey: string | null;
+  mediaUrl: string | null;
+  hashtags: string[];
+  location: string | null;
+  visibility: "NATIONAL" | "LOCAL";
   score: number;
   views: number;
   createdAt: string;
@@ -133,6 +137,23 @@ export default function PostDetail() {
                     <Calendar className="w-3 h-3" />
                     {new Date(post.createdAt).toLocaleString()}
                   </span>
+                  {post.visibility === "LOCAL" ? (
+                    <Badge variant="outline" className="gap-1">
+                      <MapPin className="w-3 h-3" />
+                      Local
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="gap-1">
+                      <Globe className="w-3 h-3" />
+                      National
+                    </Badge>
+                  )}
+                  {post.location && (
+                    <span className="flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      {post.location}
+                    </span>
+                  )}
                   {post.serviceKey && (
                     <Badge variant="secondary" data-testid="badge-service-tag">
                       #{post.serviceKey}
@@ -144,10 +165,30 @@ export default function PostDetail() {
                   </span>
                   <span>Score: {post.score}</span>
                 </CardDescription>
+                {post.hashtags && post.hashtags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {post.hashtags.map((tag, idx) => (
+                      <Badge key={idx} variant="secondary" className="text-xs gap-1">
+                        <Hash className="w-3 h-3" />
+                        {tag.replace('#', '')}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
+            {post.mediaUrl && (
+              <div className="rounded-md overflow-hidden">
+                <img 
+                  src={post.mediaUrl} 
+                  alt="Post media" 
+                  className="w-full h-auto"
+                  data-testid="post-media"
+                />
+              </div>
+            )}
             <div
               className="prose prose-sm dark:prose-invert max-w-none"
               dangerouslySetInnerHTML={{ __html: post.bodyHtml }}
