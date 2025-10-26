@@ -13,9 +13,7 @@ import trackRouter from "./routes/track";
 import profileRouter from "./routes/profile";
 import testimonialsRouter from "./routes/testimonials";
 import communityRouter from "./routes/community";
-import healthRouter from "./routes/health";
-import debugRouter from "./routes/debug";
-import { getCache, putCache, CACHE_DISABLED } from "./utils/cache";
+import { getCache, putCache } from "./utils/cache";
 
 // Stripe setup - from javascript_stripe integration
 const stripe = process.env.STRIPE_SECRET_KEY
@@ -891,10 +889,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: error.message });
     }
   });
-
-  // Health & Debug routes
-  app.use("/api", healthRouter);
-  app.use("/api", debugRouter);
 
   // Current user / ME route
   app.use("/api/me", meRouter);
