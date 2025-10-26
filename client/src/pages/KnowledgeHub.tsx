@@ -104,7 +104,7 @@ export default function KnowledgeHub() {
       setOrderingService(serviceType);
       const response = await apiRequest("/api/partners/order-setup", "POST", {
         type: serviceType
-      }) as { success: boolean; message: string };
+      }) as unknown as { success: boolean; message: string };
 
       toast({
         title: "Order Received",
