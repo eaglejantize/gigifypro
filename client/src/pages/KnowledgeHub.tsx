@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,8 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Hero } from "@/components/Hero";
 import { GigifiedProgress } from "@/components/GigifiedProgress";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
 import * as LucideIcons from "lucide-react";
 import type { KnowledgeArticle, Badge as BadgeType } from "@shared/schema";
 import { apiGet } from "@/lib/api";
@@ -56,24 +53,7 @@ const sections = [
     description: "Liability coverage and financial planning",
     color: "text-emerald-600"
   },
-  { 
-    id: "partner_integrations", 
-    title: "Partner Integrations", 
-    icon: LucideIcons.Building2,
-    description: "LLC formation, EIN, business licenses, and insurance services",
-    color: "text-cyan-600"
-  },
 ];
-
-interface PartnerService {
-  type: string;
-  name: string;
-  description: string;
-  basePriceCents: number;
-  markupCents: number;
-  totalPriceCents: number;
-  platformFeePercent: number;
-}
 
 function getDynamicIcon(iconName: string) {
   const Icon = (LucideIcons as any)[iconName] || LucideIcons.Circle;
@@ -81,9 +61,6 @@ function getDynamicIcon(iconName: string) {
 }
 
 export default function KnowledgeHub() {
-  const { toast } = useToast();
-  const [orderingService, setOrderingService] = useState<string | null>(null);
-
   const { data: articles, isLoading: articlesLoading } = useQuery<KnowledgeArticle[]>({
     queryKey: ["/api/knowledge/articles"],
     queryFn: () => apiGet("/api/knowledge/articles"),
@@ -93,33 +70,6 @@ export default function KnowledgeHub() {
     queryKey: ["/api/knowledge/badges"],
     queryFn: () => apiGet("/api/knowledge/badges"),
   });
-
-  const { data: partnerServices, isLoading: servicesLoading } = useQuery<{ services: PartnerService[] }>({
-    queryKey: ["/api/partners/services"],
-    queryFn: () => apiGet("/api/partners/services"),
-  });
-
-  const handleOrderService = async (serviceType: string) => {
-    try {
-      setOrderingService(serviceType);
-      const response = await apiRequest("/api/partners/order-setup", "POST", {
-        type: serviceType
-      }) as unknown as { success: boolean; message: string };
-
-      toast({
-        title: "Order Received",
-        description: response.message || "A specialist will contact you within 24 hours.",
-      });
-    } catch (error) {
-      toast({
-        title: "Order Failed",
-        description: error instanceof Error ? error.message : "Failed to place order. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setOrderingService(null);
-    }
-  };
 
   const articlesBySection = articles?.reduce((acc, article) => {
     if (!acc[article.section]) {
@@ -187,70 +137,6 @@ export default function KnowledgeHub() {
             const sectionArticles = articlesBySection[section.id] || [];
             const SectionIcon = section.icon;
 
-            // Special rendering for Partner Integrations section
-            if (section.id === "partner_integrations") {
-              return (
-                <div key={section.id} data-testid={`section-${section.id}`}>
-                  <div className="flex items-center gap-3 mb-6">
-                    <SectionIcon className={`w-8 h-8 ${section.color}`} />
-                    <div>
-                      <h2 className="text-2xl font-bold">{section.title}</h2>
-                      <p className="text-muted-foreground">{section.description}</p>
-                    </div>
-                  </div>
-
-                  {servicesLoading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {[1, 2, 3].map(i => <Skeleton key={i} className="h-56" />)}
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {partnerServices?.services.map((service) => (
-                        <Card key={service.type} className="flex flex-col" data-testid={`card-partner-${service.type}`}>
-                          <CardHeader>
-                            <CardTitle className="text-lg">{service.name}</CardTitle>
-                            <CardDescription>{service.description}</CardDescription>
-                          </CardHeader>
-                          <CardContent className="flex-1 flex flex-col justify-between">
-                            <div className="space-y-2 mb-4">
-                              <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Base Price:</span>
-                                <span>${(service.basePriceCents / 100).toFixed(2)}</span>
-                              </div>
-                              <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Platform Fee ({service.platformFeePercent}%):</span>
-                                <span>${(service.markupCents / 100).toFixed(2)}</span>
-                              </div>
-                              <div className="flex justify-between font-bold border-t pt-2">
-                                <span>Total:</span>
-                                <span>${(service.totalPriceCents / 100).toFixed(2)}</span>
-                              </div>
-                            </div>
-                            <Button
-                              onClick={() => handleOrderService(service.type)}
-                              disabled={orderingService === service.type}
-                              className="w-full"
-                              data-testid={`button-order-${service.type}`}
-                            >
-                              {orderingService === service.type ? (
-                                <>
-                                  <LucideIcons.Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                  Processing...
-                                </>
-                              ) : (
-                                "Order Service"
-                              )}
-                            </Button>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            }
-
-            // Regular article sections
             return (
               <div key={section.id} data-testid={`section-${section.id}`}>
                 <div className="flex items-center gap-3 mb-6">

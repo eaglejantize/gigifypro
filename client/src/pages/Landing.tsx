@@ -25,15 +25,6 @@ export default function Landing() {
           <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/50" />
         </div>
 
-        {/* Logo Overlay */}
-        <div className="pointer-events-none absolute left-4 top-4 z-20" data-testid="hero-logo-overlay">
-          <img 
-            src="/brand/gpro-text-logo.png" 
-            alt="GigifyPro" 
-            className="h-12 w-auto drop-shadow-lg" 
-          />
-        </div>
-
         {/* Hero Content */}
         <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-6" data-testid="text-hero-title">

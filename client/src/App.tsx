@@ -7,7 +7,6 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { Navbar } from "@/components/Navbar";
 import CtaBanner from "@/components/CtaBanner";
 import MobileCtaBar from "@/components/MobileCtaBar";
-import BuildTag from "@/components/BuildTag";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/Landing";
 import Feed from "@/pages/Feed";
@@ -37,7 +36,6 @@ function Router() {
     <Switch>
       <Route path="/" component={Landing} />
       <Route path="/feed" component={Feed} />
-      <Route path="/explore" component={Feed} />
       <Route path="/auth/login" component={Login} />
       <Route path="/auth/register" component={Register} />
       <Route path="/post" component={PostTask} />
@@ -56,9 +54,6 @@ function Router() {
       <Route path="/community" component={CommunityHome} />
       <Route path="/community/new" component={NewPost} />
       <Route path="/community/post/:id" component={PostDetail} />
-      <Route path="/gsquare" component={CommunityHome} />
-      <Route path="/gsquare/new" component={NewPost} />
-      <Route path="/gsquare/post/:id" component={PostDetail} />
       <Route path="/admin/services" component={AdminServices} />
       <Route path="/admin/analytics" component={AdminAnalytics} />
       <Route component={NotFound} />
@@ -79,7 +74,6 @@ function App() {
             </main>
           </div>
           <MobileCtaBar />
-          <BuildTag />
           <Toaster />
         </TooltipProvider>
       </AuthProvider>
