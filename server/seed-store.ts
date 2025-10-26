@@ -167,7 +167,7 @@ const storeProducts = [
     name: "G PRO Cleaning Apron",
     description: "Professional navy blue cleaning apron with printed white 'G PRO' logo on chest. Durable, water-resistant fabric with adjustable neck strap and front pocket for supplies. Perfect for housekeeping, cleaning services, and professional home care workers.",
     imageUrl: "@assets/generated_images/G_PRO_Cleaning_Apron_71965aeb.png",
-    category: "apparel" as const,
+    category: "safety_gear" as const,
     priceCents: 2499,
     variants: [
       { name: "One Size", priceCents: 2499, sku: "APRON-CLEAN-ONE" },
