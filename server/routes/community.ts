@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "../db";
 import { posts, comments, reactions, topics, reputations, reports } from "@shared/schema";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, sql, isNull } from "drizzle-orm";
 import { mdToSafeHtml } from "../utils/markdown";
 import { hotScore } from "../utils/hot";
 
@@ -260,12 +260,25 @@ router.post("/comments", needAuth, async (req, res) => {
 router.get("/posts/:id/comments", async (req, res) => {
   try {
     const commentRows = await db
-      .select()
+      .select({
+        comment: comments,
+        author: {
+          id: sql`users.id`,
+          name: sql`users.name`,
+          avatar: sql`users.avatar`,
+        }
+      })
       .from(comments)
-      .where(and(eq(comments.postId, req.params.id), eq(comments.parentId, sql`NULL`)))
+      .leftJoin(sql`users`, sql`users.id = ${comments.authorId}`)
+      .where(and(eq(comments.postId, req.params.id), isNull(comments.parentId)))
       .orderBy(comments.createdAt);
 
-    res.json(commentRows);
+    const results = commentRows.map(row => ({
+      ...row.comment,
+      author: row.author
+    }));
+
+    res.json(results);
   } catch (error) {
     console.error("Error fetching comments:", error);
     res.status(500).json({ error: "Failed to fetch comments" });

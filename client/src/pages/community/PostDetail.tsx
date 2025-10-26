@@ -35,6 +35,11 @@ type Comment = {
   bodyHtml: string;
   score: number;
   createdAt: string;
+  author: {
+    id: string;
+    name: string;
+    avatar: string | null;
+  };
 };
 
 export default function PostDetail() {
@@ -215,13 +220,18 @@ export default function PostDetail() {
                 {comments.map((comment) => (
                   <Card key={comment.id} data-testid={`card-comment-${comment.id}`}>
                     <CardContent className="pt-6 space-y-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="font-semibold text-sm" data-testid={`text-comment-author-${comment.id}`}>
+                          {comment.author?.name || 'Anonymous'}
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(comment.createdAt).toLocaleString()}
+                        </span>
+                      </div>
                       <div
                         className="prose prose-sm dark:prose-invert max-w-none"
                         dangerouslySetInnerHTML={{ __html: comment.bodyHtml }}
                       />
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span>{new Date(comment.createdAt).toLocaleString()}</span>
-                      </div>
                       <ReactionBar targetType="comment" targetId={comment.id} />
                     </CardContent>
                   </Card>
