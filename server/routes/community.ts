@@ -19,7 +19,7 @@ function needAuth(req: any, res: any, next: any) {
 // Create Post
 router.post("/posts", needAuth, async (req, res) => {
   try {
-    const { title, bodyMd, serviceKey, topicKey } = req.body || {};
+    const { title, bodyMd, mediaUrl, hashtags = [], location, visibility = "NATIONAL", serviceKey, topicKey } = req.body || {};
     
     if (!title || !bodyMd) {
       return res.status(400).json({ error: "Missing required fields" });
@@ -39,6 +39,10 @@ router.post("/posts", needAuth, async (req, res) => {
       title,
       bodyMd,
       bodyHtml,
+      mediaUrl: mediaUrl || null,
+      hashtags: Array.isArray(hashtags) ? hashtags : [],
+      location: location || null,
+      visibility: visibility as "NATIONAL" | "LOCAL",
       serviceKey: serviceKey || null,
       topicId: topic.id,
       authorId: (req.session as any).uid,
@@ -89,7 +93,7 @@ router.get("/posts/:id", async (req, res) => {
 // List Posts (Feed)
 router.get("/posts", async (req, res) => {
   try {
-    const { mode = "latest", serviceKey, topicKey, cursor, take = "20" } = req.query;
+    const { mode = "latest", serviceKey, topicKey, visibility, location, cursor, take = "20" } = req.query;
     const takeNum = Math.min(50, Number(take) || 20);
 
     let query = db.select().from(posts);
@@ -104,6 +108,14 @@ router.get("/posts", async (req, res) => {
       if (topicRows.length > 0) {
         conditions.push(eq(posts.topicId, topicRows[0].id));
       }
+    }
+
+    if (visibility && (visibility === "NATIONAL" || visibility === "LOCAL")) {
+      conditions.push(eq(posts.visibility, String(visibility) as "NATIONAL" | "LOCAL"));
+    }
+
+    if (location) {
+      conditions.push(eq(posts.location, String(location)));
     }
 
     if (conditions.length > 0) {
