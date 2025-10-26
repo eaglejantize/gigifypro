@@ -20,14 +20,14 @@ type Post = {
 
 export default function CommunityHome() {
   const [mode, setMode] = useState<"latest" | "hot">("latest");
-  const [topicKey, setTopicKey] = useState<string>("");
+  const [topicKey, setTopicKey] = useState<string>("all");
   const [serviceKey, setServiceKey] = useState<string>("");
 
   const { data: posts, isLoading } = useQuery<Post[]>({
     queryKey: ["/api/community/posts", mode, topicKey, serviceKey],
     queryFn: () => {
       const params = new URLSearchParams({ mode });
-      if (topicKey) params.append("topicKey", topicKey);
+      if (topicKey && topicKey !== "all") params.append("topicKey", topicKey);
       if (serviceKey) params.append("serviceKey", serviceKey);
       return apiGet(`/api/community/posts?${params}`);
     },
@@ -91,7 +91,7 @@ export default function CommunityHome() {
                     <SelectValue placeholder="All Topics" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Topics</SelectItem>
+                    <SelectItem value="all">All Topics</SelectItem>
                     <SelectItem value="ideas">Ideas</SelectItem>
                     <SelectItem value="service-tips">Service Tips</SelectItem>
                     <SelectItem value="show-tell">Show & Tell</SelectItem>

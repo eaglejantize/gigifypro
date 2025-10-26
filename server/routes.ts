@@ -131,6 +131,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Set session
+      (req.session as any).uid = user.id;
+
       // Return user without password
       const { password: _, ...userWithoutPassword } = user;
       res.json({ user: userWithoutPassword });
@@ -157,6 +160,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!valid) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
+
+      // Set session
+      (req.session as any).uid = user.id;
 
       // Return user without password
       const { password: _, ...userWithoutPassword } = user;

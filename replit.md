@@ -4,6 +4,8 @@
 
 gigifypro is a gig-economy marketplace platform connecting clients with local service professionals. The platform enables service discovery, booking, real-time messaging, and a trust-based review system where "likes" function as positive review signals. Built as a full-stack TypeScript application with modern web technologies, it emphasizes transparent pricing, worker verification, and social proof through ratings and reviews.
 
+**New Feature (Oct 2025):** Launched a Public Discourse system (Digital Town Square) with community posts, comments, reactions, topics, reputation/karma system, moderation tools, and hot feed algorithm for community engagement.
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
@@ -88,10 +90,20 @@ Preferred communication style: Simple, everyday language.
 - UserBadges join table tracking user certification achievements with earned dates
 - AnalyticsEvents table for tracking user engagement (page views, service views, knowledge views, CTA clicks)
 
+**Community Discourse Tables**
+- Topics: Pre-defined discussion categories (4 topics: ideas, service-tips, show-tell, neighborhood)
+- Posts: User-generated forum posts with markdown support, service tagging, and hot scoring
+- Comments: Nested discussion threads under posts with markdown support
+- Reactions: User engagement signals (LIKE, HELPFUL, INSIGHTFUL) with weighted scoring
+- Reports: User-submitted content moderation reports (handled by admins)
+- Reputations: User karma/reputation scores earned from community engagement
+- CommunityFollows: Topic subscription tracking
+- UserFollows: User-to-user following relationships
+
 **Data Relationships**
 - One-to-one: User to WorkerProfile
-- One-to-many: Worker to ServiceListings, User to JobRequests, Booking to Messages
-- Many-to-many implicit: Categories to Services through listings
+- One-to-many: Worker to ServiceListings, User to JobRequests, Booking to Messages, Topic to Posts, Post to Comments, User to Posts/Comments/Reactions
+- Many-to-many implicit: Categories to Services through listings, Users to Topics through CommunityFollows, Users to Users through UserFollows
 
 **File-Based Storage**
 - Service info stored in JSON format at server/content/serviceInfo.json
@@ -153,6 +165,20 @@ Preferred communication style: Simple, everyday language.
 - Each service guide includes: How It Works, Tools & Startup Gear, Certifications & Requirements, Safety & Best Practices, Pricing Model, Upsell & Business Growth, Get Gigified Badge
 - Service guides designed for first-time gig workers with practical business advice
 - Emphasis on compliance, safety, cross-selling opportunities, and scalable business models
+
+**Community Discourse System**
+- Hot feed algorithm: score = weighted_reactions / (age_hours + 2)^1.5
+  - Reaction weights: LIKE=1, HELPFUL=2, INSIGHTFUL=3
+  - Scores recalculated on each reaction event
+- Markdown rendering with DOMPurify sanitization (marked + isomorphic-dompurify)
+  - Allows: links, images, formatting, lists, code blocks
+  - Strips: scripts, iframes, event handlers, dangerous HTML
+- Session-based authentication using req.session.uid (set on login/register)
+- Community routes: /api/community/* (posts, comments, reactions)
+- Admin moderation: /api/admin/community/* (report management)
+- Feed modes: "latest" (chronological) and "hot" (algorithm-ranked)
+- Topic filtering and service tag filtering
+- Rate limiting: Not yet implemented (planned: 10/min posts, 30/min comments, 60/min reactions)
 
 **Additional Services**
 - Google Fonts CDN for Inter and JetBrains Mono font families

@@ -9,7 +9,8 @@ const router = Router();
 
 // Auth guard
 function needAuth(req: any, res: any, next: any) {
-  if (!req.session?.userId) {
+  const uid = (req.session as any)?.uid;
+  if (!uid) {
     return res.status(401).json({ error: "Unauthorized" });
   }
   next();
@@ -40,7 +41,7 @@ router.post("/posts", needAuth, async (req, res) => {
       bodyHtml,
       serviceKey: serviceKey || null,
       topicId: topic.id,
-      authorId: req.session.userId,
+      authorId: (req.session as any).uid,
     }).returning();
 
     res.json(post);
@@ -141,7 +142,7 @@ router.post("/react", needAuth, async (req, res) => {
       // Upsert reaction
       const existing = await db.select().from(reactions).where(
         and(
-          eq(reactions.userId, req.session.userId),
+          eq(reactions.userId, (req.session as any).uid),
           eq(reactions.postId, targetId),
           eq(reactions.kind, kindUpper as any)
         )
@@ -149,7 +150,7 @@ router.post("/react", needAuth, async (req, res) => {
 
       if (existing.length === 0) {
         await db.insert(reactions).values({
-          userId: req.session.userId,
+          userId: (req.session as any).uid,
           postId: targetId,
           commentId: null,
           kind: kindUpper as any,
@@ -160,13 +161,9 @@ router.post("/react", needAuth, async (req, res) => {
       const postRows = await db.select().from(posts).where(eq(posts.id, targetId)).limit(1);
       if (postRows.length > 0) {
         const post = postRows[0];
-        const reactionCount = await db.select({ count: sql<number>`count(*)` })
-          .from(reactions)
-          .where(eq(reactions.postId, targetId));
+        const postReactions = await db.select().from(reactions).where(eq(reactions.postId, targetId));
         
-        const upvotes = Number(reactionCount[0]?.count || 0);
-        const ageHours = (Date.now() - post.createdAt.getTime()) / 3600000;
-        const score = hotScore(upvotes, ageHours);
+        const score = hotScore(postReactions, post.createdAt);
 
         await db.update(posts).set({ score }).where(eq(posts.id, targetId));
 
@@ -184,7 +181,7 @@ router.post("/react", needAuth, async (req, res) => {
       // Comment reaction
       const existing = await db.select().from(reactions).where(
         and(
-          eq(reactions.userId, req.session.userId),
+          eq(reactions.userId, (req.session as any).uid),
           eq(reactions.commentId, targetId),
           eq(reactions.kind, kindUpper as any)
         )
@@ -192,7 +189,7 @@ router.post("/react", needAuth, async (req, res) => {
 
       if (existing.length === 0) {
         await db.insert(reactions).values({
-          userId: req.session.userId,
+          userId: (req.session as any).uid,
           postId: null,
           commentId: targetId,
           kind: kindUpper as any,
@@ -235,7 +232,7 @@ router.post("/comments", needAuth, async (req, res) => {
     const [comment] = await db.insert(comments).values({
       postId,
       parentId: parentId || null,
-      authorId: req.session.userId,
+      authorId: (req.session as any).uid,
       bodyMd,
       bodyHtml,
     }).returning();
@@ -273,7 +270,7 @@ router.post("/reports", needAuth, async (req, res) => {
     }
 
     const [report] = await db.insert(reports).values({
-      reporterId: req.session.userId,
+      reporterId: (req.session as any).uid,
       postId: postId || null,
       commentId: commentId || null,
       reason,
