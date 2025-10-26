@@ -56,10 +56,10 @@ export default function CommunityHome() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold" data-testid="text-community-title">
-              Community Forum
+              G-Square
             </h1>
             <p className="text-muted-foreground">
-              Share ideas, ask questions, and connect with the GigifyPro community
+              Your digital town square—share ideas, connect locally, and grow together
             </p>
           </div>
           <Link href="/community/new">

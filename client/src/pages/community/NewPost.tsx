@@ -59,7 +59,7 @@ export default function NewPost() {
         const post = await response.json();
         toast({
           title: "Post created!",
-          description: "Your post has been published to the community",
+          description: "Your post has been published to G-Square",
         });
         setLocation(`/community/post/${post.id}`);
       } else {
@@ -89,7 +89,7 @@ export default function NewPost() {
           <CardHeader>
             <CardTitle>Create a New Post</CardTitle>
             <CardDescription>
-              Share your ideas, questions, or stories with the community. Use Markdown for formatting.
+              Share your ideas, questions, or stories with G-Square. Use Markdown for formatting.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
