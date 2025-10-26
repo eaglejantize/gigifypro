@@ -24,6 +24,9 @@ export default function Feed() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("ranked");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [zipCode, setZipCode] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
 
   const { data: allListings, isLoading } = useQuery<ListingWithWorker[]>({
     queryKey: ["/api/listings"],
@@ -125,13 +128,40 @@ export default function Feed() {
             </div>
           </div>
 
-          <div className="w-full md:w-[400px]">
-            <CategoryDropdown
-              value={selectedCategory}
-              onChange={setSelectedCategory}
-              placeholder="Filter by category..."
-              showAllOption={true}
-            />
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="w-full md:w-[400px]">
+              <CategoryDropdown
+                value={selectedCategory}
+                onChange={setSelectedCategory}
+                placeholder="Filter by category..."
+                showAllOption={true}
+              />
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2 flex-1">
+              <Input
+                placeholder="ZIP Code"
+                value={zipCode}
+                onChange={(e) => setZipCode(e.target.value)}
+                className="w-full sm:w-32"
+                data-testid="input-zip"
+              />
+              <Input
+                placeholder="City"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                className="w-full sm:flex-1"
+                data-testid="input-city"
+              />
+              <Input
+                placeholder="State"
+                value={state}
+                onChange={(e) => setState(e.target.value)}
+                className="w-full sm:w-24"
+                maxLength={2}
+                data-testid="input-state"
+              />
+            </div>
           </div>
         </div>
 
