@@ -30,6 +30,7 @@ import AdminAnalytics from "@/pages/AdminAnalytics";
 import CommunityHome from "@/pages/community/CommunityHome";
 import NewPost from "@/pages/community/NewPost";
 import PostDetail from "@/pages/community/PostDetail";
+import BuildTag from "@/components/BuildTag";
 
 function Router() {
   return (
@@ -74,6 +75,7 @@ function App() {
             </main>
           </div>
           <MobileCtaBar />
+          <BuildTag />
           <Toaster />
         </TooltipProvider>
       </AuthProvider>

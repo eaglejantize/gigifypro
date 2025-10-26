@@ -41,13 +41,16 @@ export const getQueryFn: <T>(options: {
     return await res.json();
   };
 
+// Temporary: Disable client-side caching for debugging
+const DISABLE_CACHE = import.meta.env.VITE_DISABLE_CACHE === "1";
+
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
-      refetchOnWindowFocus: false,
-      staleTime: Infinity,
+      refetchOnWindowFocus: DISABLE_CACHE ? true : false,
+      staleTime: DISABLE_CACHE ? 0 : Infinity,
       retry: false,
     },
     mutations: {
