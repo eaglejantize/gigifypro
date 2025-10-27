@@ -5,6 +5,13 @@ import { eq, and } from "drizzle-orm";
 import { refreshUserBadges } from "../services/badgeService";
 import { z } from "zod";
 
+// Validation schema for profile updates (excludes userId and id to prevent tampering)
+const updateProfileSchema = z.object({
+  name: z.string().min(1).optional(),
+  bio: z.string().optional(),
+  niche: z.string().optional(),
+});
+
 const router = Router();
 
 // Auth guard
@@ -50,6 +57,8 @@ router.get("/:id/badges", async (req, res) => {
 });
 
 // Create Giger Profile(s)
+// NOTE: Neon HTTP driver doesn't support transactions - race conditions possible under high concurrency
+// In production, add a database constraint or use Neon WebSocket driver
 router.post("/giger/create", needAuth, async (req, res) => {
   try {
     const userId = (req.session as any).uid;
@@ -119,12 +128,13 @@ router.patch("/giger/:id", needAuth, async (req, res) => {
       return res.status(404).json({ error: "Profile not found or unauthorized" });
     }
 
-    // Extract services if provided
-    const { services, ...profileUpdates } = updates;
+    // Extract and validate profile updates (excludes userId to prevent tampering)
+    const { services, ...rawProfileUpdates } = updates;
+    const validatedUpdates = updateProfileSchema.parse(rawProfileUpdates);
 
-    // Update profile
+    // Update profile with validated fields only
     const [updatedProfile] = await db.update(profiles)
-      .set({ ...profileUpdates, updatedAt: new Date() })
+      .set({ ...validatedUpdates, updatedAt: new Date() })
       .where(eq(profiles.id, profileId))
       .returning();
 
@@ -147,6 +157,9 @@ router.patch("/giger/:id", needAuth, async (req, res) => {
     res.json(updatedProfile);
   } catch (error) {
     console.error("Error updating profile:", error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: "Invalid update data", details: error.errors });
+    }
     res.status(500).json({ error: "Failed to update profile" });
   }
 });

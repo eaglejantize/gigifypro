@@ -43,8 +43,8 @@ export default function ProfileSetup() {
   const [searchTerm, setSearchTerm] = useState("");
   const [profileForms, setProfileForms] = useState<ProfileForm[]>([]);
 
-  // Fetch services
-  const { data: servicesData = {}, isLoading } = useQuery<Record<string, any>>({
+  // Fetch services - API returns the services array directly
+  const { data: servicesData, isLoading } = useQuery<any>({
     queryKey: ["/api/services"],
   });
 
@@ -70,21 +70,23 @@ export default function ProfileSetup() {
     },
   });
 
-  // Convert services data to flat array
-  const services: ServiceInfo[] = Object.entries(servicesData).flatMap(([category, categoryServices]: [string, any]) =>
-    Object.entries(categoryServices || {}).map(([serviceKey, service]: [string, any]) => ({
-      serviceKey,
-      name: service.name,
-      summary: service.summary,
-      category,
+  // Convert services data to array
+  // API may return { services: [...] } or services: [...] directly
+  const rawServices = servicesData?.services || servicesData || [];
+  const services: ServiceInfo[] = (Array.isArray(rawServices) ? rawServices : [])
+    .map((service: any) => ({
+      serviceKey: service.key,
+      name: service.label || service.key,
+      summary: service.summary || "",
+      category: service.category || "Other",
     }))
-  );
+    .filter((service) => service.serviceKey && service.name);
 
   // Filter services based on search
   const filteredServices = services.filter(
     (service) =>
-      service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      service.category.toLowerCase().includes(searchTerm.toLowerCase())
+      (service.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (service.category || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const maxProfiles = 3;
@@ -125,6 +127,40 @@ export default function ProfileSetup() {
     setProfileForms(newForms);
   };
 
+  // Reconcile profile forms with selected services - preserves edits when services change
+  useEffect(() => {
+    if (selectedServices.length > 0) {
+      // Reconcile by serviceKey to preserve existing form data
+      const newForms: ProfileForm[] = selectedServices.map((service) => {
+        // Find existing form for this service
+        const existingForm = profileForms.find(
+          (form) => form.services[0]?.serviceKey === service.serviceKey
+        );
+        
+        // Return existing form if found, otherwise create new form
+        return existingForm || {
+          name: `${service.name} Specialist`,
+          bio: `Professional ${service.niche} expert`,
+          services: [{ serviceKey: service.serviceKey, isPrimary: true }],
+        };
+      });
+      
+      // Only update if forms actually changed
+      const formsChanged = newForms.length !== profileForms.length ||
+        newForms.some((form, i) => 
+          !profileForms[i] || 
+          form.services[0]?.serviceKey !== profileForms[i].services[0]?.serviceKey
+        );
+      
+      if (formsChanged) {
+        setProfileForms(newForms);
+      }
+    } else if (profileForms.length > 0) {
+      // Clear forms if no services selected
+      setProfileForms([]);
+    }
+  }, [selectedServices, profileForms]);
+
   const canGoToStep2 = selectedServices.length > 0;
   const canGoToStep3 = selectedServices.every((s) => s.niche.trim().length > 0);
 
@@ -143,16 +179,6 @@ export default function ProfileSetup() {
         description: "Please specify a niche for each selected service",
       });
       return;
-    }
-
-    if (step === 2) {
-      // Initialize profile forms based on selected services
-      const initialForms: ProfileForm[] = selectedServices.map((service) => ({
-        name: `${service.name} Specialist`,
-        bio: `Professional ${service.niche} expert`,
-        services: [{ serviceKey: service.serviceKey, isPrimary: true }],
-      }));
-      setProfileForms(initialForms);
     }
 
     setStep(step + 1);
@@ -267,6 +293,11 @@ export default function ProfileSetup() {
                 <Label>Available Services</Label>
                 <ScrollArea className="h-96 border rounded-md">
                   <div className="p-4 space-y-2">
+                    {filteredServices.length === 0 && !isLoading && (
+                      <p className="text-muted-foreground text-center py-8">
+                        {searchTerm ? `No services found matching "${searchTerm}"` : "No services available"}
+                      </p>
+                    )}
                     {filteredServices.map((service) => {
                       const isSelected = selectedServices.some((s) => s.serviceKey === service.serviceKey);
                       return (
