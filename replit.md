@@ -5,6 +5,7 @@
 gigifypro is a gig-economy marketplace platform connecting clients with local service professionals. The platform enables service discovery, booking, real-time messaging, and a trust-based review system where "likes" function as positive review signals. Built as a full-stack TypeScript application with modern web technologies, it emphasizes transparent pricing, worker verification, and social proof through ratings and reviews.
 
 **New Features (Oct 2025):**
+- **Multi-Profile Giger System:** Each user can create up to 3 specialized giger profiles, each showcasing different services (selected from 75 available) with custom niches, profile names, and bios. Profile setup wizard with 3-step flow: service selection, niche definition, and profile details with form persistence across navigation.
 - **Public Discourse System:** Digital Town Square with community posts, comments, reactions, topics, reputation/karma system, moderation tools, and hot feed algorithm for community engagement
 - **G PRO Brand Integration:** Professional branded store with 5 new products (Chef Hat, Chef Jacket, Cleaning Apron, Safety Jacket, Laundry Bag Kit), category filtering, and enhanced product catalog
 - **GigScore Algorithm:** AI-assisted worker ranking system calculating scores based on review quality (40%), completed jobs (25%), response time (15%), cancellations (10%), and repeat clients (10%)
@@ -83,6 +84,8 @@ Preferred communication style: Simple, everyday language.
 **Schema Design**
 - Users table with role-based access (user, worker, admin)
 - Worker profiles linked to users with skills, rates, and verification status
+- **Profiles table:** Multi-profile giger system allowing up to 3 specialized profiles per user with custom names, bios, and service selections
+- **ProfileServices table:** Join table linking profiles to their selected services with isPrimary flag for primary service designation
 - Service categories for organizing offerings
 - Service listings published by workers
 - Job requests posted by clients
@@ -106,8 +109,8 @@ Preferred communication style: Simple, everyday language.
 
 **Data Relationships**
 - One-to-one: User to WorkerProfile
-- One-to-many: Worker to ServiceListings, User to JobRequests, Booking to Messages, Topic to Posts, Post to Comments, User to Posts/Comments/Reactions
-- Many-to-many implicit: Categories to Services through listings, Users to Topics through CommunityFollows, Users to Users through UserFollows
+- One-to-many: User to Profiles, Worker to ServiceListings, User to JobRequests, Booking to Messages, Topic to Posts, Post to Comments, User to Posts/Comments/Reactions
+- Many-to-many: Profiles to Services through ProfileServices, Categories to Services through listings, Users to Topics through CommunityFollows, Users to Users through UserFollows
 
 **File-Based Storage**
 - Service info stored in JSON format at server/content/serviceInfo.json
