@@ -1,10 +1,20 @@
 import { Router } from "express";
 import { db } from "../db";
-import { users, userBadges, badges } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { users, userBadges, badges, profiles, profileServices, insertProfileSchema } from "@shared/schema";
+import { eq, and } from "drizzle-orm";
 import { refreshUserBadges } from "../services/badgeService";
+import { z } from "zod";
 
 const router = Router();
+
+// Auth guard
+function needAuth(req: any, res: any, next: any) {
+  const uid = (req.session as any)?.uid;
+  if (!uid) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  next();
+}
 
 // GET /api/profile/:id/badges
 router.get("/:id/badges", async (req, res) => {
@@ -36,6 +46,161 @@ router.get("/:id/badges", async (req, res) => {
   } catch (error) {
     console.error("Error fetching profile badges:", error);
     res.status(500).json({ error: "Failed to fetch badges" });
+  }
+});
+
+// Create Giger Profile(s)
+router.post("/giger/create", needAuth, async (req, res) => {
+  try {
+    const userId = (req.session as any).uid;
+    const { profiles: profilesData } = req.body;
+
+    if (!Array.isArray(profilesData) || profilesData.length === 0) {
+      return res.status(400).json({ error: "Profiles array required" });
+    }
+
+    // Check user doesn't exceed 3 profiles
+    const existingProfiles = await db.select().from(profiles).where(eq(profiles.userId, userId));
+    if (existingProfiles.length + profilesData.length > 3) {
+      return res.status(400).json({ error: "Maximum 3 profiles allowed per user" });
+    }
+
+    const createdProfiles = [];
+
+    for (const profileData of profilesData) {
+      const { services, ...profileFields } = profileData;
+
+      // Validate profile data
+      const validatedProfile = insertProfileSchema.parse({
+        ...profileFields,
+        userId,
+      });
+
+      // Create profile
+      const [newProfile] = await db.insert(profiles).values(validatedProfile).returning();
+
+      // Add services
+      if (Array.isArray(services) && services.length > 0) {
+        const serviceRecords = services.map((svc: any) => ({
+          profileId: newProfile.id,
+          serviceKey: svc.serviceKey,
+          isPrimary: svc.isPrimary || false,
+        }));
+
+        await db.insert(profileServices).values(serviceRecords);
+      }
+
+      createdProfiles.push(newProfile);
+    }
+
+    res.json({ profiles: createdProfiles });
+  } catch (error) {
+    console.error("Error creating profiles:", error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: "Invalid profile data", details: error.errors });
+    }
+    res.status(500).json({ error: "Failed to create profiles" });
+  }
+});
+
+// Update Giger Profile
+router.patch("/giger/:id", needAuth, async (req, res) => {
+  try {
+    const userId = (req.session as any).uid;
+    const profileId = req.params.id;
+    const updates = req.body;
+
+    // Verify ownership
+    const existingProfile = await db.select().from(profiles).where(
+      and(eq(profiles.id, profileId), eq(profiles.userId, userId))
+    ).limit(1);
+
+    if (existingProfile.length === 0) {
+      return res.status(404).json({ error: "Profile not found or unauthorized" });
+    }
+
+    // Extract services if provided
+    const { services, ...profileUpdates } = updates;
+
+    // Update profile
+    const [updatedProfile] = await db.update(profiles)
+      .set({ ...profileUpdates, updatedAt: new Date() })
+      .where(eq(profiles.id, profileId))
+      .returning();
+
+    // Update services if provided
+    if (Array.isArray(services)) {
+      // Delete existing services
+      await db.delete(profileServices).where(eq(profileServices.profileId, profileId));
+
+      // Insert new services
+      if (services.length > 0) {
+        const serviceRecords = services.map((svc: any) => ({
+          profileId,
+          serviceKey: svc.serviceKey,
+          isPrimary: svc.isPrimary || false,
+        }));
+        await db.insert(profileServices).values(serviceRecords);
+      }
+    }
+
+    res.json(updatedProfile);
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    res.status(500).json({ error: "Failed to update profile" });
+  }
+});
+
+// Get My Giger Profiles
+router.get("/giger/mine", needAuth, async (req, res) => {
+  try {
+    const userId = (req.session as any).uid;
+
+    const userProfiles = await db.select().from(profiles).where(eq(profiles.userId, userId));
+
+    // Fetch services for each profile
+    const profilesWithServices = await Promise.all(
+      userProfiles.map(async (profile) => {
+        const services = await db.select()
+          .from(profileServices)
+          .where(eq(profileServices.profileId, profile.id));
+
+        return {
+          ...profile,
+          services,
+        };
+      })
+    );
+
+    res.json(profilesWithServices);
+  } catch (error) {
+    console.error("Error fetching profiles:", error);
+    res.status(500).json({ error: "Failed to fetch profiles" });
+  }
+});
+
+// Get Giger Profile by ID
+router.get("/giger/:id", async (req, res) => {
+  try {
+    const profileId = req.params.id;
+
+    const profile = await db.select().from(profiles).where(eq(profiles.id, profileId)).limit(1);
+
+    if (profile.length === 0) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
+
+    const services = await db.select()
+      .from(profileServices)
+      .where(eq(profileServices.profileId, profileId));
+
+    res.json({
+      ...profile[0],
+      services,
+    });
+  } catch (error) {
+    console.error("Error fetching profile:", error);
+    res.status(500).json({ error: "Failed to fetch profile" });
   }
 });
 

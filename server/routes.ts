@@ -234,6 +234,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Services endpoint (for profile setup)
+  app.get("/api/services", async (_req, res) => {
+    try {
+      const serviceInfo = await readServiceInfo();
+      res.json(serviceInfo);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Listing endpoints
   app.get("/api/listings", async (req, res) => {
     try {
