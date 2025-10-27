@@ -50,7 +50,7 @@ export default function CtaBanner() {
             data-testid="button-banner-get-gigified"
           >
             <a
-              href="/knowledge"
+              href="/profile-setup"
               onClick={() => trackCta("banner_get_gigified")}
             >
               <GraduationCap className="h-4 w-4" />

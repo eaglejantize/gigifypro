@@ -75,7 +75,7 @@ export default function Landing() {
               data-testid="button-hero-get-gigified"
             >
               <a
-                href="/knowledge"
+                href="/profile-setup"
                 onClick={() => trackCta("hero_get_gigified")}
               >
                 <GraduationCap className="h-5 w-5" />
