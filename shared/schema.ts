@@ -791,3 +791,44 @@ export type InsertReport = z.infer<typeof insertReportSchema>;
 
 export type Reputation = typeof reputations.$inferSelect;
 export type InsertReputation = z.infer<typeof insertReputationSchema>;
+
+// Giger Profiles (multi-profile system)
+export const profiles = pgTable("profiles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  tagline: text("tagline"),
+  bio: text("bio"),
+  mainNiche: text("main_niche"),
+  subNiches: text("sub_niches").array().default(sql`ARRAY[]::text[]`),
+  city: text("city"),
+  state: text("state"),
+  rateCents: integer("rate_cents").default(2500),
+  isLive: boolean("is_live").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertProfileSchema = createInsertSchema(profiles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type Profile = typeof profiles.$inferSelect;
+export type InsertProfile = z.infer<typeof insertProfileSchema>;
+
+// Profile Services (many-to-many between profiles and services)
+export const profileServices = pgTable("profile_services", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  profileId: varchar("profile_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  serviceKey: text("service_key").notNull(),
+  isPrimary: boolean("is_primary").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertProfileServiceSchema = createInsertSchema(profileServices).omit({
+  id: true,
+  createdAt: true,
+});
+export type ProfileService = typeof profileServices.$inferSelect;
+export type InsertProfileService = z.infer<typeof insertProfileServiceSchema>;

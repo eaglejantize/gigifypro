@@ -1,0 +1,79 @@
+You are an expert full-stack engineer working in the GigifyPro project.
+
+TASK: Implement the Giger Profile Setup system (Phase 1, Step 1).
+
+OBJECTIVES
+1. Create Prisma models for Profile and ProfileService.
+2. Build backend API routes for creating and updating profiles.
+3. Build frontend wizard page with:
+   - Checkboxes for selecting services (from /server/content/serviceInfo.json)
+   - Select main niche and optional sub-niches.
+   - Toggle to create separate profiles per niche.
+   - Inputs for profile name, tagline, bio, hourly rate, and location.
+4. Support multi-profile creation per user (max 3).
+5. Save data to DB and return created profiles as JSON.
+
+PRISMA MODELS (append to schema.prisma)
+--------------------------------------------------
+model Profile {
+  id            String   @id @default(cuid())
+  userId        String
+  name          String
+  tagline       String?
+  bio           String?
+  mainNiche     String?
+  subNiches     String[]
+  city          String?
+  state         String?
+  rateCents     Int?
+  isLive        Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  services      ProfileService[]
+}
+
+model ProfileService {
+  id        String @id @default(cuid())
+  profileId String
+  serviceKey String
+  isPrimary Boolean @default(false)
+  profile   Profile @relation(fields: [profileId], references: [id])
+}
+--------------------------------------------------
+
+SERVER ROUTES
+--------------------------------------------------
+Create file: server/routes/profile.ts
+Endpoints:
+POST /api/profile/create
+PATCH /api/profile/:id
+GET /api/profile/mine
+Implement using Prisma and session.uid.
+Mount route in server/routes.ts: api.use("/profile", profileRouter);
+--------------------------------------------------
+
+CLIENT UI
+--------------------------------------------------
+Create page: client/src/pages/Onboarding/ProfileSetup.tsx
+Features:
+- Fetch services list from /api/services (use existing serviceInfo.json)
+- Render grouped checkboxes by category
+- Allow one main niche (radio)
+- Sub-niches (multi-checkbox)
+- Toggle: “Create separate profile for this niche”
+- Inputs: profile name, tagline, bio, rate ($25 default)
+- On submit → POST to /api/profile/create
+- Display confirmation list of created profiles
+--------------------------------------------------
+
+AFTER IMPLEMENTATION
+1. Run: npx prisma generate && npx prisma migrate dev -n "profile_setup_v1"
+2. Rebuild app and verify:
+   - /api/profile/mine returns JSON
+   - Onboarding page renders service checkboxes and creates profile records.
+
+PRINT at the end:
+✅ “Profile Setup implemented successfully” if no errors.
+❌ Otherwise print stack trace.
+
+END OF TASK
