@@ -1,0 +1,89 @@
+Right now you’ve got an Express app that exports app, but it’s not listening and not mounting routes. Do these three tiny fixes:
+1) Create/verify the central API router
+Path: server/routes.ts (create if it doesn’t exist)
+Copy code
+Ts
+// server/routes.ts
+import { Router } from "express";
+import profileRouter from "./routes/profile"; // must exist: server/routes/profile.ts
+
+const api = Router();
+
+// mount feature routers here
+api.use("/profile", profileRouter);
+
+// simple health check
+api.get("/health", (_req, res) => {
+  res.json({ ok: true, ts: new Date().toISOString() });
+});
+
+export default api;
+2) Mount the API router in your app
+Edit your file (the one you pasted). I’ll assume it’s server/app.ts. Add the api import + app.use("/api", api):
+Copy code
+Ts
+// server/app.ts
+import express from "express";
+import cookieParser from "cookie-parser";
+import session from "express-session";
+import corsMiddleware from "./cors";
+import api from "./routes";              // ⬅️ add this line
+
+const app = express();
+
+app.use(corsMiddleware);
+app.use(express.json());
+app.use(cookieParser());
+
+app.use(session({
+  secret: process.env.SESSION_SECRET || "dev_secret_change_me",
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: false,
+  }
+}));
+
+// ⬇️ mount all API routes at /api
+app.use("/api", api);
+
+export default app;
+If your file is actually server/index.ts already, still import and use api as above, and keep the listen code from step 3 below in the same file.
+3) Add the listener entry point
+Path: server/index.ts (create or replace with this)
+Copy code
+Ts
+// server/index.ts
+import app from "./app";
+
+const PORT = Number(process.env.PORT || 3000);
+app.listen(PORT, () => {
+  console.log(`✅ API listening on http://localhost:${PORT}`);
+});
+4) Run & verify
+In the shell:
+Copy code
+Bash
+# kill any stuck node processes (safe)
+pkill -f node || true
+
+# start dev
+npm run dev
+You should see:
+Copy code
+
+✅ API listening on http://localhost:3000
+Now smoke-test:
+Copy code
+Bash
+curl -i http://localhost:3000/api/health
+# expect: HTTP/1.1 200 OK with { ok: true, ts: ... }
+
+curl -i http://localhost:3000/api/profile/mine
+# expect: HTTP/1.1 200 OK with JSON (maybe [] if none yet)
+Send me back
+The last 5–10 lines of the npm run dev console (look for the ✅ line).
+The output of both curl commands above.
+Once the API is up, we’ll wire the /profile-setup page route and finish Step 1, then move to the Adaptive Verification Wizard (Step 2).

@@ -1,0 +1,15 @@
+// server/routes.ts
+import { Router } from "express";
+import profileRouter from "./routes/profile"; // must exist: server/routes/profile.ts
+
+const api = Router();
+
+// mount feature routers here
+api.use("/profile", profileRouter);
+
+// simple health check
+api.get("/health", (_req, res) => {
+  res.json({ ok: true, ts: new Date().toISOString() });
+});
+
+export default api;
