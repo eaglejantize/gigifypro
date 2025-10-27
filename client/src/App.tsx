@@ -18,6 +18,7 @@ import Profile from "@/pages/Profile";
 import Inbox from "@/pages/Inbox";
 import Dashboard from "@/pages/Dashboard";
 import Settings from "@/pages/Settings";
+import ProfileSetup from "@/pages/ProfileSetup";
 import Store from "@/pages/store/Store";
 import ProductDetail from "@/pages/store/ProductDetail";
 import Cart from "@/pages/store/Cart";
@@ -44,6 +45,7 @@ function Router() {
       <Route path="/inbox" component={Inbox} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/settings" component={Settings} />
+      <Route path="/profile-setup" component={ProfileSetup} />
       <Route path="/store" component={Store} />
       <Route path="/store/product/:slug" component={ProductDetail} />
       <Route path="/store/cart" component={Cart} />
