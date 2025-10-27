@@ -12,6 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { ChevronLeft, ChevronRight, Check, Search, X } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 type ServiceInfo = {
   serviceKey: string;
@@ -38,10 +39,23 @@ type ProfileForm = {
 export default function ProfileSetup() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [selectedServices, setSelectedServices] = useState<SelectedService[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [profileForms, setProfileForms] = useState<ProfileForm[]>([]);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to create your giger profiles",
+        variant: "destructive",
+      });
+      setLocation("/auth/login");
+    }
+  }, [user, setLocation, toast]);
 
   // Fetch services - API returns the services array directly
   const { data: servicesData, isLoading } = useQuery<any>({
