@@ -6,6 +6,8 @@ gigifypro is a gig-economy marketplace platform connecting clients with local se
 
 **New Features (Oct 2025):**
 - **Multi-Profile Giger System:** Each user can create up to 3 specialized giger profiles, each showcasing different services (selected from 75 available) with custom niches, profile names, and bios. Profile setup wizard with 3-step flow: service selection, niche definition, and profile details with form persistence across navigation.
+- **Redesigned Post Task Flow (Oct 31, 2025):** New 4-step customer booking flow - (1) Select service & enter task title, (2) Browse/select giger with visible pricing, (3) Add details (date/location/description), (4) Review & submit. Customers now see each giger's set pricing (hourly/fixed/custom) before selection instead of universal hourly rates.
+- **Giger Pricing Models:** Profiles support three pricing models - hourly (per 30min blocks), fixed (one-time price), custom (negotiable). Pricing displayed upfront in GigerCard components with color-coded badges.
 - **Public Discourse System:** Digital Town Square with community posts, comments, reactions, topics, reputation/karma system, moderation tools, and hot feed algorithm for community engagement
 - **G PRO Brand Integration:** Professional branded store with 5 new products (Chef Hat, Chef Jacket, Cleaning Apron, Safety Jacket, Laundry Bag Kit), category filtering, and enhanced product catalog
 - **GigScore Algorithm:** AI-assisted worker ranking system calculating scores based on review quality (40%), completed jobs (25%), response time (15%), cancellations (10%), and repeat clients (10%)
