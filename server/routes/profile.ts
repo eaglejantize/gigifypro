@@ -3,6 +3,7 @@ import { db } from "../db";
 import { users, userBadges, badges, profiles, profileServices, insertProfileSchema, reviewLikes, workerProfiles } from "@shared/schema";
 import { eq, and, sql as drizzleSql } from "drizzle-orm";
 import { refreshUserBadges } from "../services/badgeService";
+import { calculateGigScore, updateGigScore } from "../services/gigScoreService";
 import { z } from "zod";
 
 // Validation schema for profile updates (excludes userId and id to prevent tampering)
@@ -53,6 +54,36 @@ router.get("/:id/badges", async (req, res) => {
   } catch (error) {
     console.error("Error fetching profile badges:", error);
     res.status(500).json({ error: "Failed to fetch badges" });
+  }
+});
+
+// GET /api/profile/:id/gigscore
+router.get("/:id/gigscore", async (req, res) => {
+  try {
+    const profileId = req.params.id;
+
+    // Calculate GigScore components
+    const scoreComponents = await calculateGigScore(profileId);
+
+    res.json(scoreComponents);
+  } catch (error) {
+    console.error("Error calculating GigScore:", error);
+    res.status(500).json({ error: "Failed to calculate GigScore" });
+  }
+});
+
+// POST /api/profile/:id/gigscore/update
+router.post("/:id/gigscore/update", async (req, res) => {
+  try {
+    const profileId = req.params.id;
+
+    // Calculate and save GigScore to database
+    const totalScore = await updateGigScore(profileId);
+
+    res.json({ gigScore: totalScore });
+  } catch (error) {
+    console.error("Error updating GigScore:", error);
+    res.status(500).json({ error: "Failed to update GigScore" });
   }
 });
 

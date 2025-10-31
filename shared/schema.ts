@@ -809,6 +809,8 @@ export const profiles = pgTable("profiles", {
   state: text("state"),
   rateCents: integer("rate_cents").default(2500),
   pricingModel: pricingModelEnum("pricing_model").notNull().default("hourly"),
+  gigScore: decimal("gig_score", { precision: 5, scale: 2 }),
+  avgResponseMinutes: integer("avg_response_minutes"),
   isLive: boolean("is_live").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

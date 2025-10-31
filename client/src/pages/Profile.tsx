@@ -1,19 +1,33 @@
 import { useRoute } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Star, Heart, Clock, MapPin, Award, MessageSquare } from "lucide-react";
+import { Star, Heart, Clock, MapPin, Award, MessageSquare, TrendingUp } from "lucide-react";
 import ProfileBadges from "@/components/ProfileBadges";
 
 export default function Profile() {
   const [, params] = useRoute("/profile/:id");
-  const userId = params?.id;
+  const profileId = params?.id;
 
-  // Mock data
+  // Fetch GigScore for profile
+  const { data: gigScoreData } = useQuery<{
+    reviewQuality: number;
+    completedJobs: number;
+    responseTime: number;
+    cancellations: number;
+    repeatClients: number;
+    totalScore: number;
+  }>({
+    queryKey: ["/api/profile", profileId, "gigscore"],
+    enabled: !!profileId,
+  });
+
+  // Mock data (will be replaced with real data from backend)
   const profile = {
-    id: userId,
+    id: profileId,
     name: "John Smith",
     avatar: null,
     bio: "Professional handyman with 10+ years of experience. Specialized in home repairs, plumbing, and electrical work.",
@@ -79,6 +93,56 @@ export default function Profile() {
                   <span>{profile.location}</span>
                 </div>
 
+                {/* GigScore - Prominent Display */}
+                {gigScoreData && (
+                  <div className="bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg p-4 mb-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-primary/10 rounded-full p-3">
+                          <TrendingUp className="w-6 h-6 text-primary" />
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-muted-foreground">
+                            GigScore
+                          </div>
+                          <div className="text-3xl font-bold text-primary" data-testid="text-gigscore">
+                            {gigScoreData.totalScore}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <Badge variant="outline" className="bg-background">
+                          {gigScoreData.totalScore >= 80 ? "Elite" : gigScoreData.totalScore >= 60 ? "Pro" : "Rising Star"}
+                        </Badge>
+                      </div>
+                    </div>
+                    
+                    {/* Score Breakdown */}
+                    <div className="grid grid-cols-5 gap-2 mt-4 pt-4 border-t border-primary/10">
+                      <div className="text-center">
+                        <div className="text-xs text-muted-foreground mb-1">Reviews</div>
+                        <div className="font-semibold text-sm">{gigScoreData.reviewQuality.toFixed(0)}</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-muted-foreground mb-1">Jobs</div>
+                        <div className="font-semibold text-sm">{gigScoreData.completedJobs.toFixed(0)}</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-muted-foreground mb-1">Speed</div>
+                        <div className="font-semibold text-sm">{gigScoreData.responseTime.toFixed(0)}</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-muted-foreground mb-1">Reliability</div>
+                        <div className="font-semibold text-sm">{gigScoreData.cancellations.toFixed(0)}</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-muted-foreground mb-1">Repeat</div>
+                        <div className="font-semibold text-sm">{gigScoreData.repeatClients.toFixed(0)}</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Stats */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                   <div>
@@ -128,10 +192,10 @@ export default function Profile() {
                 </div>
 
                 {/* Badges */}
-                {userId && (
+                {profileId && (
                   <div className="mb-6">
                     <div className="text-sm font-semibold mb-2">Certifications & Badges</div>
-                    <ProfileBadges userId={userId} />
+                    <ProfileBadges userId={profileId} />
                   </div>
                 )}
 
