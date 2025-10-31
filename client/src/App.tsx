@@ -26,6 +26,7 @@ import Checkout from "@/pages/store/Checkout";
 import KnowledgeHub from "@/pages/KnowledgeHub";
 import ArticleDetail from "@/pages/ArticleDetail";
 import Services from "@/pages/Services";
+import HowItWorks from "@/pages/HowItWorks";
 import AdminServices from "@/pages/admin/AdminServices";
 import AdminAnalytics from "@/pages/AdminAnalytics";
 import CommunityHome from "@/pages/community/CommunityHome";
@@ -53,6 +54,7 @@ function Router() {
       <Route path="/knowledge" component={KnowledgeHub} />
       <Route path="/knowledge/article/:slug" component={ArticleDetail} />
       <Route path="/services" component={Services} />
+      <Route path="/how-it-works" component={HowItWorks} />
       <Route path="/community" component={CommunityHome} />
       <Route path="/community/new" component={NewPost} />
       <Route path="/community/post/:id" component={PostDetail} />
