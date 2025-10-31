@@ -10,6 +10,21 @@ import * as LucideIcons from "lucide-react";
 import type { KnowledgeArticle, Badge as BadgeType } from "@shared/schema";
 import { apiGet } from "@/lib/api";
 
+// Most popular services to feature in Skill Builder section
+const POPULAR_SERVICE_KEYS = [
+  "house-cleaning",
+  "deep-cleaning", 
+  "lawncare",
+  "handyman",
+  "home-repairs",
+  "moving-help",
+  "furniture-assembly",
+  "dog-walking",
+  "pet-sitting",
+  "delivery",
+  "errands"
+];
+
 const sections = [
   { 
     id: "getting_started", 
@@ -137,62 +152,109 @@ export default function KnowledgeHub() {
             const sectionArticles = articlesBySection[section.id] || [];
             const SectionIcon = section.icon;
 
+            // For Skill Builder, show only most popular services
+            const isSkillBuilder = section.id === "skill_builder";
+            let displayArticles = sectionArticles;
+            
+            if (isSkillBuilder) {
+              // Sort articles by popularity, then take top 6
+              const popularArticles = sectionArticles
+                .sort((a, b) => {
+                  const aIndex = POPULAR_SERVICE_KEYS.indexOf(a.slug);
+                  const bIndex = POPULAR_SERVICE_KEYS.indexOf(b.slug);
+                  
+                  // If both are in popular list, sort by their position
+                  if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+                  // If only one is popular, prioritize it
+                  if (aIndex !== -1) return -1;
+                  if (bIndex !== -1) return 1;
+                  // If neither is popular, maintain original order
+                  return 0;
+                })
+                .slice(0, 6);
+              displayArticles = popularArticles;
+            }
+
             return (
               <div key={section.id} data-testid={`section-${section.id}`}>
                 <div className="flex items-center gap-3 mb-6">
                   <SectionIcon className={`w-8 h-8 ${section.color}`} />
-                  <div>
+                  <div className="flex-1">
                     <h2 className="text-2xl font-bold">{section.title}</h2>
                     <p className="text-muted-foreground">{section.description}</p>
                   </div>
+                  {isSkillBuilder && sectionArticles.length > 6 && (
+                    <Link href="/services">
+                      <Button variant="outline" size="sm" data-testid="button-view-all-services">
+                        View All 75 Services
+                        <LucideIcons.ArrowRight className="ml-2 w-4 h-4" />
+                      </Button>
+                    </Link>
+                  )}
                 </div>
 
                 {articlesLoading ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {[1, 2].map(i => <Skeleton key={i} className="h-48" />)}
                   </div>
-                ) : sectionArticles.length === 0 ? (
+                ) : displayArticles.length === 0 ? (
                   <Card>
                     <CardContent className="py-8 text-center text-muted-foreground">
                       <p>No articles available in this section yet.</p>
                     </CardContent>
                   </Card>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {sectionArticles.map((article) => {
-                      const ArticleIcon = getDynamicIcon(article.icon || "FileText");
-                      return (
-                        <Link 
-                          key={article.id} 
-                          href={`/knowledge/article/${article.slug}`}
-                          data-testid={`link-article-${article.slug}`}
-                        >
-                          <Card className="h-full hover-elevate active-elevate-2 cursor-pointer">
-                            <CardHeader>
-                              <div className="flex items-start gap-3">
-                                <ArticleIcon className="w-6 h-6 text-primary flex-shrink-0" />
-                                <div className="flex-1">
-                                  <CardTitle className="text-lg group-hover:text-primary">
-                                    {article.title}
-                                  </CardTitle>
-                                  <CardDescription className="mt-2">
-                                    {article.summary}
-                                  </CardDescription>
-                                  <div className="flex items-center gap-2 mt-3">
-                                    <LucideIcons.Clock className="w-4 h-4 text-muted-foreground" />
-                                    <span className="text-sm text-muted-foreground">
-                                      {article.readTimeMinutes} min read
-                                    </span>
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {displayArticles.map((article) => {
+                        const ArticleIcon = getDynamicIcon(article.icon || "FileText");
+                        return (
+                          <Link 
+                            key={article.id} 
+                            href={`/knowledge/article/${article.slug}`}
+                            data-testid={`link-article-${article.slug}`}
+                          >
+                            <Card className="h-full hover-elevate active-elevate-2 cursor-pointer">
+                              <CardHeader>
+                                <div className="flex items-start gap-3">
+                                  <ArticleIcon className="w-6 h-6 text-primary flex-shrink-0" />
+                                  <div className="flex-1">
+                                    <CardTitle className="text-lg group-hover:text-primary">
+                                      {article.title}
+                                    </CardTitle>
+                                    <CardDescription className="mt-2">
+                                      {article.summary}
+                                    </CardDescription>
+                                    <div className="flex items-center gap-2 mt-3">
+                                      <LucideIcons.Clock className="w-4 h-4 text-muted-foreground" />
+                                      <span className="text-sm text-muted-foreground">
+                                        {article.readTimeMinutes} min read
+                                      </span>
+                                    </div>
                                   </div>
+                                  <LucideIcons.ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
                                 </div>
-                                <LucideIcons.ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                              </div>
-                            </CardHeader>
-                          </Card>
+                              </CardHeader>
+                            </Card>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                    {isSkillBuilder && sectionArticles.length > 6 && (
+                      <div className="mt-6 text-center">
+                        <Link href="/services">
+                          <Button variant="outline" size="lg" data-testid="button-view-all-services-bottom">
+                            <LucideIcons.BookOpen className="mr-2 w-5 h-5" />
+                            View All 75 Service Training Guides
+                            <LucideIcons.ArrowRight className="ml-2 w-5 h-5" />
+                          </Button>
                         </Link>
-                      );
-                    })}
-                  </div>
+                        <p className="text-sm text-muted-foreground mt-3">
+                          Explore comprehensive training for all services with certifications, safety guides, and business tips
+                        </p>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             );
