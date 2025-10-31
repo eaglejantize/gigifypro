@@ -36,6 +36,7 @@ export const badgeTypeEnum = pgEnum("badge_type", [
 export const reactionKindEnum = pgEnum("reaction_kind", ["LIKE", "HELPFUL", "INSIGHTFUL"]);
 export const reportStatusEnum = pgEnum("report_status", ["PENDING", "REVIEWED", "ACTIONED"]);
 export const visibilityEnum = pgEnum("visibility", ["NATIONAL", "LOCAL"]);
+export const pricingModelEnum = pgEnum("pricing_model", ["hourly", "fixed", "custom"]);
 
 // Users table
 export const users = pgTable("users", {
@@ -804,6 +805,7 @@ export const profiles = pgTable("profiles", {
   city: text("city"),
   state: text("state"),
   rateCents: integer("rate_cents").default(2500),
+  pricingModel: pricingModelEnum("pricing_model").notNull().default("hourly"),
   isLive: boolean("is_live").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
