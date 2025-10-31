@@ -578,6 +578,346 @@ Minimum order: 5 meals or $100
   },
 
   {
+    slug: "building-your-gig-team",
+    section: "team_collaboration",
+    title: "Building Your Gig Team: Collaborate for Bigger Jobs",
+    summary: "Learn how to network with other gigers and build teams for multi-person jobs like moving, events, and large-scale projects.",
+    icon: "Users",
+    content: `# Building Your Gig Team: Collaborate for Bigger Jobs
+
+## Why Team Up?
+
+Some gigs are simply too big for one person. Moving a three-bedroom house, catering a 100-person event, or landscaping a large property requires multiple skilled hands working together. **Your network of fellow gigers is your greatest asset.**
+
+## Jobs That Need Teams
+
+### Moving & Heavy Lifting
+Moving jobs often need 2-4 people depending on the size. You'll need:
+- **Strong backs**: Physical labor for carrying furniture
+- **Truck drivers**: Someone with a vehicle and loading experience
+- **Organizers**: Detail-oriented people to pack and label boxes
+- **Specialists**: For handling pianos, antiques, or fragile items
+
+A standard 2-bedroom apartment move might need 2 people for 4 hours, while a 4-bedroom house could require 4 people for 8+ hours.
+
+### Event Services
+Weddings, corporate events, and parties benefit from coordinated teams:
+- **Setup crews**: Multiple people for tent assembly, table arrangement, decoration
+- **Catering teams**: Cooks, servers, and cleanup staff
+- **Bartenders and servers**: Events over 50 people typically need multiple servers
+- **Photography teams**: Primary photographer plus assistant for lighting and equipment
+
+### Large-Scale Cleaning & Renovation
+Deep cleaning commercial spaces or post-construction cleanup works better with teams:
+- **Cleaning crews**: 3-4 people can clean an office building in half the time
+- **Painting teams**: One person cutting in edges, another rolling walls
+- **Yard crews**: Mowing, edging, blowing, and hauling debris simultaneously
+
+## Finding Your Crew
+
+### 1. Browse Other Giger Profiles
+Use Gigifypro's search to find gigers who offer complementary services:
+- Search for similar services in your area
+- Check their GigScore and reviews for reliability
+- Look at their availability and pricing
+
+### 2. Start with Smaller Collaborations
+Don't jump into a massive project right away:
+- Team up for a weekend moving job first
+- Work one event together before committing to more
+- Test communication and work styles on lower-stakes gigs
+
+### 3. Build a Reliable Roster
+Keep a list of 5-10 reliable gigers you can call:
+- **The Reliable One**: Always shows up on time, never cancels
+- **The Specialist**: Has unique skills (welding, electrical, heavy machinery)
+- **The Network Hub**: Knows other gigers and can fill gaps quickly
+- **The Equipment Owner**: Has trucks, tools, or specialized gear
+
+## Coordinating Your Team
+
+### Before the Job
+- **Agree on pricing**: Split evenly? Lead gets 40%, helpers get 30% each? Decide upfront
+- **Confirm availability**: Get firm commitments 48 hours before
+- **Assign roles**: Who's leading? Who's bringing what equipment?
+- **Share job details**: Send the address, tasker contact, and scope to everyone
+
+### During the Job
+- **Communicate clearly**: Use group texts for real-time updates
+- **Support each other**: If someone's struggling, jump in to help
+- **Present professionally**: You're a unified team to the tasker
+- **Document progress**: Take before/after photos for all team members' portfolios
+
+### After the Job
+- **Split payment fairly**: Honor your agreement immediately
+- **Share feedback**: What worked? What could improve?
+- **Exchange reviews**: Leave positive feedback on each other's profiles
+- **Plan the next one**: If it went well, schedule another collaboration
+
+## Setting Team Standards
+
+The best gig teams have shared expectations:
+
+**Reliability**: If you commit, you show up. Last-minute cancellations hurt everyone.
+
+**Quality**: The team's reputation depends on the weakest link. Everyone maintains high standards.
+
+**Communication**: Respond to messages within a few hours. Keep the group informed.
+
+**Fair pricing**: Don't undercut your team members. Coordinate rates for consistency.
+
+**Safety first**: Look out for each other. Stop work if conditions become unsafe.
+
+## Pricing Team Jobs
+
+### Lead + Helpers Model
+- **Lead giger**: 40-50% (found the job, manages client, coordinates)
+- **Helper gigers**: 30-25% each (skilled labor, reliable execution)
+
+Example: $400 moving job with 3 people
+- Lead: $180 (45%)
+- Helper 1: $110 (27.5%)
+- Helper 2: $110 (27.5%)
+
+### Equal Split Model
+Everyone contributes equally to finding jobs and managing clients:
+- **3-person event crew**: $600 job = $200 each
+- Works when all team members are experienced professionals
+
+### Hourly Team Rate
+Charge per person per hour:
+- **$30/hour per person × 3 people × 4 hours = $360**
+- Simple math, scales with team size and duration
+
+## Growing Your Team Business
+
+Once you have a reliable crew, you can take on bigger opportunities:
+
+**Recurring contracts**: Office building cleaning, weekly lawn service, seasonal projects
+
+**Specialty niches**: Move only pianos, cater only weddings, clean only post-construction
+
+**Referral network**: Team members bring their own client bases together
+
+**Equipment investment**: Pool money to buy a cargo van, professional-grade tools
+
+## Common Pitfalls to Avoid
+
+**Don't overcommit**: Only bring the team size you actually need
+
+**Don't hire strangers last-minute**: Work with people you've tested first
+
+**Don't skip payment agreements**: Always confirm splits before starting
+
+**Don't ignore red flags**: If someone's consistently late or sloppy, find a replacement
+
+**Don't compete with teammates**: Collaborate, don't poach each other's clients
+
+## Your Network Is Your Business
+
+The most successful gigers aren't lone wolves—they're connected professionals who know when to call in backup. Start building your crew today. You'll land bigger jobs, earn more money, and have people who understand the hustle.
+
+**Remember**: Other gigers aren't your competition. They're your future business partners.
+
+---
+
+*Ready to build your team? Browse giger profiles and start making connections today.*`,
+    readTimeMinutes: 8,
+    order: 1,
+  },
+  {
+    slug: "networking-for-gigers",
+    section: "team_collaboration",
+    title: "Networking for Gigers: Your Crew Is Your Career",
+    summary: "Building a strong network of fellow gigers opens doors to bigger opportunities, backup support, and long-term business growth.",
+    icon: "Network",
+    content: `# Networking for Gigers: Your Crew Is Your Career
+
+## Why Networking Matters in the Gig Economy
+
+In traditional jobs, you have coworkers. In the gig economy, you need to build your own professional network. **The gigers you know directly impact the jobs you can take and the income you can earn.**
+
+## The Real Benefits of a Strong Network
+
+### 1. Access to Bigger Jobs
+Some clients need teams, not individuals:
+- Moving a 4-bedroom house
+- Catering a 200-person wedding
+- Renovating an entire office space
+- Multi-day landscaping projects
+
+**If you can't assemble a team, you can't bid on these jobs.**
+
+### 2. Backup When You Need It
+Life happens. You get sick, your car breaks down, or you double-booked yourself. A strong network means you can:
+- Find a replacement who won't let down your client
+- Trade shifts when emergencies come up
+- Cover each other during vacations
+
+### 3. Learn New Skills
+Your network is your best training resource:
+- Watch how experienced gigers handle difficult clients
+- Learn new techniques and best practices
+- Get mentorship from veterans in your field
+- Cross-train in complementary services
+
+### 4. Share Resources
+Gigers with strong networks pool resources:
+- **Equipment sharing**: Borrow a carpet cleaner, pressure washer, or truck
+- **Bulk buying**: Split costs on cleaning supplies, tools, or uniforms
+- **Client referrals**: Pass jobs you can't take to trusted colleagues
+- **Knowledge exchange**: Trade tips on pricing, scheduling, and growth
+
+## Where to Find Fellow Gigers
+
+### On Gigifypro
+The easiest way to network is right here:
+
+**Browse profiles** in your service category and adjacent categories:
+- If you do lawn care, connect with landscapers and tree trimming services
+- If you clean homes, network with organizers and junk removal specialists
+- If you do handyman work, know electricians, plumbers, and painters
+
+**Reach out professionally**:
+- "Hi! I saw you offer moving services in our area. I'm building a reliable moving crew and wondered if you'd be interested in collaborating on bigger jobs."
+- "Your deep cleaning profile looks great! I specialize in regular maintenance cleaning and often get requests for deep cleans. Would you be open to referrals?"
+
+### In Your Community
+
+**Local Facebook groups**: Many cities have gig worker communities
+
+**Service provider meetups**: Some areas host monthly networking events for contractors and service pros
+
+**Client locations**: If you're working a job and see another giger (plumber, electrician, cleaner), introduce yourself
+
+**Supply stores**: Hardware stores, restaurant supply shops, and cleaning supply retailers are where pros meet
+
+## Building Genuine Relationships
+
+Networking isn't collecting contacts—it's building trust.
+
+### Start with Value
+Don't lead with "What can you do for me?" Instead:
+- Offer to help on their next big job for free or reduced rate
+- Share a helpful tip or resource
+- Send them a client referral before asking for anything back
+
+### Follow Through on Commitments
+**Nothing destroys your reputation faster than flaking:**
+- If you say you'll show up, show up
+- If you promise to send a contact, send it that day
+- If you commit to a job, don't bail unless it's a real emergency
+
+### Communicate Regularly
+Stay on people's radar without being annoying:
+- Monthly check-in: "Hope business is going well! Let me know if you need backup this month."
+- Share wins: "Just landed a recurring commercial cleaning contract! Might need extra hands soon."
+- Ask for advice: "You've been doing this longer—any tips for handling difficult client negotiations?"
+
+### Give Before You Take
+The most connected gigers are the most generous:
+- Share job leads even if you can't take them
+- Introduce people who could benefit from knowing each other
+- Provide honest feedback and encouragement
+- Celebrate other people's wins publicly
+
+## Maintaining Your Network
+
+### Keep a Contact Database
+Don't rely on memory. Track:
+- Names and specialties
+- Phone numbers and Gigifypro profiles
+- Availability patterns (some gigers are weekends-only, others weekdays)
+- Reliability notes (always on time, great with clients, owns a truck)
+- Past collaborations and outcomes
+
+### Regular Communication
+**Monthly touchpoints** keep relationships warm:
+- Send a quick text: "Hey! Just checking in. Any big jobs coming up?"
+- Share relevant opportunities: "Saw this lead for tree trimming—thought of you"
+- Coordinate coffee or lunch every few months
+
+### Reputation Management
+Your reputation travels through your network:
+- **Deliver quality**: Every job you do reflects on people who referred you
+- **Be professional**: Show up on time, communicate clearly, dress appropriately
+- **Handle problems well**: Mistakes happen—how you fix them matters more
+
+## Red Flags to Avoid
+
+Not everyone deserves a spot in your network:
+
+**The Ghost**: Commits to jobs then disappears at the last minute
+
+**The Cheapskate**: Undercuts your pricing or negotiates unfairly on splits
+
+**The Complainer**: Constantly negative about clients, the platform, or the work
+
+**The Competitor**: Takes your leads and clients instead of collaborating
+
+**The Sloppy Worker**: Low-quality work that damages your reputation by association
+
+**Cut these people loose quickly.** Your network's strength depends on everyone maintaining standards.
+
+## Growing Your Network Strategically
+
+### Identify Your Gaps
+What jobs do you turn down because you lack certain skills or resources?
+- Need someone with a cargo van for furniture delivery?
+- Missing electrical expertise for handyman jobs?
+- Can't handle jobs that require bilingual communication?
+
+**Build relationships that fill those gaps.**
+
+### Target Complementary Services
+The best network connections aren't competitors—they're collaborators:
+
+**If you clean homes**, network with:
+- Organizers
+- Junk removal services
+- Window cleaners
+- Carpet cleaners
+
+**If you do lawn care**, network with:
+- Tree trimming services
+- Landscapers
+- Fence builders
+- Outdoor lighting installers
+
+**If you do event setup**, network with:
+- Caterers
+- Bartenders
+- Photographers
+- DJs and musicians
+
+### Build Depth and Breadth
+**Depth**: Multiple contacts in each specialty (backups when someone's unavailable)
+
+**Breadth**: Connections across many specialties (more job opportunities)
+
+Aim for **2-3 reliable contacts** in every service category adjacent to yours.
+
+## Your Network Is Your Safety Net
+
+The gig economy can be unpredictable. A strong network provides:
+- Steady work when your leads dry up
+- Emergency backup when life interrupts
+- Emotional support from people who understand the hustle
+- Learning opportunities that accelerate your growth
+- Pathways to bigger opportunities and better income
+
+**Start building today.** Reach out to one giger this week. Offer help. Start a conversation. Build your crew.
+
+Your success isn't just about what you can do alone—it's about who you know and who knows they can count on you.
+
+---
+
+*Ready to network? Browse giger profiles and start connecting with professionals in your area.*`,
+    readTimeMinutes: 7,
+    order: 2,
+  },
+
+  {
     slug: "building-repeat-clients",
     section: "customer_service",
     title: "Building Repeat Clients Through Trust",

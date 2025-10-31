@@ -18,6 +18,7 @@ export const knowledgeSectionEnum = pgEnum("knowledge_section", [
   "getting_started",
   "safety_compliance",
   "skill_builder",
+  "team_collaboration",
   "customer_service",
   "local_law",
   "insurance_financial"

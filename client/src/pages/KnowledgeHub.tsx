@@ -48,6 +48,13 @@ const sections = [
     color: "text-purple-600"
   },
   { 
+    id: "team_collaboration", 
+    title: "Team Collaboration", 
+    icon: LucideIcons.Users,
+    description: "Build your network and collaborate on multi-person gigs",
+    color: "text-indigo-600"
+  },
+  { 
     id: "customer_service", 
     title: "Customer Service & Growth", 
     icon: LucideIcons.Award,
