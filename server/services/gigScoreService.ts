@@ -1,5 +1,5 @@
 import { db } from "../db";
-import { profiles, reviewLikes, jobRequests } from "@shared/schema";
+import { profiles, reviewLikes, jobRequests, workerProfiles } from "@shared/schema";
 import { eq, sql } from "drizzle-orm";
 
 interface GigScoreComponents {
@@ -26,20 +26,30 @@ export async function calculateGigScore(profileId: string): Promise<GigScoreComp
     throw new Error("Profile not found");
   }
 
-  // 1. Review Quality (40 points max)
-  // Average rating from reviews (1-5 stars) normalized to 0-40
-  const reviewStats = await db
-    .select({
-      avgRating: sql<number>`COALESCE(AVG(${reviewLikes.rating}), 0)`,
-      reviewCount: sql<number>`COUNT(*)`,
-    })
-    .from(reviewLikes)
-    .where(eq(reviewLikes.workerId, profileData.userId))
+  // Get worker profile ID for this user (for reviews)
+  const workerProfile = await db
+    .select({ id: workerProfiles.id })
+    .from(workerProfiles)
+    .where(eq(workerProfiles.userId, profileData.userId))
     .then((res: any) => res[0]);
 
-  const reviewQuality = reviewStats.avgRating
-    ? Math.min(40, (reviewStats.avgRating / 5) * 40)
-    : 0;
+  // 1. Review Quality (40 points max)
+  // Average rating from reviews (1-5 stars) normalized to 0-40
+  let reviewQuality = 0;
+  if (workerProfile) {
+    const reviewStats = await db
+      .select({
+        avgRating: sql<number>`COALESCE(AVG(${reviewLikes.rating}), 0)`,
+        reviewCount: sql<number>`COUNT(*)`,
+      })
+      .from(reviewLikes)
+      .where(eq(reviewLikes.workerId, workerProfile.id))
+      .then((res: any) => res[0] || { avgRating: 0, reviewCount: 0 });
+
+    reviewQuality = reviewStats.avgRating
+      ? Math.min(40, (reviewStats.avgRating / 5) * 40)
+      : 0;
+  }
 
   // 2. Completed Jobs (25 points max)
   // Logarithmic scale: log10(jobs + 1) / log10(100) * 25
