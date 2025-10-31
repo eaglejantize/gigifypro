@@ -66,9 +66,13 @@ router.get("/:id/gigscore", async (req, res) => {
     const scoreComponents = await calculateGigScore(profileId);
 
     res.json(scoreComponents);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error calculating GigScore:", error);
-    res.status(500).json({ error: "Failed to calculate GigScore" });
+    if (error.message === "Profile not found") {
+      res.status(404).json({ error: "Profile not found" });
+    } else {
+      res.status(500).json({ error: "Failed to calculate GigScore" });
+    }
   }
 });
 
@@ -81,9 +85,13 @@ router.post("/:id/gigscore/update", async (req, res) => {
     const totalScore = await updateGigScore(profileId);
 
     res.json({ gigScore: totalScore });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error updating GigScore:", error);
-    res.status(500).json({ error: "Failed to update GigScore" });
+    if (error.message === "Profile not found") {
+      res.status(404).json({ error: "Profile not found" });
+    } else {
+      res.status(500).json({ error: "Failed to update GigScore" });
+    }
   }
 });
 
