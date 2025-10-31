@@ -48,12 +48,16 @@ const listingSchema = z.object({
 });
 
 const jobRequestSchema = z.object({
-  categoryId: z.string(),
-  title: z.string(),
-  description: z.string(),
-  budget: z.string(),
-  duration: z.number(),
-  location: z.string(),
+  categoryId: z.string().optional(),
+  serviceKey: z.string().min(1, "Service is required"),
+  profileId: z.string().min(1, "Giger selection is required"),
+  title: z.string().min(1, "Title is required"),
+  description: z.string().optional(),
+  budget: z.string().optional(),
+  quotedPrice: z.number().positive("Quoted price must be positive"),
+  pricingModel: z.enum(["hourly", "fixed", "custom"]),
+  duration: z.number().optional(),
+  location: z.string().min(1, "Location is required"),
   scheduledFor: z.string().optional(),
 });
 
@@ -367,13 +371,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Client ID required" });
       }
 
+      // Convert quoted price from cents to decimal budget
+      const budget = (data.quotedPrice / 100).toFixed(2);
+
       const job = await storage.createJobRequest({
         clientId,
         title: data.title,
         duration: data.duration,
-        description: data.description,
+        description: data.description || "",
         categoryId: data.categoryId,
-        budget: data.budget,
+        serviceKey: data.serviceKey,
+        profileId: data.profileId,
+        budget,
+        pricingModel: data.pricingModel,
         location: data.location,
         scheduledFor: data.scheduledFor ? new Date(data.scheduledFor) : null,
       });
