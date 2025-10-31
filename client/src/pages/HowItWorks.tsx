@@ -43,23 +43,24 @@ export default function HowItWorks() {
           <Card>
             <CardContent className="pt-6">
               <p className="text-lg mb-4">
-                Gigifypro is a gig-economy marketplace that connects clients with
-                local service professionals. Whether you need help with home
-                repairs, cleaning, delivery, creative services, or pet care, our
-                platform makes it easy to find trusted gigers in your area.
+                Life gets busy. Your sink starts leaking at the worst time. Your lawn needs attention but weekends are precious. You need someone you can trust, right in your neighborhood, at a price that's fair.
+              </p>
+              <p className="text-lg mb-4">
+                At the same time, you've got skills. Maybe you're great with your hands, creative with design, or a natural with pets. You're looking for flexible work that respects your time and pays what you're worth.
+              </p>
+              <p className="text-lg mb-4">
+                <span className="font-semibold">That's where Gigifypro comes in.</span> We're a local marketplace that brings neighbors together—Taskers who need help and Gigers who provide it. From home repairs and cleaning to creative services and pet care, we make it simple to find trusted professionals in your area or turn your talents into real income.
               </p>
               <p className="text-lg">
-                Our mission: <span className="font-bold">Learn. Earn. Get Gigified.</span> 
-                We help everyday people turn their skills into income while providing
-                clients with reliable, affordable services.
+                Our mission: <span className="font-bold">Learn. Earn. Get Gigified.</span> We believe everyone deserves access to affordable help when they need it, and everyone deserves the opportunity to build something meaningful with the skills they already have.
               </p>
             </CardContent>
           </Card>
         </section>
 
-        {/* For Clients Section */}
+        {/* For Taskers Section */}
         <section className="mb-16">
-          <h2 className="text-3xl font-bold mb-6">For Clients: Finding Help Made Easy</h2>
+          <h2 className="text-3xl font-bold mb-6">For Taskers: Finding Help Made Easy</h2>
           
           <div className="grid md:grid-cols-2 gap-6 mb-8">
             <Card>
@@ -110,7 +111,7 @@ export default function HowItWorks() {
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span>Read verified client reviews and ratings</span>
+                    <span>Read verified reviews and ratings</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
@@ -159,7 +160,7 @@ export default function HowItWorks() {
               <CardContent>
                 <p className="text-muted-foreground mb-4">
                   After the job is complete, share your experience to help future
-                  clients and reward great gigers.
+                  taskers and reward great gigers.
                 </p>
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-start gap-2">
@@ -295,13 +296,13 @@ export default function HowItWorks() {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground mb-4">
-                  Receive job requests, communicate with clients, and deliver
+                  Receive job requests, communicate with taskers, and deliver
                   excellent service.
                 </p>
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span>Get notified when clients request your services</span>
+                    <span>Get notified when taskers request your services</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
@@ -324,7 +325,7 @@ export default function HowItWorks() {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground mb-4">
-                  Earn great reviews and boost your GigScore to attract more clients.
+                  Earn great reviews and boost your GigScore to attract more taskers.
                 </p>
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-start gap-2">
@@ -359,7 +360,7 @@ export default function HowItWorks() {
             <CardContent>
               <p className="text-lg mb-4">
                 GigScore is our proprietary performance scoring system that rates gigers
-                on a 0-100 scale based on multiple performance factors. It helps clients
+                on a 0-100 scale based on multiple performance factors. It helps taskers
                 quickly identify top-performing gigers.
               </p>
             </CardContent>
@@ -376,7 +377,7 @@ export default function HowItWorks() {
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Average star rating from client reviews. Higher ratings mean higher scores.
+                  Average star rating from tasker reviews. Higher ratings mean higher scores.
                 </p>
               </CardContent>
             </Card>
@@ -431,12 +432,12 @@ export default function HowItWorks() {
                 <div className="flex items-center gap-3 mb-3">
                   <Heart className="w-5 h-5 text-destructive" />
                   <div>
-                    <div className="font-bold">Repeat Clients</div>
+                    <div className="font-bold">Repeat Taskers</div>
                     <div className="text-sm text-muted-foreground">10% weight</div>
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Percentage of clients who book again. Higher loyalty = higher score.
+                  Percentage of taskers who book again. Higher loyalty = higher score.
                 </p>
               </CardContent>
             </Card>
@@ -502,7 +503,7 @@ export default function HowItWorks() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Real reviews from real clients. Both clients and gigers can leave
+                  Real reviews from real taskers. Both taskers and gigers can leave
                   feedback after each job.
                 </p>
               </CardContent>
