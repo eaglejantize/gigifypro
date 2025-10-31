@@ -77,7 +77,7 @@ export default function PostTask() {
   });
 
   const createJobMutation = useMutation({
-    mutationFn: async (data: any) => apiRequest("/api/jobs", "POST", data),
+    mutationFn: async (data: any) => apiRequest("POST", "/api/jobs", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users", user?.id, "jobs"] });
       toast({
