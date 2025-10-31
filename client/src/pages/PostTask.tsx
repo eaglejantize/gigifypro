@@ -109,13 +109,12 @@ export default function PostTask() {
       });
       return;
     }
-    if (step === 1 && !title.trim()) {
-      toast({
-        title: "Title required",
-        description: "Please enter a task title.",
-        variant: "destructive",
-      });
-      return;
+    if (step === 1) {
+      // Auto-generate title from service if not set
+      const selectedSvc = services.find((s) => s.key === serviceKey);
+      if (selectedSvc && !title.trim()) {
+        setTitle(selectedSvc.label);
+      }
     }
     if (step === 2 && !selectedGigerId) {
       toast({
@@ -231,17 +230,6 @@ export default function PostTask() {
                   {selectedService && (
                     <p className="text-sm text-muted-foreground">{selectedService.summary}</p>
                   )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="title">Task Title</Label>
-                  <Input
-                    id="title"
-                    placeholder="e.g., 5-day meal prep for family of 4"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    data-testid="input-title"
-                  />
                 </div>
 
                 <div className="flex justify-end pt-4">
