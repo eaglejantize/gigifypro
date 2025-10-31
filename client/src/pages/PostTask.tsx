@@ -7,30 +7,74 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CategoryDropdown } from "@/components/CategoryDropdown";
+import { GigerCard } from "@/components/GigerCard";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { calculatePrice, durationOptions, formatPrice } from "@/lib/pricing";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Loader2 } from "lucide-react";
+import { CalendarIcon, Loader2, Search } from "lucide-react";
 import { format } from "date-fns";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { ServiceCategory } from "@shared/schema";
+
+interface Giger {
+  profileId: string;
+  profileName: string;
+  tagline?: string | null;
+  bio?: string | null;
+  mainNiche?: string | null;
+  city?: string | null;
+  state?: string | null;
+  rateCents: number;
+  pricingModel: "hourly" | "fixed" | "custom";
+  userId: string;
+  userName: string;
+  avatar?: string | null;
+  reviewCount: number;
+  avgRating: number;
+  likeCount: number;
+  isPrimaryService: boolean;
+}
+
+interface Service {
+  key: string;
+  label: string;
+  summary: string;
+  category: string;
+}
 
 export default function PostTask() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
   const [step, setStep] = useState(1);
-  const [category, setCategory] = useState("");
+  
+  // Step 1: Service selection
+  const [serviceKey, setServiceKey] = useState("");
   const [title, setTitle] = useState("");
+  
+  // Step 2: Giger selection
+  const [selectedGigerId, setSelectedGigerId] = useState<string | null>(null);
+  const [selectedGiger, setSelectedGiger] = useState<Giger | null>(null);
+  
+  // Step 3: Task details
   const [description, setDescription] = useState("");
-  const [duration, setDuration] = useState(60);
   const [date, setDate] = useState<Date>();
   const [location, setLocationValue] = useState("");
 
-  const quote = calculatePrice(duration);
+  // Fetch available services
+  const { data: servicesData, isLoading: servicesLoading } = useQuery<any>({
+    queryKey: ["/api/services"],
+  });
+
+  const services: Service[] = Array.isArray(servicesData)
+    ? servicesData
+    : servicesData?.services || [];
+
+  // Fetch available gigers when service is selected
+  const { data: gigers = [], isLoading: gigersLoading } = useQuery<Giger[]>({
+    queryKey: ["/api/profile/gigers/by-service", serviceKey],
+    enabled: !!serviceKey && step === 2,
+  });
 
   const createJobMutation = useMutation({
     mutationFn: async (data: any) => apiRequest("/api/jobs", "POST", data),
@@ -38,7 +82,7 @@ export default function PostTask() {
       queryClient.invalidateQueries({ queryKey: ["/api/users", user?.id, "jobs"] });
       toast({
         title: "Task posted successfully!",
-        description: "Workers will start responding soon.",
+        description: "Your selected giger will be notified.",
       });
       setLocation("/dashboard");
     },
@@ -51,6 +95,39 @@ export default function PostTask() {
     },
   });
 
+  const handleSelectGiger = (giger: Giger) => {
+    setSelectedGigerId(giger.profileId);
+    setSelectedGiger(giger);
+  };
+
+  const handleNext = () => {
+    if (step === 1 && !serviceKey) {
+      toast({
+        title: "Service required",
+        description: "Please select a service to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (step === 1 && !title.trim()) {
+      toast({
+        title: "Title required",
+        description: "Please enter a task title.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (step === 2 && !selectedGigerId) {
+      toast({
+        title: "Giger required",
+        description: "Please select a giger to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setStep(step + 1);
+  };
+
   const handleSubmit = async () => {
     if (!user) {
       toast({
@@ -62,26 +139,38 @@ export default function PostTask() {
       return;
     }
 
+    if (!selectedGiger) {
+      toast({
+        title: "No giger selected",
+        description: "Please select a giger.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     createJobMutation.mutate({
       clientId: user.id,
-      categoryId: category,
+      serviceKey,
       title,
       description,
-      budget: quote.total.toString(),
-      duration,
+      profileId: selectedGigerId,
+      quotedPrice: selectedGiger.rateCents,
+      pricingModel: selectedGiger.pricingModel,
       location,
       scheduledFor: date?.toISOString(),
     });
   };
 
+  const selectedService = services.find((s) => s.key === serviceKey);
+
   return (
     <div className="min-h-screen bg-background py-8">
-      <div className="max-w-4xl mx-auto px-4">
+      <div className="max-w-6xl mx-auto px-4">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2" data-testid="text-post-task-title">
             Post a Task
           </h1>
-          <p className="text-muted-foreground">Tell us what you need done</p>
+          <p className="text-muted-foreground">Find the perfect giger for your job</p>
         </div>
 
         {/* Progress Indicator */}
@@ -110,217 +199,282 @@ export default function PostTask() {
           ))}
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
-          {/* Form */}
-          <div className="md:col-span-2">
+        {/* Step 1: Service & Title */}
+        {step === 1 && (
+          <div className="max-w-2xl mx-auto">
             <Card>
               <CardHeader>
-                <CardTitle>
-                  {step === 1 && "Category & Details"}
-                  {step === 2 && "Schedule & Location"}
-                  {step === 3 && "Duration & Budget"}
-                  {step === 4 && "Review & Post"}
-                </CardTitle>
-                <CardDescription>Step {step} of 4</CardDescription>
+                <CardTitle>What do you need done?</CardTitle>
+                <CardDescription>Step 1 of 4: Select a service and describe your task</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {step === 1 && (
-                  <>
-                    <div className="space-y-2">
-                      <Label htmlFor="category">Service Category</Label>
-                      <CategoryDropdown
-                        value={category}
-                        onChange={setCategory}
-                        placeholder="Select a service category..."
-                        showAllOption={false}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="title">Task Title</Label>
-                      <Input
-                        id="title"
-                        placeholder="e.g., Fix leaking kitchen faucet"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        data-testid="input-title"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="description">Description</Label>
-                      <Textarea
-                        id="description"
-                        placeholder="Provide details about the task..."
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        rows={5}
-                        data-testid="input-description"
-                      />
-                    </div>
-                  </>
-                )}
+                <div className="space-y-2">
+                  <Label htmlFor="service">Service Needed</Label>
+                  <Select value={serviceKey} onValueChange={setServiceKey}>
+                    <SelectTrigger data-testid="select-service">
+                      <SelectValue placeholder="Select a service..." />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      {servicesLoading ? (
+                        <div className="p-4 text-center text-muted-foreground">
+                          Loading services...
+                        </div>
+                      ) : (
+                        services.map((service) => (
+                          <SelectItem key={service.key} value={service.key}>
+                            {service.label}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {selectedService && (
+                    <p className="text-sm text-muted-foreground">{selectedService.summary}</p>
+                  )}
+                </div>
 
-                {step === 2 && (
-                  <>
-                    <div className="space-y-2">
-                      <Label>Preferred Date</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className="w-full justify-start text-left"
-                            data-testid="button-select-date"
-                          >
-                            <CalendarIcon className="mr-2 w-4 h-4" />
-                            {date ? format(date, "PPP") : "Pick a date"}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <Calendar
-                            mode="single"
-                            selected={date}
-                            onSelect={setDate}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="location">Location</Label>
-                      <Input
-                        id="location"
-                        placeholder="Enter your address"
-                        value={location}
-                        onChange={(e) => setLocationValue(e.target.value)}
-                        data-testid="input-location"
-                      />
-                    </div>
-                  </>
-                )}
+                <div className="space-y-2">
+                  <Label htmlFor="title">Task Title</Label>
+                  <Input
+                    id="title"
+                    placeholder="e.g., 5-day meal prep for family of 4"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    data-testid="input-title"
+                  />
+                </div>
 
-                {step === 3 && (
-                  <>
-                    <div className="space-y-2">
-                      <Label htmlFor="duration">Estimated Duration</Label>
-                      <Select
-                        value={duration.toString()}
-                        onValueChange={(v) => setDuration(Number(v))}
-                      >
-                        <SelectTrigger data-testid="select-duration">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {durationOptions.map((opt) => (
-                            <SelectItem key={opt.value} value={opt.value.toString()}>
-                              {opt.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="p-4 bg-muted rounded-lg">
-                      <div className="text-sm text-muted-foreground mb-1">Estimated Cost</div>
-                      <div className="text-3xl font-bold" data-testid="text-estimated-cost">
-                        {formatPrice(quote.total)}
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-1">{quote.breakdown}</div>
-                    </div>
-                  </>
-                )}
+                <div className="flex justify-end pt-4">
+                  <Button
+                    onClick={handleNext}
+                    className="min-w-32"
+                    data-testid="button-next"
+                  >
+                    Find Gigers
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
-                {step === 4 && (
-                  <div className="space-y-4">
-                    <div>
-                      <div className="text-sm font-medium text-muted-foreground">Category</div>
-                      <div className="text-lg">{category}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-muted-foreground">Title</div>
-                      <div className="text-lg">{title}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-muted-foreground">Description</div>
-                      <div className="text-sm">{description}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-muted-foreground">Date</div>
-                      <div className="text-lg">{date ? format(date, "PPP") : "Not set"}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-muted-foreground">Location</div>
-                      <div className="text-lg">{location}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-muted-foreground">Budget</div>
-                      <div className="text-lg font-bold">{formatPrice(quote.total)}</div>
-                    </div>
-                  </div>
-                )}
+        {/* Step 2: Browse & Select Giger */}
+        {step === 2 && (
+          <div>
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold mb-2">Available Gigers</h2>
+              <p className="text-muted-foreground">
+                {gigers.length} {gigers.length === 1 ? "giger" : "gigers"} available for {selectedService?.label}
+              </p>
+            </div>
+
+            {gigersLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : gigers.length === 0 ? (
+              <Card className="p-12">
+                <div className="text-center">
+                  <Search className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">No gigers available</h3>
+                  <p className="text-muted-foreground mb-4">
+                    No gigers currently offer this service. Try selecting a different service.
+                  </p>
+                  <Button variant="outline" onClick={() => setStep(1)}>
+                    Change Service
+                  </Button>
+                </div>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {gigers.map((giger) => (
+                  <GigerCard
+                    key={giger.profileId}
+                    {...giger}
+                    onSelect={() => handleSelectGiger(giger)}
+                    isSelected={selectedGigerId === giger.profileId}
+                  />
+                ))}
 
                 <div className="flex gap-3 pt-4">
-                  {step > 1 && (
-                    <Button
-                      variant="outline"
-                      onClick={() => setStep(step - 1)}
-                      data-testid="button-back"
-                    >
-                      Back
-                    </Button>
-                  )}
-                  {step < 4 ? (
-                    <Button
-                      onClick={() => setStep(step + 1)}
-                      className="flex-1"
-                      data-testid="button-next"
-                    >
-                      Next
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={handleSubmit}
-                      disabled={createJobMutation.isPending}
-                      className="flex-1"
-                      data-testid="button-post-task"
-                    >
-                      {createJobMutation.isPending ? "Posting..." : "Post Task"}
-                    </Button>
-                  )}
+                  <Button
+                    variant="outline"
+                    onClick={() => setStep(1)}
+                    data-testid="button-back"
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    onClick={handleNext}
+                    disabled={!selectedGigerId}
+                    className="flex-1"
+                    data-testid="button-next"
+                  >
+                    Continue with {selectedGiger?.profileName || "Selected Giger"}
+                  </Button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            )}
           </div>
+        )}
 
-          {/* Price Calculator Sidebar */}
-          <div className="md:col-span-1">
-            <Card className="sticky top-20">
+        {/* Step 3: Task Details */}
+        {step === 3 && (
+          <div className="max-w-2xl mx-auto">
+            <Card>
               <CardHeader>
-                <CardTitle>Price Estimate</CardTitle>
+                <CardTitle>Task Details</CardTitle>
+                <CardDescription>Step 3 of 4: When and where do you need this done?</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Duration</span>
-                    <span className="font-medium">{duration} min</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Rate</span>
-                    <span className="font-medium">$25/30min</span>
-                  </div>
-                  <div className="border-t pt-3">
-                    <div className="flex justify-between items-center">
-                      <span className="font-semibold">Total</span>
-                      <span className="text-2xl font-bold text-primary">
-                        {formatPrice(quote.total)}
-                      </span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Final price may vary based on worker's custom rate
-                  </p>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Provide details about the task..."
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={5}
+                    data-testid="input-description"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Preferred Date</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start text-left"
+                        data-testid="button-select-date"
+                      >
+                        <CalendarIcon className="mr-2 w-4 h-4" />
+                        {date ? format(date, "PPP") : "Pick a date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={date}
+                        onSelect={setDate}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="location">Location</Label>
+                  <Input
+                    id="location"
+                    placeholder="Enter your address"
+                    value={location}
+                    onChange={(e) => setLocationValue(e.target.value)}
+                    data-testid="input-location"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setStep(2)}
+                    data-testid="button-back"
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    onClick={handleNext}
+                    className="flex-1"
+                    data-testid="button-next"
+                  >
+                    Review
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           </div>
-        </div>
+        )}
+
+        {/* Step 4: Review & Submit */}
+        {step === 4 && selectedGiger && (
+          <div className="max-w-2xl mx-auto">
+            <Card>
+              <CardHeader>
+                <CardTitle>Review & Submit</CardTitle>
+                <CardDescription>Step 4 of 4: Confirm your task details</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground mb-1">Service</div>
+                  <div className="text-lg">{selectedService?.label}</div>
+                </div>
+
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground mb-1">Task Title</div>
+                  <div className="text-lg">{title}</div>
+                </div>
+
+                {description && (
+                  <div>
+                    <div className="text-sm font-medium text-muted-foreground mb-1">Description</div>
+                    <div className="text-sm">{description}</div>
+                  </div>
+                )}
+
+                <div className="border-t pt-4">
+                  <div className="text-sm font-medium text-muted-foreground mb-3">Selected Giger</div>
+                  <GigerCard
+                    {...selectedGiger}
+                    onSelect={() => {}}
+                    isSelected={true}
+                  />
+                </div>
+
+                {date && (
+                  <div>
+                    <div className="text-sm font-medium text-muted-foreground mb-1">Preferred Date</div>
+                    <div className="text-lg">{format(date, "PPP")}</div>
+                  </div>
+                )}
+
+                {location && (
+                  <div>
+                    <div className="text-sm font-medium text-muted-foreground mb-1">Location</div>
+                    <div className="text-lg">{location}</div>
+                  </div>
+                )}
+
+                <div className="bg-muted p-4 rounded-lg">
+                  <div className="flex justify-between items-center">
+                    <span className="font-semibold">Quoted Price</span>
+                    <span className="text-2xl font-bold text-primary">
+                      ${(selectedGiger.rateCents / 100).toFixed(0)}
+                      {selectedGiger.pricingModel === "hourly" ? "/hr" : selectedGiger.pricingModel === "fixed" ? " fixed" : ""}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setStep(3)}
+                    data-testid="button-back"
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={createJobMutation.isPending}
+                    className="flex-1"
+                    data-testid="button-post-task"
+                  >
+                    {createJobMutation.isPending ? "Posting..." : "Post Task"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );
