@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "../db";
-import { users, userBadges, badges, profiles, profileServices, insertProfileSchema } from "@shared/schema";
-import { eq, and } from "drizzle-orm";
+import { users, userBadges, badges, profiles, profileServices, insertProfileSchema, reviewLikes, workerProfiles } from "@shared/schema";
+import { eq, and, sql as drizzleSql } from "drizzle-orm";
 import { refreshUserBadges } from "../services/badgeService";
 import { z } from "zod";
 
@@ -53,6 +53,76 @@ router.get("/:id/badges", async (req, res) => {
   } catch (error) {
     console.error("Error fetching profile badges:", error);
     res.status(500).json({ error: "Failed to fetch badges" });
+  }
+});
+
+// Get Available Gigers by Service
+router.get("/gigers/by-service/:serviceKey", async (req, res) => {
+  try {
+    const { serviceKey } = req.params;
+
+    // Find all profiles that offer this service and are live
+    const gigersWithService = await db
+      .select({
+        profileId: profileServices.profileId,
+        serviceKey: profileServices.serviceKey,
+        isPrimary: profileServices.isPrimary,
+        profile: profiles,
+        user: {
+          id: users.id,
+          name: users.name,
+          avatar: users.avatar,
+        },
+      })
+      .from(profileServices)
+      .innerJoin(profiles, eq(profileServices.profileId, profiles.id))
+      .innerJoin(users, eq(profiles.userId, users.id))
+      .where(and(
+        eq(profileServices.serviceKey, serviceKey),
+        eq(profiles.isLive, true)
+      ));
+
+    // Get ratings stats for each giger (use workerProfiles for backward compat)
+    const gigersWithStats = await Promise.all(
+      gigersWithService.map(async (giger) => {
+        // Get review count and average rating
+        const reviewStats = await db
+          .select({
+            count: drizzleSql<number>`count(*)::int`,
+            avgRating: drizzleSql<number>`COALESCE(avg(${reviewLikes.rating}), 0)`,
+            likeCount: drizzleSql<number>`count(${reviewLikes.id})::int`,
+          })
+          .from(reviewLikes)
+          .innerJoin(workerProfiles, eq(reviewLikes.workerId, workerProfiles.id))
+          .where(eq(workerProfiles.userId, giger.user.id));
+
+        const stats = reviewStats[0] || { count: 0, avgRating: 0, likeCount: 0 };
+
+        return {
+          profileId: giger.profile.id,
+          profileName: giger.profile.name,
+          tagline: giger.profile.tagline,
+          bio: giger.profile.bio,
+          mainNiche: giger.profile.mainNiche,
+          city: giger.profile.city,
+          state: giger.profile.state,
+          rateCents: giger.profile.rateCents,
+          pricingModel: giger.profile.pricingModel,
+          userId: giger.user.id,
+          userName: giger.user.name,
+          avatar: giger.user.avatar,
+          reviewCount: stats.count,
+          avgRating: parseFloat(stats.avgRating?.toString() || "0"),
+          likeCount: stats.likeCount,
+          isPrimaryService: giger.isPrimary,
+        };
+      })
+    );
+
+    res.json(gigersWithStats);
+  } catch (error) {
+    console.error("Error fetching gigers by service:", error);
+    res.status(500).json({ error: "Failed to fetch gigers" });
   }
 });
 
