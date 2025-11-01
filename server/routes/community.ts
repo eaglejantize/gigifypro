@@ -96,7 +96,6 @@ router.get("/posts", async (req, res) => {
     const { mode = "latest", serviceKey, topicKey, visibility, location, cursor, take = "20" } = req.query;
     const takeNum = Math.min(50, Number(take) || 20);
 
-    let query = db.select().from(posts);
     const conditions = [];
 
     if (serviceKey) {
@@ -118,8 +117,29 @@ router.get("/posts", async (req, res) => {
       conditions.push(eq(posts.location, String(location)));
     }
 
+    // Build base query with comment counts using LEFT JOIN and GROUP BY
+    const commentCountSubquery = db
+      .select({
+        postId: comments.postId,
+        count: sql<number>`count(*)::int`.as('comment_count'),
+      })
+      .from(comments)
+      .groupBy(comments.postId)
+      .as('comment_counts');
+
+    const baseQuery = db
+      .select({
+        post: posts,
+        replies: sql<number>`COALESCE(${commentCountSubquery.count}, 0)::int`.as('replies'),
+      })
+      .from(posts)
+      .leftJoin(commentCountSubquery, eq(posts.id, commentCountSubquery.postId))
+      .$dynamic();
+
+    let query = baseQuery;
+
     if (conditions.length > 0) {
-      query = query.where(and(...conditions)) as any;
+      query = query.where(and(...conditions));
     }
 
     if (mode === "hot") {
@@ -130,20 +150,11 @@ router.get("/posts", async (req, res) => {
 
     const results = await query.limit(takeNum);
     
-    // Add comment counts to each post
-    const postsWithCounts = await Promise.all(
-      results.map(async (post) => {
-        const commentCount = await db
-          .select({ count: sql<number>`count(*)::int` })
-          .from(comments)
-          .where(eq(comments.postId, post.id));
-        
-        return {
-          ...post,
-          replies: commentCount[0]?.count || 0,
-        };
-      })
-    );
+    // Transform results to include replies count with post data
+    const postsWithCounts = results.map((row) => ({
+      ...row.post,
+      replies: row.replies || 0,
+    }));
     
     res.json(postsWithCounts);
   } catch (error) {
