@@ -1,6 +1,6 @@
 import { db } from "../db";
 import { communityStats, volunteerServices, profiles } from "@shared/schema";
-import { eq, and, gte, inArray, sql } from "drizzle-orm";
+import { eq, and, gte, inArray, sql, or } from "drizzle-orm";
 
 /**
  * Compute Community Score (0-100) based on last 90 days of G-Square activity
@@ -56,6 +56,7 @@ export async function computeVolunteerScore(userId: string): Promise<number> {
   oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
   // Get approved/completed volunteer entries from last 12 months
+  // Use completedAt if available (for completed entries), otherwise createdAt (for approved entries)
   const entries = await db
     .select()
     .from(volunteerServices)
@@ -63,7 +64,16 @@ export async function computeVolunteerScore(userId: string): Promise<number> {
       and(
         inArray(volunteerServices.profileId, profileIds),
         inArray(volunteerServices.status, ["approved", "completed"]),
-        gte(volunteerServices.completedAt, oneYearAgo)
+        or(
+          and(
+            sql`${volunteerServices.completedAt} IS NOT NULL`,
+            gte(volunteerServices.completedAt, oneYearAgo)
+          ),
+          and(
+            sql`${volunteerServices.completedAt} IS NULL`,
+            gte(volunteerServices.createdAt, oneYearAgo)
+          )
+        )
       )
     );
 

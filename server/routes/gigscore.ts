@@ -4,6 +4,7 @@ import { communityStats, volunteerServices, profiles } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { computeCommunityScore, computeVolunteerScore } from "../lib/score-signals";
 import { calculateGigScore } from "../services/gigScoreService";
+import isAdmin from "../middleware/isAdmin";
 import type { Request, Response, NextFunction } from "express";
 
 const router = Router();
@@ -112,8 +113,8 @@ router.post("/volunteer", requireAuth, async (req: Request, res: Response) => {
   }
 });
 
-// 3) Admin approve/complete volunteer entries
-router.patch("/volunteer/:id", requireAuth, async (req: Request, res: Response) => {
+// 3) Admin approve/complete volunteer entries (ADMIN ONLY)
+router.patch("/volunteer/:id", requireAuth, isAdmin, async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);
     const { status, rating, verifiedBy } = req.body || {};
