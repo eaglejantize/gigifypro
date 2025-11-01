@@ -60,6 +60,13 @@ app.use((req, res, next) => {
     throw err;
   });
 
+  // Serve static files in development mode (must be before Vite catch-all)
+  if (app.get("env") === "development") {
+    const path = await import("path");
+    const publicPath = path.resolve(import.meta.dirname, "public");
+    app.use(express.static(publicPath));
+  }
+
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
