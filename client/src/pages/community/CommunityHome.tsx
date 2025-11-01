@@ -7,15 +7,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Plus, TrendingUp, Clock, Globe, MapPin, Hash, Image, Send, MessageCircle, Eye } from "lucide-react";
+import { Plus, TrendingUp, Clock, Globe, MapPin, Hash, Send, Lightbulb, Users, Sparkles } from "lucide-react";
 import { useState, useEffect } from "react";
 import { apiGet } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
+import PostCard from "@/components/gsquare/PostCard";
+import ThemeToggle from "@/components/gsquare/ThemeToggle";
 
 type Post = {
   id: string;
   title: string;
+  bodyMd?: string;
   serviceKey: string | null;
   mediaUrl: string | null;
   hashtags: string[];
@@ -63,7 +66,7 @@ export default function CommunityHome() {
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: quickPostText.substring(0, 100), // Use first 100 chars as title
+          title: quickPostText.substring(0, 100),
           topicKey: "ideas",
           bodyMd: quickPostText,
           visibility: "NATIONAL",
@@ -113,60 +116,60 @@ export default function CommunityHome() {
   });
 
   return (
-    <div className="min-h-screen bg-background py-8">
-      <div className="max-w-6xl mx-auto px-4 space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold" data-testid="text-community-title">
-            G-Square
-          </h1>
-          <p className="text-muted-foreground">
-            Your digital town square—share ideas, connect locally, and grow together
-          </p>
+    <div className="min-h-screen bg-background">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+        {/* Header with Theme Toggle */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold" data-testid="text-community-title">
+              G-Square
+            </h1>
+            <p className="text-muted-foreground text-sm">
+              Your digital town square—share ideas, connect locally, and grow together
+            </p>
+          </div>
+          <ThemeToggle />
         </div>
 
-        {/* Quick Post */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="space-y-3">
-              <Textarea
-                placeholder="What's on your mind? Share your thoughts with G-Square..."
-                value={quickPostText}
-                onChange={(e) => setQuickPostText(e.target.value)}
-                className="min-h-[100px] resize-none"
-                data-testid="textarea-quick-post"
-              />
-              <div className="flex items-center justify-between gap-2">
-                <Link href="/community/new">
-                  <Button variant="ghost" size="sm" data-testid="button-advanced-post">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Advanced options
+        {/* Two-Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Main Feed - Left Column */}
+          <div className="lg:col-span-8 space-y-4">
+            {/* Quick Post Card */}
+            <div className="gp-card p-5">
+              <div className="space-y-3">
+                <Textarea
+                  placeholder="What's on your mind? Share your thoughts with G-Square..."
+                  value={quickPostText}
+                  onChange={(e) => setQuickPostText(e.target.value)}
+                  className="min-h-[100px] resize-none border-0 focus-visible:ring-0 text-base"
+                  data-testid="textarea-quick-post"
+                />
+                <div className="flex items-center justify-between gap-2 pt-3 border-t border-border">
+                  <Link href="/community/new">
+                    <Button variant="ghost" size="sm" data-testid="button-advanced-post">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Advanced
+                    </Button>
+                  </Link>
+                  <Button 
+                    onClick={handleQuickPost} 
+                    disabled={isPosting || !quickPostText.trim()}
+                    data-testid="button-quick-post"
+                    size="sm"
+                  >
+                    <Send className="w-4 h-4 mr-2" />
+                    {isPosting ? "Posting..." : "Post"}
                   </Button>
-                </Link>
-                <Button 
-                  onClick={handleQuickPost} 
-                  disabled={isPosting || !quickPostText.trim()}
-                  data-testid="button-quick-post"
-                >
-                  <Send className="w-4 h-4 mr-2" />
-                  {isPosting ? "Posting..." : "Post"}
-                </Button>
+                </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Filters */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Filters</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Feed</label>
+            {/* Filters Bar */}
+            <div className="gp-card p-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <Select value={mode} onValueChange={(v) => setMode(v as any)}>
-                  <SelectTrigger data-testid="select-feed-mode">
+                  <SelectTrigger data-testid="select-feed-mode" className="h-9">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -184,12 +187,9 @@ export default function CommunityHome() {
                     </SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Visibility</label>
                 <Select value={visibility} onValueChange={setVisibility}>
-                  <SelectTrigger data-testid="select-visibility">
+                  <SelectTrigger data-testid="select-visibility" className="h-9">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -208,12 +208,9 @@ export default function CommunityHome() {
                     </SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Topic</label>
                 <Select value={topicKey} onValueChange={setTopicKey}>
-                  <SelectTrigger data-testid="select-topic">
+                  <SelectTrigger data-testid="select-topic" className="h-9">
                     <SelectValue placeholder="All Topics" />
                   </SelectTrigger>
                   <SelectContent>
@@ -224,128 +221,142 @@ export default function CommunityHome() {
                     <SelectItem value="neighborhood">Neighborhood</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Service Tag</label>
                 <Input
-                  placeholder="e.g., lawn-care"
+                  placeholder="Service tag..."
                   value={serviceKey}
                   onChange={(e) => setServiceKey(e.target.value)}
                   data-testid="input-service-filter"
+                  className="h-9"
                 />
+              </div>
+
+              {visibility === "LOCAL" && (
+                <div className="mt-3 pt-3 border-t border-border">
+                  <Input
+                    placeholder="Location (e.g., 90210 or Nashville, TN)"
+                    value={locationFilter}
+                    onChange={(e) => setLocationFilter(e.target.value)}
+                    data-testid="input-location-filter"
+                    className="h-9"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Posts Feed */}
+            {isLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="gp-card p-5">
+                    <div className="flex items-start gap-3">
+                      <Skeleton className="h-10 w-10 rounded-full" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-5 w-3/4" />
+                        <Skeleton className="h-4 w-1/2" />
+                        <Skeleton className="h-20 w-full mt-3" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : posts && posts.length > 0 ? (
+              <div className="space-y-4">
+                {posts.map((post) => (
+                  <PostCard key={post.id} post={post} />
+                ))}
+              </div>
+            ) : (
+              <div className="gp-card p-12 text-center">
+                <div className="max-w-md mx-auto space-y-3">
+                  <Sparkles className="w-12 h-12 mx-auto text-muted-foreground" />
+                  <p className="text-muted-foreground">No posts found. Be the first to start a discussion!</p>
+                  <Link href="/community/new">
+                    <Button className="mt-4" data-testid="button-create-first-post">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create Post
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Sidebar - Right Column */}
+          <aside className="lg:col-span-4 space-y-4">
+            {/* Trending Tags */}
+            <div className="gp-card p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Hash className="w-5 h-5 text-primary" />
+                <h3 className="font-semibold text-base">Trending Tags</h3>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {["gigcorp", "community", "futureofwork", "wellness", "events", "art"].map((tag) => (
+                  <a key={tag} href={`/community?tag=${tag}`} className="gp-pill hover-elevate">
+                    #{tag}
+                  </a>
+                ))}
               </div>
             </div>
 
-            {visibility === "LOCAL" && (
-              <div className="space-y-2 pt-2">
-                <label className="text-sm font-medium flex items-center gap-2">
-                  <MapPin className="w-4 h-4" />
-                  Location Filter
-                </label>
-                <Input
-                  placeholder="e.g., 90210 or Nashville, TN"
-                  value={locationFilter}
-                  onChange={(e) => setLocationFilter(e.target.value)}
-                  data-testid="input-location-filter"
-                />
-                {locationFilter && (
-                  <p className="text-xs text-muted-foreground">
-                    Filtering by location: {locationFilter}
-                  </p>
-                )}
+            {/* Top GigCorps */}
+            <div className="gp-card p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Users className="w-5 h-5 text-primary" />
+                <h3 className="font-semibold text-base">Top GigCorps</h3>
               </div>
-            )}
-          </CardContent>
-        </Card>
+              <ul className="space-y-3">
+                <li className="text-sm text-muted-foreground flex items-start gap-2">
+                  <Badge variant="secondary" className="mt-0.5 flex-shrink-0">1</Badge>
+                  <span>Home Avengers (Handyman + Cleaning + Lawn)</span>
+                </li>
+                <li className="text-sm text-muted-foreground flex items-start gap-2">
+                  <Badge variant="secondary" className="mt-0.5 flex-shrink-0">2</Badge>
+                  <span>Event Squad (Chef + Decor + Photo)</span>
+                </li>
+                <li className="text-sm text-muted-foreground flex items-start gap-2">
+                  <Badge variant="secondary" className="mt-0.5 flex-shrink-0">3</Badge>
+                  <span>Wellness Crew (Trainer + Massage)</span>
+                </li>
+              </ul>
+            </div>
 
-        {/* Posts List */}
-        <div className="space-y-4">
-          {isLoading ? (
-            <>
-              {[1, 2, 3, 4, 5].map((i) => (
-                <Card key={i}>
-                  <CardHeader>
-                    <Skeleton className="h-6 w-3/4" />
-                    <Skeleton className="h-4 w-1/2 mt-2" />
-                  </CardHeader>
-                </Card>
-              ))}
-            </>
-          ) : posts && posts.length > 0 ? (
-            posts.map((post) => (
-              <Card key={post.id} className="hover-elevate" data-testid={`card-post-${post.id}`}>
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <Link href={`/community/post/${post.id}`}>
-                        <CardTitle className="text-xl cursor-pointer hover:text-primary">
-                          {post.title}
-                        </CardTitle>
-                      </Link>
-                      <CardDescription className="flex flex-wrap items-center gap-3 text-xs mt-2">
-                        <span>{new Date(post.createdAt).toLocaleDateString()}</span>
-                        {post.visibility === "LOCAL" ? (
-                          <Badge variant="outline" className="gap-1">
-                            <MapPin className="w-3 h-3" />
-                            Local
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="gap-1">
-                            <Globe className="w-3 h-3" />
-                            National
-                          </Badge>
-                        )}
-                        {post.location && (
-                          <span className="flex items-center gap-1">
-                            <MapPin className="w-3 h-3" />
-                            {post.location}
-                          </span>
-                        )}
-                        {post.serviceKey && (
-                          <span className="text-primary">#{post.serviceKey}</span>
-                        )}
-                        <span className="flex items-center gap-1" data-testid={`text-views-${post.id}`}>
-                          <Eye className="w-3 h-3" />
-                          {post.views}
-                        </span>
-                        <span className="flex items-center gap-1" data-testid={`text-replies-${post.id}`}>
-                          <MessageCircle className="w-3 h-3" />
-                          {post.replies}
-                        </span>
-                        <span>{post.score} score</span>
-                      </CardDescription>
-                    </div>
-                    {post.mediaUrl && (
-                      <Image className="w-4 h-4 text-muted-foreground" />
-                    )}
-                  </div>
-                  {post.hashtags && post.hashtags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {post.hashtags.map((tag, idx) => (
-                        <Badge key={idx} variant="secondary" className="text-xs gap-1">
-                          <Hash className="w-3 h-3" />
-                          {tag.replace('#', '')}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </CardHeader>
-              </Card>
-            ))
-          ) : (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <p className="text-muted-foreground">No posts found. Be the first to start a discussion!</p>
+            {/* Tip of the Week */}
+            <div className="gp-card p-5 bg-primary/5 border-primary/20">
+              <div className="flex items-center gap-2 mb-3">
+                <Lightbulb className="w-5 h-5 text-primary" />
+                <h3 className="font-semibold text-base">Tip of the Week</h3>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Add photos to posts—image posts get 3× more replies and engagement from the community.
+              </p>
+            </div>
+
+            {/* Quick Links */}
+            <div className="gp-card p-5">
+              <h3 className="font-semibold text-base mb-3">Quick Links</h3>
+              <div className="space-y-2">
                 <Link href="/community/new">
-                  <Button className="mt-4" data-testid="button-create-first-post">
+                  <Button variant="ghost" size="sm" className="w-full justify-start" data-testid="link-create-post">
                     <Plus className="w-4 h-4 mr-2" />
-                    Create Post
+                    Create New Post
                   </Button>
                 </Link>
-              </CardContent>
-            </Card>
-          )}
+                <Link href="/services">
+                  <Button variant="ghost" size="sm" className="w-full justify-start" data-testid="link-browse-services">
+                    <Hash className="w-4 h-4 mr-2" />
+                    Browse Services
+                  </Button>
+                </Link>
+                <Link href="/knowledge">
+                  <Button variant="ghost" size="sm" className="w-full justify-start" data-testid="link-knowledge-hub">
+                    <Lightbulb className="w-4 h-4 mr-2" />
+                    Knowledge Hub
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </aside>
         </div>
       </div>
     </div>

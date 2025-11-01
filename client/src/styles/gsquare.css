@@ -1,7 +1,3 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 @layer components {
   .gp-card {
     @apply bg-card dark:bg-card rounded-xl shadow-sm border border-border transition-all duration-200;
@@ -28,7 +24,7 @@
   }
   
   .gp-icon {
-    @apply inline-flex items-center gap-1 text-muted-foreground hover-elevate active-elevate-2 cursor-pointer text-xs transition-colors;
+    @apply inline-flex items-center gap-1 text-muted-foreground cursor-pointer text-xs transition-colors;
   }
   
   .gp-img {
