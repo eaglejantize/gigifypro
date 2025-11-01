@@ -1,0 +1,195 @@
+You are an expert full-stack engineer working on the GigifyPro repo.
+
+GOAL
+Beautify the G-Square UI with a modern social look while keeping existing data + routes.
+- Two-column layout (feed + sidebar)
+- Polished post cards (rounded, shadow, hover)
+- Avatars (initials fallback), tag pills, reaction bar
+- Image preview if post.imageUrl exists
+- Keep counters: views + replies
+- Add theme toggle (light/dark) persisted to localStorage
+
+============================================================
+A) DESIGN TOKENS (Tailwind utilities)
+============================================================
+Create (or update) client/src/styles/gsquare.css with:
+------------------------------------------------------------
+.gp-card { @apply bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 transition-all duration-200; }
+.gp-card:hover { @apply shadow-md -translate-y-0.5; }
+.gp-pill { @apply inline-flex items-center rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs px-2 py-0.5; }
+.gp-meta { @apply text-xs text-zinc-500 dark:text-zinc-400; }
+.gp-title { @apply text-base font-semibold text-zinc-900 dark:text-zinc-100; }
+.gp-body  { @apply text-sm text-zinc-700 dark:text-zinc-300; }
+.gp-icon  { @apply inline-flex items-center gap-1 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-pointer; }
+.gp-img  { @apply rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800; }
+------------------------------------------------------------
+
+Import once in client/src/main.tsx (or App.tsx):
+------------------------------------------------------------
+/// <reference path="../styles/gsquare.css" />
+import "./styles/gsquare.css";
+------------------------------------------------------------
+
+============================================================
+B) SHARED UI PIECES
+============================================================
+Create client/src/components/ui/Avatar.tsx:
+------------------------------------------------------------
+export default function Avatar({ name }: { name?: string }) {
+  const initials = (name||"?").split(" ").map(p=>p[0]).slice(0,2).join("").toUpperCase();
+  return (
+    <div className="h-9 w-9 rounded-full bg-blue-600/10 text-blue-700 dark:text-blue-300 flex items-center justify-center font-bold">
+      {initials}
+    </div>
+  );
+}
+------------------------------------------------------------
+
+Create client/src/components/ui/ThemeToggle.tsx:
+------------------------------------------------------------
+import { useEffect, useState } from "react";
+export default function ThemeToggle(){
+  const [dark,setDark] = useState(false);
+  useEffect(()=>{ const saved = localStorage.getItem("gp_theme"); if(saved){ setDark(saved==="dark"); document.documentElement.classList.toggle("dark", saved==="dark"); }},[]);
+  function toggle(){
+    const next = !dark;
+    setDark(next);
+    localStorage.setItem("gp_theme", next?"dark":"light");
+    document.documentElement.classList.toggle("dark", next);
+  }
+  return (
+    <button onClick={toggle} className="gp-pill">{dark?"☀️ Light":"🌙 Dark"}</button>
+  );
+}
+------------------------------------------------------------
+
+============================================================
+C) FEED LAYOUT + SIDEBAR
+============================================================
+Create/Update client/src/pages/GSquare/Feed.tsx (use your fetch URL):
+------------------------------------------------------------
+import { useEffect, useState } from "react";
+import PostCard from "../../components/gsquare/PostCard";
+import ThemeToggle from "../../components/ui/ThemeToggle";
+
+export default function GSquareFeed(){
+  const [posts,setPosts] = useState<any[]>([]);
+  useEffect(()=>{ (async()=>{
+    const r = await fetch("/api/gsquare/feed",{credentials:"include"});
+    setPosts(await r.json());
+  })(); },[]);
+
+  return (
+    <div className="max-w-6xl mx-auto px-3 sm:px-6 py-6 grid grid-cols-1 lg:grid-cols-10 gap-6">
+      {/* Left: Main Feed */}
+      <div className="lg:col-span-7 space-y-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-bold">G-Square</h1>
+          <ThemeToggle/>
+        </div>
+        {posts.map(p => <PostCard key={p.id} post={p} />)}
+      </div>
+
+      {/* Right: Sidebar */}
+      <aside className="lg:col-span-3 space-y-4">
+        <div className="gp-card p-4">
+          <div className="font-semibold mb-2">Trending Tags</div>
+          <div className="flex flex-wrap gap-2">
+            {["gigcorp","community","futureofwork","wellness","events","art"].map(t=>(
+              <a key={t} href={`/g-square?tag=${t}`} className="gp-pill">#{t}</a>
+            ))}
+          </div>
+        </div>
+        <div className="gp-card p-4">
+          <div className="font-semibold mb-2">Top GigCorps</div>
+          <ul className="text-sm text-zinc-700 dark:text-zinc-300 list-disc pl-5 space-y-1">
+            <li>Home Avengers (Handyman + Cleaning + Lawn)</li>
+            <li>Event Squad (Chef + Decor + Photo)</li>
+            <li>Wellness Crew (Trainer + Massage)</li>
+          </ul>
+        </div>
+        <div className="gp-card p-4">
+          <div className="font-semibold mb-2">Tip of the Week</div>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Add photos to posts—image posts get 3× more replies.
+          </p>
+        </div>
+      </aside>
+    </div>
+  );
+}
+------------------------------------------------------------
+
+============================================================
+D) POST CARD
+============================================================
+Create client/src/components/gsquare/PostCard.tsx:
+------------------------------------------------------------
+import Avatar from "../ui/Avatar";
+
+export default function PostCard({ post }: { post:any }){
+  const hasImage = !!post.imageUrl;
+  return (
+    <article className="gp-card p-4">
+      <header className="flex items-center gap-3">
+        <Avatar name={post.author}/>
+        <div>
+          <div className="gp-title">{post.title}</div>
+          <div className="gp-meta">{new Date(post.createdAt).toLocaleDateString()} · {post.author || "Member"}</div>
+        </div>
+      </header>
+
+      {hasImage && (
+        <a href={`/g-square/post/${post.id}`} className="block mt-3 gp-img">
+          <img src={post.imageUrl} alt="" className="w-full h-auto object-cover" loading="lazy"/>
+        </a>
+      )}
+
+      <p className="gp-body mt-3 line-clamp-4">{post.content}</p>
+
+      {Array.isArray(post.tags) && post.tags.length>0 && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {post.tags.map((t:string)=><a key={t} className="gp-pill" href={`/g-square?tag=${t}`}>#{t}</a>)}
+        </div>
+      )}
+
+      <footer className="mt-3 flex items-center justify-between">
+        <div className="flex items-center gap-5 gp-meta">
+          <span title="Views">👁 {post.views ?? 0}</span>
+          <span title="Replies">💬 {post.replies ?? 0}</span>
+        </div>
+        <div className="flex items-center gap-4">
+          <a href={`/g-square/post/${post.id}`} className="gp-icon">💬 Reply</a>
+          <button className="gp-icon" onClick={()=>navigator.share?.({title:post.title, url:`/g-square/post/${post.id}`})}>↗️ Share</button>
+          <button className="gp-icon">❤️ Like</button>
+        </div>
+      </footer>
+    </article>
+  );
+}
+------------------------------------------------------------
+
+============================================================
+E) ROUTING (ensure path exists)
+============================================================
+In client/src/App.tsx (or router file), ensure:
+------------------------------------------------------------
+import GSquareFeed from "./pages/GSquare/Feed";
+<Route path="/g-square" element={<GSquareFeed/>} />
+------------------------------------------------------------
+
+============================================================
+F) BUILD & VERIFY (agent should run)
+============================================================
+- Rebuild dev server
+- Visit /g-square
+- Confirm:
+  - Two-column layout shows
+  - Cards have rounded corners, hover, image preview
+  - Views + replies visible
+  - Theme toggle persists across refresh
+
+PRINT at end:
+- "✅ G-Square UI Beautify v1 applied"
+- Number of posts rendered on feed
+- Example card: { id, title, views, replies }
