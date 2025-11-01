@@ -263,9 +263,9 @@ router.get("/posts/:id/comments", async (req, res) => {
       .select({
         comment: comments,
         author: {
-          id: sql`users.id`,
-          name: sql`users.name`,
-          avatar: sql`users.avatar`,
+          id: sql<string>`users.id`.as('author_id'),
+          name: sql<string>`users.name`.as('author_name'),
+          avatar: sql<string | null>`users.avatar`.as('author_avatar'),
         }
       })
       .from(comments)
@@ -292,9 +292,9 @@ router.get("/comments/:id/replies", async (req, res) => {
       .select({
         comment: comments,
         author: {
-          id: sql`users.id`,
-          name: sql`users.name`,
-          avatar: sql`users.avatar`,
+          id: sql<string>`users.id`.as('author_id'),
+          name: sql<string>`users.name`.as('author_name'),
+          avatar: sql<string | null>`users.avatar`.as('author_avatar'),
         }
       })
       .from(comments)

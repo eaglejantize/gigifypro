@@ -9,7 +9,7 @@ import MarkdownEditor from "@/components/MarkdownEditor";
 import ReactionBar from "@/components/ReactionBar";
 import { useState } from "react";
 import { apiGet } from "@/lib/api";
-import { Eye, MessageSquare, Calendar, Globe, MapPin, Hash } from "lucide-react";
+import { Eye, MessageSquare, Calendar, Globe, MapPin, Hash, Reply } from "lucide-react";
 
 type Post = {
   id: string;
@@ -41,6 +41,164 @@ type Comment = {
     avatar: string | null;
   };
 };
+
+// Component to display a single comment with its replies
+function CommentWithReplies({ 
+  comment, 
+  postId, 
+  depth = 0 
+}: { 
+  comment: Comment; 
+  postId: string; 
+  depth?: number;
+}) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [isReplying, setIsReplying] = useState(false);
+  const [replyMd, setReplyMd] = useState("");
+  const [showReplies, setShowReplies] = useState(true);
+
+  // Fetch replies for this comment
+  const { data: replies } = useQuery<Comment[]>({
+    queryKey: ["/api/community/comments", comment.id, "replies"],
+    queryFn: () => apiGet(`/api/community/comments/${comment.id}/replies`),
+  });
+
+  const addReplyMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/community/comments", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          postId, 
+          parentId: comment.id, 
+          bodyMd: replyMd 
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to add reply");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      setReplyMd("");
+      setIsReplying(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/community/comments", comment.id, "replies"] });
+      toast({
+        title: "Reply added!",
+        description: "Your reply has been posted",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to add reply",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const maxDepth = 4; // Limit nesting depth
+  const canReply = depth < maxDepth;
+  const indentClass = depth > 0 ? "ml-6 pl-4 border-l-2 border-border" : "";
+
+  return (
+    <div className={indentClass}>
+      <Card data-testid={`card-comment-${comment.id}`}>
+        <CardContent className="pt-6 space-y-3">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="font-semibold text-sm" data-testid={`text-comment-author-${comment.id}`}>
+              {comment.author?.name || 'Anonymous'}
+            </div>
+            <span className="text-xs text-muted-foreground">
+              {new Date(comment.createdAt).toLocaleString()}
+            </span>
+          </div>
+          <div
+            className="prose prose-sm dark:prose-invert max-w-none"
+            dangerouslySetInnerHTML={{ __html: comment.bodyHtml }}
+          />
+          <div className="flex items-center gap-2">
+            <ReactionBar targetType="comment" targetId={comment.id} />
+            {canReply && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setIsReplying(!isReplying)}
+                className="gap-1"
+                data-testid={`button-reply-${comment.id}`}
+              >
+                <Reply className="w-3 h-3" />
+                Reply
+              </Button>
+            )}
+            {replies && replies.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowReplies(!showReplies)}
+                className="text-xs"
+                data-testid={`button-toggle-replies-${comment.id}`}
+              >
+                {showReplies ? "Hide" : "Show"} {replies.length} {replies.length === 1 ? "reply" : "replies"}
+              </Button>
+            )}
+          </div>
+
+          {/* Reply Form */}
+          {isReplying && (
+            <div className="pt-4 space-y-3 border-t" data-testid={`form-reply-${comment.id}`}>
+              <MarkdownEditor
+                value={replyMd}
+                onChange={setReplyMd}
+                placeholder="Write your reply..."
+              />
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => addReplyMutation.mutate()}
+                  disabled={!replyMd.trim() || addReplyMutation.isPending}
+                  size="sm"
+                  data-testid={`button-submit-reply-${comment.id}`}
+                >
+                  {addReplyMutation.isPending ? "Posting..." : "Post Reply"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setIsReplying(false);
+                    setReplyMd("");
+                  }}
+                  data-testid={`button-cancel-reply-${comment.id}`}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Nested Replies */}
+      {showReplies && replies && replies.length > 0 && (
+        <div className="mt-4 space-y-4">
+          {replies.map((reply) => (
+            <CommentWithReplies 
+              key={reply.id} 
+              comment={reply} 
+              postId={postId}
+              depth={depth + 1}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function PostDetail() {
   const [, params] = useRoute("/community/post/:id");
@@ -218,23 +376,11 @@ export default function PostDetail() {
             {comments && comments.length > 0 ? (
               <div className="space-y-4">
                 {comments.map((comment) => (
-                  <Card key={comment.id} data-testid={`card-comment-${comment.id}`}>
-                    <CardContent className="pt-6 space-y-3">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="font-semibold text-sm" data-testid={`text-comment-author-${comment.id}`}>
-                          {comment.author?.name || 'Anonymous'}
-                        </div>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(comment.createdAt).toLocaleString()}
-                        </span>
-                      </div>
-                      <div
-                        className="prose prose-sm dark:prose-invert max-w-none"
-                        dangerouslySetInnerHTML={{ __html: comment.bodyHtml }}
-                      />
-                      <ReactionBar targetType="comment" targetId={comment.id} />
-                    </CardContent>
-                  </Card>
+                  <CommentWithReplies 
+                    key={comment.id} 
+                    comment={comment} 
+                    postId={postId!}
+                  />
                 ))}
               </div>
             ) : (
