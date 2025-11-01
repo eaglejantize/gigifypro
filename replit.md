@@ -27,7 +27,7 @@ Preferred communication style: Simple, everyday language.
 ### Data Storage
 
 **Database:** PostgreSQL with Drizzle ORM for type-safe queries. Neon serverless PostgreSQL for connection pooling.
-**Schema Design:** Includes tables for Users (with roles), Worker profiles, multi-profile Gigers (Profiles table with up to 3 specialized profiles), ProfileServices (linking profiles to services), Service categories, Listings, Job requests, Bookings, Review/Like system, Messages, Notifications, Badges, UserBadges, and AnalyticsEvents.
+**Schema Design:** Includes tables for Users (with roles), Worker profiles, multi-profile Gigers (Profiles table with up to 3 specialized profiles), ProfileServices (linking profiles to services), Service categories, Listings, Job requests, Bookings, Review/Like system, Messages, Notifications, Badges, UserBadges, AnalyticsEvents, CommunityStats (G-Square activity tracking), and VolunteerServices (pro-bono work tracking).
 **Community Discourse Tables:** Topics, Posts, Comments, Reactions, Reports, Reputations, CommunityFollows, and UserFollows to support the Public Discourse System.
 **Data Relationships:** Defined one-to-one, one-to-many, and many-to-many relationships across entities.
 **File-Based Storage:** Service info, testimonials, and badge auto-awarding logic are managed via JSON files and dedicated services.
@@ -36,7 +36,7 @@ Preferred communication style: Simple, everyday language.
 
 **Multi-Profile Giger System:** Allows users to create up to 3 specialized Giger profiles, each with custom services, niches, and bios, supported by a 3-step setup wizard.
 **Redesigned Post Task Flow:** A 4-step customer booking process showing Giger pricing upfront (hourly, fixed, custom).
-**GigScore System:** A comprehensive 0-100 point worker performance algorithm based on review quality, completed jobs, response time, cancellations, and repeat clients, displayed with tier badges and a detailed interactive modal.
+**GigScore System:** A comprehensive 0-100 point worker performance algorithm with 7 weighted signals: Review Quality (35%), Completed Jobs (22%), Response Speed (12%), Repeat Taskers (10%), Cancellation Penalty (-10%), Community Involvement (6% - G-Square activity), and Volunteerism (5% - pro-bono work). Displayed with tier badges and a detailed interactive modal. Admin-controlled volunteer approval workflow ensures data integrity.
 **How It Works Page:** A comprehensive onboarding guide explaining platform mechanics for clients and Gigers.
 **Dual-View Dashboard:** Separated Giger and Tasker dashboards with relevant metrics and management tools.
 **Team Collaboration Section:** Knowledge Hub with articles on building gig teams and networking for multi-person jobs.
