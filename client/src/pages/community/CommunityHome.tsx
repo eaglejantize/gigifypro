@@ -292,7 +292,12 @@ export default function CommunityHome() {
               </div>
               <div className="flex flex-wrap gap-2">
                 {["gigcorp", "community", "futureofwork", "wellness", "events", "art"].map((tag) => (
-                  <a key={tag} href={`/community?tag=${tag}`} className="gp-pill hover-elevate">
+                  <a 
+                    key={tag} 
+                    href={`/community?tag=${tag}`} 
+                    className="gp-pill hover-elevate"
+                    data-testid={`link-tag-${tag}`}
+                  >
                     #{tag}
                   </a>
                 ))}

@@ -27,9 +27,10 @@ export default function ThemeToggle() {
       size="icon"
       onClick={toggle}
       data-testid="button-theme-toggle"
-      className="rounded-full"
+      className="rounded-full focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+      aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
     >
-      {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+      {dark ? <Sun className="w-4 h-4" aria-hidden="true" /> : <Moon className="w-4 h-4" aria-hidden="true" />}
     </Button>
   );
 }

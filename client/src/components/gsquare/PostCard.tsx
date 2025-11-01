@@ -104,21 +104,28 @@ export default function PostCard({ post }: { post: Post }) {
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <Link href={`/community/post/${post.id}`}>
-            <button className="gp-icon" data-testid={`button-reply-${post.id}`}>
-              <MessageCircle className="w-4 h-4" />
-              <span>Reply</span>
-            </button>
+          <Link 
+            href={`/community/post/${post.id}`} 
+            data-testid={`button-reply-${post.id}`}
+            className="gp-icon focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 rounded"
+          >
+            <MessageCircle className="w-4 h-4" aria-hidden="true" />
+            <span>Reply</span>
           </Link>
           <button
-            className="gp-icon"
+            className="gp-icon focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 rounded"
             onClick={() => navigator.share?.({ title: post.title, url: `/community/post/${post.id}` })}
             data-testid={`button-share-${post.id}`}
+            aria-label="Share post"
           >
-            <Share2 className="w-4 h-4" />
+            <Share2 className="w-4 h-4" aria-hidden="true" />
           </button>
-          <button className="gp-icon" data-testid={`button-like-${post.id}`}>
-            <Heart className="w-4 h-4" />
+          <button 
+            className="gp-icon focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 rounded" 
+            data-testid={`button-like-${post.id}`} 
+            aria-label="Like post"
+          >
+            <Heart className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
       </footer>

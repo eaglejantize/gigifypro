@@ -278,6 +278,43 @@
     pointer-events: none;
   }
 
+  /* G-Square Community Styling */
+  .gp-card {
+    @apply bg-card dark:bg-card rounded-xl shadow-sm border border-border transition-all duration-200;
+  }
+  
+  .gp-card:hover {
+    @apply shadow-md -translate-y-0.5;
+  }
+  
+  .gp-pill {
+    @apply inline-flex items-center rounded-full bg-secondary text-secondary-foreground text-xs px-2.5 py-1 font-medium border border-secondary-border;
+  }
+  
+  a.gp-pill {
+    @apply focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:outline-none;
+  }
+  
+  .gp-meta {
+    @apply text-xs text-muted-foreground;
+  }
+  
+  .gp-title {
+    @apply text-base font-semibold text-foreground;
+  }
+  
+  .gp-body {
+    @apply text-sm text-muted-foreground leading-relaxed;
+  }
+  
+  .gp-icon {
+    @apply inline-flex items-center gap-1 text-muted-foreground cursor-pointer text-xs transition-colors;
+  }
+  
+  .gp-img {
+    @apply rounded-lg overflow-hidden border border-border;
+  }
+
   /* .no-default-hover-elevate/no-default-active-elevate is an escape hatch so consumers of
    * buttons/badges can remove the automatic brightness adjustment on interactions
    * and program their own. */
