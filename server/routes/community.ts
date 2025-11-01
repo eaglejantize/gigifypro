@@ -256,7 +256,7 @@ router.post("/comments", needAuth, async (req, res) => {
   }
 });
 
-// Get Comments for a Post
+// Get Comments for a Post (top-level only)
 router.get("/posts/:id/comments", async (req, res) => {
   try {
     const commentRows = await db
@@ -282,6 +282,35 @@ router.get("/posts/:id/comments", async (req, res) => {
   } catch (error) {
     console.error("Error fetching comments:", error);
     res.status(500).json({ error: "Failed to fetch comments" });
+  }
+});
+
+// Get Replies for a Comment
+router.get("/comments/:id/replies", async (req, res) => {
+  try {
+    const replyRows = await db
+      .select({
+        comment: comments,
+        author: {
+          id: sql`users.id`,
+          name: sql`users.name`,
+          avatar: sql`users.avatar`,
+        }
+      })
+      .from(comments)
+      .leftJoin(sql`users`, sql`users.id = ${comments.authorId}`)
+      .where(eq(comments.parentId, req.params.id))
+      .orderBy(comments.createdAt);
+
+    const results = replyRows.map(row => ({
+      ...row.comment,
+      author: row.author
+    }));
+
+    res.json(results);
+  } catch (error) {
+    console.error("Error fetching replies:", error);
+    res.status(500).json({ error: "Failed to fetch replies" });
   }
 });
 
