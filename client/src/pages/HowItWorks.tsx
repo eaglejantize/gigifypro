@@ -361,7 +361,8 @@ export default function HowItWorks() {
               <p className="text-lg mb-4">
                 GigScore is our proprietary performance scoring system that rates gigers
                 on a 0-100 scale based on multiple performance factors. It helps taskers
-                quickly identify top-performing gigers.
+                quickly identify top-performing gigers who deliver quality work and contribute
+                to our community.
               </p>
             </CardContent>
           </Card>
@@ -373,7 +374,7 @@ export default function HowItWorks() {
                   <Star className="w-5 h-5 text-chart-3" />
                   <div>
                     <div className="font-bold">Review Quality</div>
-                    <div className="text-sm text-muted-foreground">40% weight</div>
+                    <div className="text-sm text-muted-foreground">35% weight</div>
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground">
@@ -388,7 +389,7 @@ export default function HowItWorks() {
                   <Award className="w-5 h-5 text-primary" />
                   <div>
                     <div className="font-bold">Completed Jobs</div>
-                    <div className="text-sm text-muted-foreground">25% weight</div>
+                    <div className="text-sm text-muted-foreground">22% weight</div>
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground">
@@ -403,7 +404,7 @@ export default function HowItWorks() {
                   <Clock className="w-5 h-5 text-primary" />
                   <div>
                     <div className="font-bold">Response Speed</div>
-                    <div className="text-sm text-muted-foreground">15% weight</div>
+                    <div className="text-sm text-muted-foreground">12% weight</div>
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground">
@@ -418,7 +419,7 @@ export default function HowItWorks() {
                   <Shield className="w-5 h-5 text-primary" />
                   <div>
                     <div className="font-bold">Reliability</div>
-                    <div className="text-sm text-muted-foreground">10% weight</div>
+                    <div className="text-sm text-muted-foreground">−10% penalty</div>
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground">
@@ -438,6 +439,36 @@ export default function HowItWorks() {
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Percentage of taskers who book again. Higher loyalty = higher score.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <Users className="w-5 h-5 text-primary" />
+                  <div>
+                    <div className="font-bold">Community Involvement</div>
+                    <div className="text-sm text-muted-foreground">6% weight</div>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  G-Square activity and helpfulness. Posts, helpful reactions, and accepted answers from the last 90 days.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <Heart className="w-5 h-5 text-chart-3" />
+                  <div>
+                    <div className="font-bold">Volunteerism</div>
+                    <div className="text-sm text-muted-foreground">5% weight</div>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Verified pro-bono work from the last 12 months. Hours donated and positive ratings increase impact.
                 </p>
               </CardContent>
             </Card>

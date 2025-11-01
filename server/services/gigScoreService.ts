@@ -1,13 +1,16 @@
 import { db } from "../db";
 import { profiles, reviewLikes, jobRequests, workerProfiles } from "@shared/schema";
 import { eq, sql } from "drizzle-orm";
+import { computeCommunityScore, computeVolunteerScore } from "../lib/score-signals";
 
 interface GigScoreComponents {
-  reviewQuality: number; // 0-40 points
-  completedJobs: number; // 0-25 points
-  responseTime: number; // 0-15 points
-  cancellations: number; // 0-10 points
+  reviewQuality: number; // 0-35 points
+  completedJobs: number; // 0-22 points
+  responseTime: number; // 0-12 points
+  cancellations: number; // 0-10 points (penalty)
   repeatClients: number; // 0-10 points
+  communityInvolvement: number; // 0-6 points
+  volunteerism: number; // 0-5 points
   totalScore: number; // 0-100 points
 }
 
@@ -33,8 +36,8 @@ export async function calculateGigScore(profileId: string): Promise<GigScoreComp
     .where(eq(workerProfiles.userId, profileData.userId))
     .then((res: any) => res[0]);
 
-  // 1. Review Quality (40 points max)
-  // Average rating from reviews (1-5 stars) normalized to 0-40
+  // 1. Review Quality (35 points max)
+  // Average rating from reviews (1-5 stars) normalized to 0-35
   let reviewQuality = 0;
   if (workerProfile) {
     const reviewStats = await db
@@ -47,13 +50,13 @@ export async function calculateGigScore(profileId: string): Promise<GigScoreComp
       .then((res: any) => res[0] || { avgRating: 0, reviewCount: 0 });
 
     reviewQuality = reviewStats.avgRating
-      ? Math.min(40, (reviewStats.avgRating / 5) * 40)
+      ? Math.min(35, (reviewStats.avgRating / 5) * 35)
       : 0;
   }
 
-  // 2. Completed Jobs (25 points max)
-  // Logarithmic scale: log10(jobs + 1) / log10(100) * 25
-  // 0 jobs = 0 points, 10 jobs = ~12.5 points, 100 jobs = 25 points
+  // 2. Completed Jobs (22 points max)
+  // Logarithmic scale: log10(jobs + 1) / log10(100) * 22
+  // 0 jobs = 0 points, 10 jobs = ~11 points, 100 jobs = 22 points
   const completedJobsCount = await db
     .select({ count: sql<number>`COUNT(*)` })
     .from(jobRequests)
@@ -61,25 +64,25 @@ export async function calculateGigScore(profileId: string): Promise<GigScoreComp
     .then((res: any) => res[0]?.count || 0);
 
   const completedJobs = Math.min(
-    25,
-    (Math.log10(Number(completedJobsCount) + 1) / Math.log10(100)) * 25
+    22,
+    (Math.log10(Number(completedJobsCount) + 1) / Math.log10(100)) * 22
   );
 
-  // 3. Response Time (15 points max)
+  // 3. Response Time (12 points max)
   // Faster response = more points
-  // 0-15 min = 15 points, 16-30 min = 12 points, 31-60 min = 8 points, 60+ min = 3 points
+  // 0-15 min = 12 points, 16-30 min = 9 points, 31-60 min = 6 points, 60+ min = 3 points
   const avgResponseMinutes = profileData.avgResponseMinutes || 60;
   let responseTime = 0;
   if (avgResponseMinutes <= 15) {
-    responseTime = 15;
-  } else if (avgResponseMinutes <= 30) {
     responseTime = 12;
+  } else if (avgResponseMinutes <= 30) {
+    responseTime = 9;
   } else if (avgResponseMinutes <= 60) {
-    responseTime = 8;
+    responseTime = 6;
   } else if (avgResponseMinutes <= 120) {
-    responseTime = 5;
+    responseTime = 4;
   } else {
-    responseTime = 3;
+    responseTime = 2;
   }
 
   // 4. Cancellations (10 points max)
@@ -112,9 +115,19 @@ export async function calculateGigScore(profileId: string): Promise<GigScoreComp
 
   const repeatClients = Math.min(10, repeatClientRate * 10);
 
-  // Calculate total score
+  // 6. Community Involvement (6 points max)
+  // G-Square activity & helpfulness normalized from 0-100 to 0-6
+  const communityScoreRaw = await computeCommunityScore(profileData.userId);
+  const communityInvolvement = (communityScoreRaw / 100) * 6;
+
+  // 7. Volunteerism (5 points max)
+  // Approved donated services normalized from 0-100 to 0-5
+  const volunteerScoreRaw = await computeVolunteerScore(profileData.userId);
+  const volunteerism = (volunteerScoreRaw / 100) * 5;
+
+  // Calculate total score (sum of all weighted components)
   const totalScore = Math.round(
-    reviewQuality + completedJobs + responseTime + cancellations + repeatClients
+    reviewQuality + completedJobs + responseTime + cancellations + repeatClients + communityInvolvement + volunteerism
   );
 
   return {
@@ -123,6 +136,8 @@ export async function calculateGigScore(profileId: string): Promise<GigScoreComp
     responseTime: Math.round(responseTime * 100) / 100,
     cancellations: Math.round(cancellations * 100) / 100,
     repeatClients: Math.round(repeatClients * 100) / 100,
+    communityInvolvement: Math.round(communityInvolvement * 100) / 100,
+    volunteerism: Math.round(volunteerism * 100) / 100,
     totalScore,
   };
 }

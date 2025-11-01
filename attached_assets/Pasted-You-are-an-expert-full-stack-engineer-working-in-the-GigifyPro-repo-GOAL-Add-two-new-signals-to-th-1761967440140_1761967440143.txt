@@ -1,0 +1,244 @@
+You are an expert full-stack engineer working in the GigifyPro repo.
+
+GOAL
+Add two new signals to the GigScore ranking system:
+  1) Community Involvement (activity & helpfulness in G-Square)
+  2) Volunteerism (donated services completed & verified)
+Weight them lightly but meaningfully. Expose endpoints to recompute scores and update “How It Works” content/UI.
+
+================================================================
+A) PRISMA SCHEMA – New tables for signals
+================================================================
+Open prisma/schema.prisma and append:
+
+model CommunityStat {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  posts          Int      @default(0)
+  comments       Int      @default(0)
+  helpfulReacts  Int      @default(0) // e.g., "Helpful", "Insightful", "Support"
+  acceptedAnswers Int     @default(0) // if your forum has accepted answer concept; else stays 0
+  lastComputedAt DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model VolunteerService {
+  id           String   @id @default(cuid())
+  profileId    String
+  title        String
+  description  String?
+  hours        Float     @default(0)
+  valueCents   Int       @default(0)
+  rating       Int?      // 1..5 (post-service feedback)
+  verifiedBy   String?   // admin userId or org name
+  status       String    @default("pending") // pending|approved|rejected|completed
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  profile      Profile   @relation(fields: [profileId], references: [id])
+}
+
+Run:
+npx prisma generate
+npx prisma migrate dev -n "gigscore_community_volunteer_v1"
+
+================================================================
+B) RANKING LIB – Add new weighted terms
+================================================================
+Create or update: server/lib/ranking.ts
+
+export type SubScores = {
+  reviewScore: number;      // 0..100
+  completionScore: number;  // 0..100
+  responseScore: number;    // 0..100
+  repeatScore: number;      // 0..100
+  cancelPenalty: number;    // 0..100 (penalty is applied as a negative)
+  communityScore?: number;  // 0..100
+  volunteerScore?: number;  // 0..100
+};
+
+function clamp01(x:number){ return Math.max(0, Math.min(1, x)); }
+
+export function gigScore(s: SubScores){
+  // Normalize to 0..1 and apply weights.
+  const w =
+    0.35 * (s.reviewScore/100) +
+    0.22 * (s.completionScore/100) +
+    0.12 * (s.responseScore/100) +
+    0.10 * (s.repeatScore/100)  +
+   -0.10 * (s.cancelPenalty/100) +
+    0.06 * ((s.communityScore ?? 0)/100) +   // NEW: community involvement (light weight)
+    0.05 * ((s.volunteerScore ?? 0)/100);    // NEW: volunteerism (light weight)
+
+  return Math.round(clamp01(w) * 100);
+}
+
+export default { gigScore };
+
+================================================================
+C) COMPUTATION HELPERS – derive community & volunteer subscores
+================================================================
+Create: server/lib/score-signals.ts
+
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
+
+// Community score (0..100) based on last 90 days of activity
+export async function computeCommunityScore(userId: string){
+  const stat = await prisma.communityStat.findUnique({ where: { userId }});
+  if(!stat) return 0;
+
+  // Simple point model; cap for stability
+  const points =
+    3 * stat.helpfulReacts +
+    2 * stat.posts +
+    1 * stat.comments +
+    4 * stat.acceptedAnswers;
+
+  // Non-linear scale with cap ~100
+  const score = Math.min(100, Math.round( (points / 60) * 100 )); // ~60 pts → 100 score
+  return score;
+}
+
+// Volunteer score (0..100) from approved/completed entries in last 12 mo.
+export async function computeVolunteerScore(userId: string){
+  // Get profiles then volunteer entries
+  const profiles = await prisma.profile.findMany({ where: { userId }, select: { id: true }});
+  if(profiles.length === 0) return 0;
+
+  const ids = profiles.map(p=>p.id);
+  const since = new Date(); since.setFullYear(since.getFullYear()-1);
+
+  const entries = await prisma.volunteerService.findMany({
+    where: { profileId: { in: ids }, status: { in: ["approved","completed"] }, completedAt: { gte: since } }
+  });
+
+  let hours = 0, ratingSum = 0, ratingCount = 0;
+  for(const e of entries){
+    hours += e.hours || 0;
+    if(e.rating){ ratingSum += e.rating; ratingCount++; }
+  }
+  const avgRating = ratingCount ? (ratingSum / ratingCount) : 5;
+
+  // 5 pts per hour (up to 12 hrs), plus small rating boost
+  const base = Math.min(60, hours * 5);           // max 60
+  const bonus = Math.max(0, (avgRating - 3) * 10); // up to +20 if ~5★
+  return Math.min(100, Math.round(base + bonus));
+}
+
+export default { computeCommunityScore, computeVolunteerScore };
+
+================================================================
+D) API – endpoints to record & recompute
+================================================================
+Create: server/routes/gigscore.ts
+
+import { Router } from "express";
+import { PrismaClient } from "@prisma/client";
+import { gigScore } from "../lib/ranking";
+import { computeCommunityScore, computeVolunteerScore } from "../lib/score-signals";
+const prisma = new PrismaClient();
+const r = Router();
+
+function needAuth(req:any,res:any,next:any){ if(!req.session?.uid) return res.status(401).json({error:"Unauthorized"}); next(); }
+
+// 1) Upsert community stat (called by G-Square actions or admin seeder)
+r.post("/community", needAuth, async (req,res)=>{
+  const { posts=0, comments=0, helpfulReacts=0, acceptedAnswers=0 } = req.body || {};
+  const row = await prisma.communityStat.upsert({
+    where: { userId: req.session.uid },
+    update: { posts: {increment: posts}, comments: {increment: comments}, helpfulReacts: {increment: helpfulReacts}, acceptedAnswers: {increment: acceptedAnswers}, lastComputedAt: new Date() },
+    create: { userId: req.session.uid, posts, comments, helpfulReacts, acceptedAnswers }
+  });
+  res.json(row);
+});
+
+// 2) Create a volunteer entry (admin can approve later)
+r.post("/volunteer", needAuth, async (req,res)=>{
+  const { profileId, title, description, hours=0, valueCents=0 } = req.body||{};
+  if(!profileId) return res.status(400).json({error:"profileId required"});
+  const v = await prisma.volunteerService.create({ data: { profileId, title, description, hours, valueCents, status: "pending" }});
+  res.json(v);
+});
+
+// 3) Admin approve/complete volunteer entries
+r.patch("/volunteer/:id", needAuth, async (req,res)=>{
+  const { status, rating, verifiedBy } = req.body||{};
+  const id = String(req.params.id);
+  const v = await prisma.volunteerService.update({ where: { id }, data: { status, rating, verifiedBy, completedAt: status==="completed"? new Date(): undefined }});
+  res.json(v);
+});
+
+// 4) Recompute GigScore preview for current user
+r.get("/preview/mine", needAuth, async (req,res)=>{
+  const uid = req.session.uid as string;
+
+  // Fetch existing subscores from your existing performance table or compute basic placeholders
+  // TODO: replace with your real metrics pipeline
+  const reviewScore = 80;      // placeholder
+  const completionScore = 85;  // placeholder
+  const responseScore = 75;    // placeholder
+  const repeatScore = 60;      // placeholder
+  const cancelPenalty = 10;    // placeholder
+
+  const communityScore  = await computeCommunityScore(uid);
+  const volunteerScore  = await computeVolunteerScore(uid);
+
+  const total = gigScore({ reviewScore, completionScore, responseScore, repeatScore, cancelPenalty, communityScore, volunteerScore });
+
+  res.json({ reviewScore, completionScore, responseScore, repeatScore, cancelPenalty, communityScore, volunteerScore, gigScore: total });
+});
+
+export default r;
+
+Mount in server/routes.ts:
+import gigscore from "./routes/gigscore";
+api.use("/gigscore", gigscore);
+
+================================================================
+E) EXPLORE API – include new terms in score
+================================================================
+Find the explore/listing computation (e.g., server/routes/explore.ts).
+Import { computeCommunityScore, computeVolunteerScore } from "../lib/score-signals" and { gigScore } from "../lib/ranking".
+When building each worker/listing row, compute both signals (cache if you have a perf layer) and pass into gigScore() so the feed reflects the updated formula.
+
+================================================================
+F) UI – “How It Works” explainer
+================================================================
+Create: server/content/how-it-works/gigscore.md
+
+# How GigScore Works
+
+GigScore summarizes your reliability and community impact on a 0–100 scale.
+
+**Weights**
+- Reviews & Ratings … **35%**
+- Job Completion Rate … **22%**
+- Response Speed … **12%**
+- Repeat Clients … **10%**
+- Cancelation Penalty … **−10%**
+- **Community Involvement** (G-Square posts, helpful reactions) … **6%**
+- **Volunteerism** (approved donated services) … **5%**
+
+**Community Involvement**
+Helpful reactions, posts, and comments from the last 90 days contribute lightly to your score. Quality > quantity.
+
+**Volunteerism**
+Verified pro-bono work in the last 12 months adds a small boost. Hours and positive ratings increase impact.
+
+Create page: client/src/pages/HowItWorks.tsx that loads and renders this markdown (use your existing markdown renderer) and link it from Explore (“How scoring works”).
+
+================================================================
+G) SMOKE TESTS – print results
+================================================================
+1) npx prisma generate
+2) npx prisma migrate dev -n "gigscore_community_volunteer_v1"  (if not yet run)
+3) Start dev server; mount check should show /api/gigscore.
+
+Run programmatically and PRINT:
+- GET /api/gigscore/preview/mine  → JSON with communityScore, volunteerScore, gigScore
+- Confirm explore feed pipeline calls gigScore with the two new terms
+- Final line:
+"✅ GigScore updated with Community & Volunteer signals and docs added"

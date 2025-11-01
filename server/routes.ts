@@ -13,6 +13,7 @@ import trackRouter from "./routes/track";
 import profileRouter from "./routes/profile";
 import testimonialsRouter from "./routes/testimonials";
 import communityRouter from "./routes/community";
+import gigscoreRouter from "./routes/gigscore";
 import { getCache, putCache } from "./utils/cache";
 
 // Stripe setup - from javascript_stripe integration
@@ -929,6 +930,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Community routes
   app.use("/api/community", communityRouter);
   app.use("/api/admin/community", adminCommunityRouter);
+
+  // GigScore routes
+  app.use("/api/gigscore", gigscoreRouter);
 
   const httpServer = createServer(app);
   return httpServer;

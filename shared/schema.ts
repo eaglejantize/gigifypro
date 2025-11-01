@@ -38,6 +38,7 @@ export const reactionKindEnum = pgEnum("reaction_kind", ["LIKE", "HELPFUL", "INS
 export const reportStatusEnum = pgEnum("report_status", ["PENDING", "REVIEWED", "ACTIONED"]);
 export const visibilityEnum = pgEnum("visibility", ["NATIONAL", "LOCAL"]);
 export const pricingModelEnum = pgEnum("pricing_model", ["hourly", "fixed", "custom"]);
+export const volunteerStatusEnum = pgEnum("volunteer_status", ["pending", "approved", "rejected", "completed"]);
 
 // Users table
 export const users = pgTable("users", {
@@ -840,3 +841,49 @@ export const insertProfileServiceSchema = createInsertSchema(profileServices).om
 });
 export type ProfileService = typeof profileServices.$inferSelect;
 export type InsertProfileService = z.infer<typeof insertProfileServiceSchema>;
+
+// Community Stats (for GigScore community involvement signal)
+export const communityStats = pgTable("community_stats", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().unique().references(() => users.id, { onDelete: "cascade" }),
+  posts: integer("posts").notNull().default(0),
+  comments: integer("comments").notNull().default(0),
+  helpfulReacts: integer("helpful_reacts").notNull().default(0),
+  acceptedAnswers: integer("accepted_answers").notNull().default(0),
+  lastComputedAt: timestamp("last_computed_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertCommunityStatSchema = createInsertSchema(communityStats).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  lastComputedAt: true,
+});
+export type CommunityStat = typeof communityStats.$inferSelect;
+export type InsertCommunityStat = z.infer<typeof insertCommunityStatSchema>;
+
+// Volunteer Services (for GigScore volunteerism signal)
+export const volunteerServices = pgTable("volunteer_services", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  profileId: varchar("profile_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  hours: decimal("hours", { precision: 10, scale: 2 }).notNull().default("0"),
+  valueCents: integer("value_cents").notNull().default(0),
+  rating: integer("rating"),
+  verifiedBy: text("verified_by"),
+  status: text("status").notNull().default("pending"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertVolunteerServiceSchema = createInsertSchema(volunteerServices).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type VolunteerService = typeof volunteerServices.$inferSelect;
+export type InsertVolunteerService = z.infer<typeof insertVolunteerServiceSchema>;
