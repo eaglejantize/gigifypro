@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Plus, TrendingUp, Clock, Globe, MapPin, Hash, Image, Send } from "lucide-react";
+import { Plus, TrendingUp, Clock, Globe, MapPin, Hash, Image, Send, MessageCircle, Eye } from "lucide-react";
 import { useState, useEffect } from "react";
 import { apiGet } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
@@ -23,6 +23,7 @@ type Post = {
   visibility: "NATIONAL" | "LOCAL";
   score: number;
   views: number;
+  replies: number;
   createdAt: string;
 };
 
@@ -304,7 +305,14 @@ export default function CommunityHome() {
                         {post.serviceKey && (
                           <span className="text-primary">#{post.serviceKey}</span>
                         )}
-                        <span>{post.views} views</span>
+                        <span className="flex items-center gap-1" data-testid={`text-views-${post.id}`}>
+                          <Eye className="w-3 h-3" />
+                          {post.views}
+                        </span>
+                        <span className="flex items-center gap-1" data-testid={`text-replies-${post.id}`}>
+                          <MessageCircle className="w-3 h-3" />
+                          {post.replies}
+                        </span>
                         <span>{post.score} score</span>
                       </CardDescription>
                     </div>

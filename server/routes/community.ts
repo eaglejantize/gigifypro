@@ -129,7 +129,23 @@ router.get("/posts", async (req, res) => {
     }
 
     const results = await query.limit(takeNum);
-    res.json(results);
+    
+    // Add comment counts to each post
+    const postsWithCounts = await Promise.all(
+      results.map(async (post) => {
+        const commentCount = await db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(comments)
+          .where(eq(comments.postId, post.id));
+        
+        return {
+          ...post,
+          replies: commentCount[0]?.count || 0,
+        };
+      })
+    );
+    
+    res.json(postsWithCounts);
   } catch (error) {
     console.error("Error listing posts:", error);
     res.status(500).json({ error: "Failed to list posts" });
