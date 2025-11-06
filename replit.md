@@ -2,7 +2,7 @@
 
 ## Overview
 
-gigifypro is a gig-economy marketplace platform connecting clients with local service professionals. It offers service discovery, booking, real-time messaging, and a trust-based review system. The platform emphasizes transparent pricing, worker verification, and social proof through ratings and reviews. Key features include a multi-profile system for service professionals (Gigers), a redesigned customer booking flow with upfront Giger pricing, various pricing models (hourly, fixed, custom), a "Public Discourse System" for community engagement, and a "GigScore System" for worker performance evaluation. The platform also integrates a "G PRO Brand" for professional products, a "How It Works" onboarding guide, a dual-view dashboard for Gigers and Taskers (customers), and a "Team Collaboration Section" for multi-person jobs.
+gigifypro is a gig-economy marketplace platform connecting clients with local service professionals. It offers service discovery, booking, real-time messaging, and a trust-based review system. The platform emphasizes transparent pricing, worker verification, and social proof through ratings and reviews. Key features include a multi-profile system for service professionals (Gig Pros), a redesigned customer booking flow with upfront Gig Pro pricing, various pricing models (hourly, fixed, custom), a "Public Discourse System" for community engagement, and a "GigScore System" for worker performance evaluation. The platform also integrates a "G PRO Brand" for professional products, a "How It Works" onboarding guide, a dual-view dashboard for Gig Pros and Taskers (customers), and a "Team Collaboration Section" for multi-person jobs.
 
 ## User Preferences
 
@@ -27,18 +27,18 @@ Preferred communication style: Simple, everyday language.
 ### Data Storage
 
 **Database:** PostgreSQL with Drizzle ORM for type-safe queries. Neon serverless PostgreSQL for connection pooling.
-**Schema Design:** Includes tables for Users (with roles), Worker profiles, multi-profile Gigers (Profiles table with up to 3 specialized profiles), ProfileServices (linking profiles to services), Service categories, Listings, Job requests, Bookings, Review/Like system, Messages, Notifications, Badges, UserBadges, AnalyticsEvents, CommunityStats (G-Square activity tracking), and VolunteerServices (pro-bono work tracking).
+**Schema Design:** Includes tables for Users (with roles), Worker profiles, multi-profile Gig Pros (Profiles table with unlimited specialized profiles), ProfileServices (linking profiles to services), Service categories, Listings, Job requests, Bookings, Review/Like system, Messages, Notifications, Badges, UserBadges, AnalyticsEvents, CommunityStats (G-Square activity tracking), and VolunteerServices (pro-bono work tracking).
 **Community Discourse Tables:** Topics, Posts, Comments, Reactions, Reports, Reputations, CommunityFollows, and UserFollows to support the Public Discourse System.
 **Data Relationships:** Defined one-to-one, one-to-many, and many-to-many relationships across entities.
 **File-Based Storage:** Service info, testimonials, and badge auto-awarding logic are managed via JSON files and dedicated services.
 
 ### Additional Features
 
-**Multi-Profile Giger System:** Allows users to create up to 3 specialized Giger profiles, each with custom services, niches, and bios, supported by a 3-step setup wizard.
-**Redesigned Post Task Flow:** A 4-step customer booking process showing Giger pricing upfront (hourly, fixed, custom).
+**Multi-Profile Gig Pro System:** Allows users to create unlimited specialized Gig Pro profiles, each with unlimited services, niches, and bios, supported by a multi-step setup wizard. No limits enforced on profile or service count.
+**Redesigned Post Task Flow:** A 4-step customer booking process showing Gig Pro pricing upfront (hourly, fixed, custom).
 **GigScore System:** A comprehensive 0-100 point worker performance algorithm with 7 weighted signals: Review Quality (35%), Completed Jobs (22%), Response Speed (12%), Repeat Taskers (10%), Cancellation Penalty (-10%), Community Involvement (6% - G-Square activity), and Volunteerism (5% - pro-bono work). Displayed with tier badges and a detailed interactive modal. Admin-controlled volunteer approval workflow ensures data integrity.
-**How It Works Page:** A comprehensive onboarding guide explaining platform mechanics for clients and Gigers.
-**Dual-View Dashboard:** Separated Giger and Tasker dashboards with relevant metrics and management tools.
+**How It Works Page:** A comprehensive onboarding guide explaining platform mechanics for clients and Gig Pros.
+**Dual-View Dashboard:** Separated Gig Pro and Tasker dashboards with relevant metrics and management tools.
 **Team Collaboration Section:** Knowledge Hub with articles on building gig teams and networking for multi-person jobs.
 **Public Discourse System:** A digital town square with posts, comments, reactions, topics, a reputation system, and a hot feed algorithm, with Markdown support and sanitization.
 
