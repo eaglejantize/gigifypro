@@ -5,10 +5,7 @@ import { Briefcase, Plus, GraduationCap } from "lucide-react";
 export default function CtaBanner() {
   return (
     <div className="border-b bg-card">
-      <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between gap-3">
-        <div className="font-semibold text-card-foreground">
-          Learn. Earn. Get Gigified.
-        </div>
+      <div className="mx-auto max-w-7xl px-4 py-3">
         <div className="flex flex-wrap justify-center gap-2">
           <Button
             variant="outline"
