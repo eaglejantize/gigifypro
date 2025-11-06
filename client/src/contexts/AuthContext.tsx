@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from "react";
 import { AuthUser, getAuthUser, setAuthUser as saveAuthUser, clearAuthUser } from "@/lib/auth";
 
 interface AuthContextType {
@@ -20,18 +20,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  const login = (authUser: AuthUser) => {
+  const login = useCallback((authUser: AuthUser) => {
     setUser(authUser);
     saveAuthUser(authUser);
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setUser(null);
     clearAuthUser();
-  };
+  }, []);
+
+  const value = useMemo(
+    () => ({ user, login, logout, isLoading }),
+    [user, login, logout, isLoading]
+  );
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
