@@ -5,14 +5,9 @@ import { Briefcase, Plus, GraduationCap } from "lucide-react";
 export default function CtaBanner() {
   return (
     <div className="border-b bg-card">
-      <div className="mx-auto max-w-7xl px-4 py-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="text-center md:text-left">
-          <div className="font-semibold text-card-foreground">
-            Learn. Earn. Get Gigified.
-          </div>
-          <div className="text-sm text-muted-foreground">
-            Turn everyday skills into income, independence, and freedom.
-          </div>
+      <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between gap-3">
+        <div className="font-semibold text-card-foreground">
+          Learn. Earn. Get Gigified.
         </div>
         <div className="flex flex-wrap justify-center gap-2">
           <Button
