@@ -16,7 +16,7 @@ import { CalendarIcon, Loader2, Search } from "lucide-react";
 import { format } from "date-fns";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
-interface Giger {
+interface GigPro {
   profileId: string;
   profileName: string;
   tagline?: string | null;
@@ -52,9 +52,9 @@ export default function PostTask() {
   const [serviceKey, setServiceKey] = useState("");
   const [title, setTitle] = useState("");
   
-  // Step 2: Giger selection
-  const [selectedGigerId, setSelectedGigerId] = useState<string | null>(null);
-  const [selectedGiger, setSelectedGiger] = useState<Giger | null>(null);
+  // Step 2: Gig Pro selection
+  const [selectedGigProId, setSelectedGigProId] = useState<string | null>(null);
+  const [selectedGigPro, setSelectedGigPro] = useState<GigPro | null>(null);
   
   // Step 3: Task details
   const [description, setDescription] = useState("");
@@ -70,8 +70,8 @@ export default function PostTask() {
     ? servicesData
     : servicesData?.services || [];
 
-  // Fetch available gigers when service is selected
-  const { data: gigers = [], isLoading: gigersLoading } = useQuery<Giger[]>({
+  // Fetch available Gig Pros when service is selected
+  const { data: gigPros = [], isLoading: gigProsLoading } = useQuery<GigPro[]>({
     queryKey: ["/api/profile/gigers/by-service", serviceKey],
     enabled: !!serviceKey && step === 2,
   });
@@ -82,7 +82,7 @@ export default function PostTask() {
       queryClient.invalidateQueries({ queryKey: ["/api/users", user?.id, "jobs"] });
       toast({
         title: "Task posted successfully!",
-        description: "Your selected giger will be notified.",
+        description: "Your selected Gig Pro will be notified.",
       });
       setLocation("/dashboard?tab=tasks&view=tasker");
     },
@@ -95,9 +95,9 @@ export default function PostTask() {
     },
   });
 
-  const handleSelectGiger = (giger: Giger) => {
-    setSelectedGigerId(giger.profileId);
-    setSelectedGiger(giger);
+  const handleSelectGigPro = (gigPro: GigPro) => {
+    setSelectedGigProId(gigPro.profileId);
+    setSelectedGigPro(gigPro);
   };
 
   const handleNext = () => {
@@ -116,10 +116,10 @@ export default function PostTask() {
         setTitle(selectedSvc.label);
       }
     }
-    if (step === 2 && !selectedGigerId) {
+    if (step === 2 && !selectedGigProId) {
       toast({
-        title: "Giger required",
-        description: "Please select a giger to continue.",
+        title: "Gig Pro required",
+        description: "Please select a Gig Pro to continue.",
         variant: "destructive",
       });
       return;
@@ -138,10 +138,10 @@ export default function PostTask() {
       return;
     }
 
-    if (!selectedGiger) {
+    if (!selectedGigPro) {
       toast({
-        title: "No giger selected",
-        description: "Please select a giger.",
+        title: "No Gig Pro selected",
+        description: "Please select a Gig Pro.",
         variant: "destructive",
       });
       return;
@@ -152,9 +152,9 @@ export default function PostTask() {
       serviceKey,
       title,
       description,
-      profileId: selectedGigerId,
-      quotedPrice: selectedGiger.rateCents,
-      pricingModel: selectedGiger.pricingModel,
+      profileId: selectedGigProId,
+      quotedPrice: selectedGigPro.rateCents,
+      pricingModel: selectedGigPro.pricingModel,
       location,
       scheduledFor: date?.toISOString(),
     });
@@ -169,7 +169,7 @@ export default function PostTask() {
           <h1 className="text-3xl font-bold mb-2" data-testid="text-post-task-title">
             Post a Task
           </h1>
-          <p className="text-muted-foreground">Find the perfect giger for your job</p>
+          <p className="text-muted-foreground">Find the perfect Gig Pro for your job</p>
         </div>
 
         {/* Progress Indicator */}
@@ -238,7 +238,7 @@ export default function PostTask() {
                     className="min-w-32"
                     data-testid="button-next"
                   >
-                    Find Gigers
+                    Find Gig Pros
                   </Button>
                 </div>
               </CardContent>
@@ -246,27 +246,27 @@ export default function PostTask() {
           </div>
         )}
 
-        {/* Step 2: Browse & Select Giger */}
+        {/* Step 2: Browse & Select Gig Pro */}
         {step === 2 && (
           <div>
             <div className="mb-6">
-              <h2 className="text-2xl font-bold mb-2">Available Gigers</h2>
+              <h2 className="text-2xl font-bold mb-2">Available Gig Pros</h2>
               <p className="text-muted-foreground">
-                {gigers.length} {gigers.length === 1 ? "giger" : "gigers"} available for {selectedService?.label}
+                {gigPros.length} {gigPros.length === 1 ? "Gig Pro" : "Gig Pros"} available for {selectedService?.label}
               </p>
             </div>
 
-            {gigersLoading ? (
+            {gigProsLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
               </div>
-            ) : gigers.length === 0 ? (
+            ) : gigPros.length === 0 ? (
               <Card className="p-12">
                 <div className="text-center">
                   <Search className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">No gigers available</h3>
+                  <h3 className="text-xl font-semibold mb-2">No Gig Pros available</h3>
                   <p className="text-muted-foreground mb-4">
-                    No gigers currently offer this service. Try selecting a different service.
+                    No Gig Pros currently offer this service. Try selecting a different service.
                   </p>
                   <Button variant="outline" onClick={() => setStep(1)}>
                     Change Service
@@ -275,12 +275,12 @@ export default function PostTask() {
               </Card>
             ) : (
               <div className="space-y-4">
-                {gigers.map((giger) => (
+                {gigPros.map((gigPro) => (
                   <GigerCard
-                    key={giger.profileId}
-                    {...giger}
-                    onSelect={() => handleSelectGiger(giger)}
-                    isSelected={selectedGigerId === giger.profileId}
+                    key={gigPro.profileId}
+                    {...gigPro}
+                    onSelect={() => handleSelectGigPro(gigPro)}
+                    isSelected={selectedGigProId === gigPro.profileId}
                   />
                 ))}
 
@@ -294,11 +294,11 @@ export default function PostTask() {
                   </Button>
                   <Button
                     onClick={handleNext}
-                    disabled={!selectedGigerId}
+                    disabled={!selectedGigProId}
                     className="flex-1"
                     data-testid="button-next"
                   >
-                    Continue with {selectedGiger?.profileName || "Selected Giger"}
+                    Continue with {selectedGigPro?.profileName || "Selected Gig Pro"}
                   </Button>
                 </div>
               </div>
@@ -384,7 +384,7 @@ export default function PostTask() {
         )}
 
         {/* Step 4: Review & Submit */}
-        {step === 4 && selectedGiger && (
+        {step === 4 && selectedGigPro && (
           <div className="max-w-2xl mx-auto">
             <Card>
               <CardHeader>
@@ -410,9 +410,9 @@ export default function PostTask() {
                 )}
 
                 <div className="border-t pt-4">
-                  <div className="text-sm font-medium text-muted-foreground mb-3">Selected Giger</div>
+                  <div className="text-sm font-medium text-muted-foreground mb-3">Selected Gig Pro</div>
                   <GigerCard
-                    {...selectedGiger}
+                    {...selectedGigPro}
                     onSelect={() => {}}
                     isSelected={true}
                   />
@@ -436,8 +436,8 @@ export default function PostTask() {
                   <div className="flex justify-between items-center">
                     <span className="font-semibold">Quoted Price</span>
                     <span className="text-2xl font-bold text-primary">
-                      ${(selectedGiger.rateCents / 100).toFixed(0)}
-                      {selectedGiger.pricingModel === "hourly" ? "/hr" : selectedGiger.pricingModel === "fixed" ? " fixed" : ""}
+                      ${(selectedGigPro.rateCents / 100).toFixed(0)}
+                      {selectedGigPro.pricingModel === "hourly" ? "/hr" : selectedGigPro.pricingModel === "fixed" ? " fixed" : ""}
                     </span>
                   </div>
                 </div>

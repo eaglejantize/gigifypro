@@ -51,7 +51,7 @@ const listingSchema = z.object({
 const jobRequestSchema = z.object({
   categoryId: z.string().optional(),
   serviceKey: z.string().min(1, "Service is required"),
-  profileId: z.string().min(1, "Giger selection is required"),
+  profileId: z.string().min(1, "Gig Pro selection is required"),
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   budget: z.string().optional(),

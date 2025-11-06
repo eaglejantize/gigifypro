@@ -91,7 +91,7 @@ router.post("/:id/gigscore/update", async (req, res) => {
   }
 });
 
-// Get Available Gigers by Service
+// Get Available Gig Pros by Service
 router.get("/gigers/by-service/:serviceKey", async (req, res) => {
   try {
     const { serviceKey } = req.params;
@@ -117,9 +117,9 @@ router.get("/gigers/by-service/:serviceKey", async (req, res) => {
         eq(profiles.isLive, true)
       ));
 
-    // Get ratings stats for each giger (use workerProfiles for backward compat)
-    const gigersWithStats = await Promise.all(
-      gigersWithService.map(async (giger) => {
+    // Get ratings stats for each Gig Pro (use workerProfiles for backward compat)
+    const gigProStats = await Promise.all(
+      gigersWithService.map(async (gigPro) => {
         // Get review count and average rating
         const reviewStats = await db
           .select({
@@ -129,39 +129,39 @@ router.get("/gigers/by-service/:serviceKey", async (req, res) => {
           })
           .from(reviewLikes)
           .innerJoin(workerProfiles, eq(reviewLikes.workerId, workerProfiles.id))
-          .where(eq(workerProfiles.userId, giger.user.id));
+          .where(eq(workerProfiles.userId, gigPro.user.id));
 
         const stats = reviewStats[0] || { count: 0, avgRating: 0, likeCount: 0 };
 
         return {
-          profileId: giger.profile.id,
-          profileName: giger.profile.name,
-          tagline: giger.profile.tagline,
-          bio: giger.profile.bio,
-          mainNiche: giger.profile.mainNiche,
-          city: giger.profile.city,
-          state: giger.profile.state,
-          rateCents: giger.profile.rateCents,
-          pricingModel: giger.profile.pricingModel,
-          userId: giger.user.id,
-          userName: giger.user.name,
-          avatar: giger.user.avatar,
+          profileId: gigPro.profile.id,
+          profileName: gigPro.profile.name,
+          tagline: gigPro.profile.tagline,
+          bio: gigPro.profile.bio,
+          mainNiche: gigPro.profile.mainNiche,
+          city: gigPro.profile.city,
+          state: gigPro.profile.state,
+          rateCents: gigPro.profile.rateCents,
+          pricingModel: gigPro.profile.pricingModel,
+          userId: gigPro.user.id,
+          userName: gigPro.user.name,
+          avatar: gigPro.user.avatar,
           reviewCount: stats.count,
           avgRating: parseFloat(stats.avgRating?.toString() || "0"),
           likeCount: stats.likeCount,
-          isPrimaryService: giger.isPrimary,
+          isPrimaryService: gigPro.isPrimary,
         };
       })
     );
 
-    res.json(gigersWithStats);
+    res.json(gigProStats);
   } catch (error) {
-    console.error("Error fetching gigers by service:", error);
-    res.status(500).json({ error: "Failed to fetch gigers" });
+    console.error("Error fetching Gig Pros by service:", error);
+    res.status(500).json({ error: "Failed to fetch Gig Pros" });
   }
 });
 
-// Create Giger Profile(s)
+// Create Gig Pro Profile(s)
 // NOTE: Neon HTTP driver doesn't support transactions - race conditions possible under high concurrency
 // In production, add a database constraint or use Neon WebSocket driver
 router.post("/giger/create", needAuth, async (req, res) => {
@@ -173,11 +173,8 @@ router.post("/giger/create", needAuth, async (req, res) => {
       return res.status(400).json({ error: "Profiles array required" });
     }
 
-    // Check user doesn't exceed 3 profiles
+    // No limit on number of profiles - Gig Pros can offer unlimited services
     const existingProfiles = await db.select().from(profiles).where(eq(profiles.userId, userId));
-    if (existingProfiles.length + profilesData.length > 3) {
-      return res.status(400).json({ error: "Maximum 3 profiles allowed per user" });
-    }
 
     const createdProfiles = [];
 
@@ -217,7 +214,7 @@ router.post("/giger/create", needAuth, async (req, res) => {
   }
 });
 
-// Update Giger Profile
+// Update Gig Pro Profile
 router.patch("/giger/:id", needAuth, async (req, res) => {
   try {
     const userId = (req.session as any).uid;
@@ -269,7 +266,7 @@ router.patch("/giger/:id", needAuth, async (req, res) => {
   }
 });
 
-// Get My Giger Profiles
+// Get My Gig Pro Profiles
 router.get("/giger/mine", needAuth, async (req, res) => {
   try {
     const userId = (req.session as any).uid;
@@ -297,7 +294,7 @@ router.get("/giger/mine", needAuth, async (req, res) => {
   }
 });
 
-// Get Giger Profile by ID
+// Get Gig Pro Profile by ID
 router.get("/giger/:id", async (req, res) => {
   try {
     const profileId = req.params.id;

@@ -49,7 +49,7 @@ export default function HowItWorks() {
                 At the same time, you've got skills. Maybe you're great with your hands, creative with design, or a natural with pets. You're looking for flexible work that respects your time and pays what you're worth.
               </p>
               <p className="text-lg mb-4">
-                <span className="font-semibold">That's where Gigifypro comes in.</span> We're a local marketplace that brings neighbors together—Taskers who need help and Gigers who provide it. From home repairs and cleaning to creative services and pet care, we make it simple to find trusted professionals in your area or turn your talents into real income.
+                <span className="font-semibold">That's where Gigifypro comes in.</span> We're a local marketplace that brings neighbors together—Taskers who need help and Gig Pros who provide it. From home repairs and cleaning to creative services and pet care, we make it simple to find trusted professionals in your area or turn your talents into real income.
               </p>
               <p className="text-lg">
                 Our mission: <span className="font-bold">Learn. Earn. Get Gigified.</span> We believe everyone deserves access to affordable help when they need it, and everyone deserves the opportunity to build something meaningful with the skills they already have.
@@ -86,7 +86,7 @@ export default function HowItWorks() {
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span>View giger profiles with detailed info</span>
+                    <span>View Gig Pro profiles with detailed info</span>
                   </li>
                 </ul>
               </CardContent>
@@ -96,12 +96,12 @@ export default function HowItWorks() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <UserCheck className="w-5 h-5 text-primary" />
-                  2. Choose Your Giger
+                  2. Choose Your Gig Pro
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground mb-4">
-                  Select the perfect giger based on their GigScore, reviews, pricing,
+                  Select the perfect Gig Pro based on their GigScore, reviews, pricing,
                   and specialization.
                 </p>
                 <ul className="space-y-2 text-sm">
@@ -131,7 +131,7 @@ export default function HowItWorks() {
               <CardContent>
                 <p className="text-muted-foreground mb-4">
                   Book the service with just a few clicks and communicate directly
-                  with your giger.
+                  with your Gig Pro.
                 </p>
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-start gap-2">
@@ -160,7 +160,7 @@ export default function HowItWorks() {
               <CardContent>
                 <p className="text-muted-foreground mb-4">
                   After the job is complete, share your experience to help future
-                  taskers and reward great gigers.
+                  taskers and reward great Gig Pros.
                 </p>
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-start gap-2">
@@ -213,7 +213,7 @@ export default function HowItWorks() {
                 <div className="space-y-2">
                   <Badge>Custom Quote</Badge>
                   <p className="text-sm text-muted-foreground">
-                    Giger provides a custom quote based on your specific needs and
+                    Gig Pro provides a custom quote based on your specific needs and
                     requirements.
                   </p>
                   <p className="text-xs font-mono bg-muted p-2 rounded">
@@ -225,9 +225,9 @@ export default function HowItWorks() {
           </Card>
         </section>
 
-        {/* For Gigers Section */}
+        {/* For Gig Pros Section */}
         <section className="mb-16">
-          <h2 className="text-3xl font-bold mb-6">For Gigers: Turn Skills Into Income</h2>
+          <h2 className="text-3xl font-bold mb-6">For Gig Pros: Turn Skills Into Income</h2>
           
           <div className="grid md:grid-cols-2 gap-6 mb-8">
             <Card>
@@ -239,13 +239,13 @@ export default function HowItWorks() {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground mb-4">
-                  Set up 1-3 specialized profiles to showcase different services or
+                  Set up specialized profiles to showcase different services or
                   niches.
                 </p>
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span>Choose services you offer (up to 5 per profile)</span>
+                    <span>Choose services you offer (unlimited)</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
@@ -359,9 +359,9 @@ export default function HowItWorks() {
             </CardHeader>
             <CardContent>
               <p className="text-lg mb-4">
-                GigScore is our proprietary performance scoring system that rates gigers
+                GigScore is our proprietary performance scoring system that rates Gig Pros
                 on a 0-100 scale based on multiple performance factors. It helps taskers
-                quickly identify top-performing gigers who deliver quality work and contribute
+                quickly identify top-performing Gig Pros who deliver quality work and contribute
                 to our community.
               </p>
             </CardContent>
@@ -519,7 +519,7 @@ export default function HowItWorks() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  All gigers go through verification processes. Look for the verified
+                  All Gig Pros go through verification processes. Look for the verified
                   badge on profiles.
                 </p>
               </CardContent>
@@ -534,7 +534,7 @@ export default function HowItWorks() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Real reviews from real taskers. Both taskers and gigers can leave
+                  Real reviews from real taskers. Both taskers and Gig Pros can leave
                   feedback after each job.
                 </p>
               </CardContent>
@@ -566,12 +566,12 @@ export default function HowItWorks() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/feed">
               <Button size="lg" data-testid="button-find-gigers">
-                Find Gigers
+                Find Gig Pros
               </Button>
             </Link>
             <Link href="/settings/giger-profiles">
               <Button size="lg" variant="outline" data-testid="button-become-giger">
-                Become a Giger
+                Become a Gig Pro
               </Button>
             </Link>
           </div>
