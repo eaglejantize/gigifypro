@@ -15,19 +15,19 @@ import ProfileBadges from "@/components/ProfileBadges";
 interface ProfileData {
   id: string;
   userId: string;
-  profileName: string;
-  tagline?: string;
-  bio?: string;
-  city?: string;
-  state?: string;
-  rateCents: number;
-  pricingModel: string;
-  mainNiche?: string;
-  services?: { id: string; serviceKey: string }[];
+  bio?: string | null;
+  skills?: string[];
+  hourlyRate?: string;
+  responseTimeMinutes?: number | null;
+  verified?: boolean;
+  completedJobs?: number;
+  cancelledJobs?: number;
+  repeatClients?: number;
+  createdAt?: Date | string;
   user?: {
     name: string;
     email?: string;
-  };
+  } | null;
 }
 
 export default function Profile() {
@@ -36,9 +36,9 @@ export default function Profile() {
   const profileId = params?.id;
   const [gigScoreDialogOpen, setGigScoreDialogOpen] = useState(false);
 
-  // Fetch profile data
+  // Fetch profile data - try new profiles endpoint first, fall back to worker profile
   const { data: profileData, isLoading: profileLoading, error: profileError } = useQuery<ProfileData>({
-    queryKey: ["/api/profile/giger", profileId],
+    queryKey: ["/api/worker", profileId],
     enabled: !!profileId,
   });
 
@@ -104,22 +104,20 @@ export default function Profile() {
   // Build profile display object from fetched data
   const profile = {
     id: profileData.id,
-    name: profileData.user?.name || profileData.profileName,
+    name: profileData.user?.name || "Worker",
     avatar: null,
     bio: profileData.bio || "No bio provided",
-    location: profileData.city && profileData.state 
-      ? `${profileData.city}, ${profileData.state}` 
-      : profileData.city || profileData.state || "Location not specified",
-    verified: false, // TODO: Add verification logic
+    location: "Location not specified", // TODO: Add location to worker profile
+    verified: profileData.verified || false,
     stats: {
       likes: 0, // TODO: Fetch from backend
       rating: 0, // TODO: Fetch from backend
       reviews: 0, // TODO: Fetch from backend
-      jobsCompleted: 0, // TODO: Fetch from backend
-      responseTime: 0, // TODO: Fetch from backend
+      jobsCompleted: profileData.completedJobs || 0,
+      responseTime: profileData.responseTimeMinutes || 0,
     },
-    skills: profileData.services?.map(s => s.serviceKey) || [],
-    hourlyRate: (profileData.rateCents / 100).toString(),
+    skills: profileData.skills || [],
+    hourlyRate: profileData.hourlyRate || "25",
   };
 
   const reviews: any[] = []; // TODO: Fetch real reviews from backend

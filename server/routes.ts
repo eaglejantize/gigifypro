@@ -203,6 +203,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/worker/:id", async (req, res) => {
+    try {
+      const profile = await storage.getWorkerProfileById(req.params.id);
+      if (!profile) {
+        return res.status(404).json({ message: "Worker profile not found" });
+      }
+      
+      // Get user data
+      const user = await storage.getUser(profile.userId);
+      
+      res.json({
+        ...profile,
+        user: user ? { name: user.name, email: user.email } : null,
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   app.post("/api/workers/profile", async (req, res) => {
     try {
       const data = workerProfileSchema.parse(req.body);
