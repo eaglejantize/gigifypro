@@ -84,7 +84,7 @@ export default function PostTask() {
         title: "Task posted successfully!",
         description: "Your selected giger will be notified.",
       });
-      setLocation("/dashboard");
+      setLocation("/dashboard?tab=tasks&view=tasker");
     },
     onError: (error: any) => {
       toast({

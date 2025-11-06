@@ -1,4 +1,4 @@
-import { useRoute } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,14 +7,40 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Star, Heart, Clock, MapPin, Award, MessageSquare, TrendingUp, Info } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import ProfileBadges from "@/components/ProfileBadges";
 
+interface ProfileData {
+  id: string;
+  userId: string;
+  profileName: string;
+  tagline?: string;
+  bio?: string;
+  city?: string;
+  state?: string;
+  rateCents: number;
+  pricingModel: string;
+  mainNiche?: string;
+  services?: { id: string; serviceKey: string }[];
+  user?: {
+    name: string;
+    email?: string;
+  };
+}
+
 export default function Profile() {
   const [, params] = useRoute("/profile/:id");
+  const [, setLocation] = useLocation();
   const profileId = params?.id;
   const [gigScoreDialogOpen, setGigScoreDialogOpen] = useState(false);
+
+  // Fetch profile data
+  const { data: profileData, isLoading: profileLoading, error: profileError } = useQuery<ProfileData>({
+    queryKey: ["/api/profile/giger", profileId],
+    enabled: !!profileId,
+  });
 
   // Fetch GigScore for profile
   const { data: gigScoreData } = useQuery<{
@@ -29,41 +55,74 @@ export default function Profile() {
     enabled: !!profileId,
   });
 
-  // Mock data (will be replaced with real data from backend)
+  // Show loading state
+  if (profileLoading) {
+    return (
+      <div className="min-h-screen bg-background py-8">
+        <div className="max-w-7xl mx-auto px-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex flex-col md:flex-row gap-6">
+                <Skeleton className="w-32 h-32 rounded-full" />
+                <div className="flex-1 space-y-4">
+                  <Skeleton className="h-10 w-64" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-16" />)}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state or 404
+  if (profileError || !profileData) {
+    return (
+      <div className="min-h-screen bg-background py-8">
+        <div className="max-w-7xl mx-auto px-4">
+          <Card>
+            <CardContent className="pt-6 text-center py-12">
+              <h2 className="text-2xl font-bold mb-4">Profile Not Found</h2>
+              <p className="text-muted-foreground mb-6">
+                The profile you're looking for doesn't exist or has been removed.
+              </p>
+              <Button onClick={() => setLocation("/feed")}>
+                Browse Gigers
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Build profile display object from fetched data
   const profile = {
-    id: profileId,
-    name: "John Smith",
+    id: profileData.id,
+    name: profileData.user?.name || profileData.profileName,
     avatar: null,
-    bio: "Professional handyman with 10+ years of experience. Specialized in home repairs, plumbing, and electrical work.",
-    location: "San Francisco, CA",
-    verified: true,
+    bio: profileData.bio || "No bio provided",
+    location: profileData.city && profileData.state 
+      ? `${profileData.city}, ${profileData.state}` 
+      : profileData.city || profileData.state || "Location not specified",
+    verified: false, // TODO: Add verification logic
     stats: {
-      likes: 45,
-      rating: 4.8,
-      reviews: 32,
-      jobsCompleted: 156,
-      responseTime: 15,
+      likes: 0, // TODO: Fetch from backend
+      rating: 0, // TODO: Fetch from backend
+      reviews: 0, // TODO: Fetch from backend
+      jobsCompleted: 0, // TODO: Fetch from backend
+      responseTime: 0, // TODO: Fetch from backend
     },
-    skills: ["Plumbing", "Electrical", "Carpentry", "Painting", "General Repairs"],
-    hourlyRate: "50",
+    skills: profileData.services?.map(s => s.serviceKey) || [],
+    hourlyRate: (profileData.rateCents / 100).toString(),
   };
 
-  const reviews = [
-    {
-      id: "1",
-      client: "Sarah Johnson",
-      rating: 5,
-      comment: "Excellent work! Very professional and completed the job quickly.",
-      date: "2 days ago",
-    },
-    {
-      id: "2",
-      client: "Mike Davis",
-      rating: 5,
-      comment: "Fixed my plumbing issue perfectly. Highly recommend!",
-      date: "1 week ago",
-    },
-  ];
+  const reviews: any[] = []; // TODO: Fetch real reviews from backend
 
   return (
     <div className="min-h-screen bg-background py-8">

@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useSearch } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -154,7 +155,17 @@ const mockJobs: JobRequestWithDetails[] = [
 export default function Dashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [isGigerView, setIsGigerView] = useState(true);
+  const searchParams = new URLSearchParams(useSearch());
+  const [isGigerView, setIsGigerView] = useState(searchParams.get("view") !== "tasker");
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") === "tasks" ? "jobs" : "bookings");
+
+  // Update view and tab from query params on mount
+  useEffect(() => {
+    const view = searchParams.get("view");
+    const tab = searchParams.get("tab");
+    if (view === "tasker") setIsGigerView(false);
+    if (tab === "tasks") setActiveTab("jobs");
+  }, []);
 
   const { data: bookings, isLoading: bookingsLoading } = useQuery<BookingWithDetails[]>({
     queryKey: ["/api/users", user?.id, "bookings"],
@@ -505,7 +516,7 @@ export default function Dashboard() {
             </div>
 
             {/* Tasker Tabs */}
-            <Tabs defaultValue="bookings" className="space-y-4">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
               <TabsList>
                 <TabsTrigger value="bookings" data-testid="tab-tasker-bookings">
                   My Services
