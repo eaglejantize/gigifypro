@@ -26,7 +26,7 @@ type JobRequestWithDetails = JobRequest & {
 };
 
 // Mock data for demonstration
-const mockGigerBookings: BookingWithDetails[] = [
+const mockGProBookings: BookingWithDetails[] = [
   {
     id: "mock-gig-1",
     clientId: "mock-client-1",
@@ -156,14 +156,14 @@ export default function Dashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
   const searchParams = new URLSearchParams(useSearch());
-  const [isGigerView, setIsGigerView] = useState(searchParams.get("view") !== "tasker");
+  const [isGProView, setIsGProView] = useState(searchParams.get("view") !== "tasker");
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") === "tasks" ? "jobs" : "bookings");
 
   // Update view and tab from query params on mount
   useEffect(() => {
     const view = searchParams.get("view");
     const tab = searchParams.get("tab");
-    if (view === "tasker") setIsGigerView(false);
+    if (view === "tasker") setIsGProView(false);
     if (tab === "tasks") setActiveTab("jobs");
   }, []);
 
@@ -196,11 +196,11 @@ export default function Dashboard() {
   });
 
   // Combine real data with mock data for demonstration
-  const allWorkerBookings = [...(bookings?.filter(b => b.workerId === user?.id) || []), ...mockGigerBookings];
+  const allWorkerBookings = [...(bookings?.filter(b => b.workerId === user?.id) || []), ...mockGProBookings];
   const allClientBookings = [...(bookings?.filter(b => b.clientId === user?.id) || []), ...mockTaskerBookings];
   const allJobs = [...(jobs || []), ...mockJobs];
 
-  const gigerStats = {
+  const gProStats = {
     earnings: allWorkerBookings
       .filter(b => b.status === "completed")
       .reduce((sum, b) => sum + parseFloat(b.quotedTotal), 0),
@@ -230,10 +230,10 @@ export default function Dashboard() {
           <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
             <div>
               <h1 className="text-3xl font-bold mb-2" data-testid="text-dashboard-title">
-                {isGigerView ? "Giger Dashboard" : "Tasker Dashboard"}
+                {isGProView ? "Gig Pro Dashboard" : "Tasker Dashboard"}
               </h1>
               <p className="text-muted-foreground">
-                {isGigerView 
+                {isGProView 
                   ? "Manage your service bookings and track your earnings" 
                   : "Manage your tasks and track service requests"}
               </p>
@@ -242,22 +242,22 @@ export default function Dashboard() {
             {/* Toggle Switch */}
             <div className="flex items-center gap-3 p-4 border rounded-lg bg-card">
               <Label htmlFor="view-toggle" className="font-medium">
-                {isGigerView ? "Giger View" : "Tasker View"}
+                {isGProView ? "G-Pro View" : "Tasker View"}
               </Label>
               <Switch
                 id="view-toggle"
-                checked={isGigerView}
-                onCheckedChange={setIsGigerView}
+                checked={isGProView}
+                onCheckedChange={setIsGProView}
                 data-testid="switch-dashboard-view"
               />
             </div>
           </div>
         </div>
 
-        {isGigerView ? (
-          // GIGER VIEW
+        {isGProView ? (
+          // GIG PRO VIEW
           <>
-            {/* Giger Stats Grid */}
+            {/* Gig Pro Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
@@ -266,10 +266,10 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold" data-testid="text-giger-earnings">
-                    {formatPrice(gigerStats.earnings)}
+                    {formatPrice(gProStats.earnings)}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    From {gigerStats.completedJobs} completed gigs
+                    From {gProStats.completedJobs} completed gigs
                   </p>
                 </CardContent>
               </Card>
@@ -281,7 +281,7 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold" data-testid="text-giger-active">
-                    {gigerStats.activeJobs}
+                    {gProStats.activeJobs}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {allWorkerBookings.filter(b => b.status === "requested").length} pending requests
@@ -296,7 +296,7 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold" data-testid="text-giger-completed">
-                    {gigerStats.completedJobs}
+                    {gProStats.completedJobs}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     All-time total
@@ -311,7 +311,7 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold" data-testid="text-giger-taskers">
-                    {gigerStats.totalClients}
+                    {gProStats.totalClients}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Unique taskers served
@@ -320,7 +320,7 @@ export default function Dashboard() {
               </Card>
             </div>
 
-            {/* Giger Tabs */}
+            {/* Gig Pro Tabs */}
             <Tabs defaultValue="bookings" className="space-y-4">
               <TabsList>
                 <TabsTrigger value="bookings" data-testid="tab-giger-bookings">
@@ -494,7 +494,7 @@ export default function Dashboard() {
                     {taskerStats.postedJobs}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Looking for gigers
+                    Looking for Gig Pros
                   </p>
                 </CardContent>
               </Card>
@@ -530,7 +530,7 @@ export default function Dashboard() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Booked Services</CardTitle>
-                    <CardDescription>Services you've requested from gigers</CardDescription>
+                    <CardDescription>Services you've requested from Gig Pros</CardDescription>
                   </CardHeader>
                   <CardContent>
                     {bookingsLoading ? (
@@ -544,7 +544,7 @@ export default function Dashboard() {
                             <div className="flex-1 min-w-0">
                               <div className="font-semibold">{booking.listing?.title || "Service"}</div>
                               <div className="text-sm text-muted-foreground">
-                                Giger: {booking.worker?.user?.name || "Unknown"} • 
+                                Gig Pro: {booking.worker?.user?.name || "Unknown"} • 
                                 {booking.scheduledFor ? format(new Date(booking.scheduledFor), " PPP") : " Date TBD"}
                               </div>
                             </div>
@@ -577,7 +577,7 @@ export default function Dashboard() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Posted Tasks</CardTitle>
-                    <CardDescription>Tasks you've posted for gigers to bid on</CardDescription>
+                    <CardDescription>Tasks you've posted for Gig Pros to bid on</CardDescription>
                   </CardHeader>
                   <CardContent>
                     {jobsLoading ? (
@@ -607,7 +607,7 @@ export default function Dashboard() {
                       </div>
                     ) : (
                       <p className="text-muted-foreground text-center py-8">
-                        No tasks posted yet. Post a task to find gigers!
+                        No tasks posted yet. Post a task to find Gig Pros!
                       </p>
                     )}
                   </CardContent>

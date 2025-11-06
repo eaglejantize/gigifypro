@@ -50,7 +50,7 @@ export default function ProfileSetup() {
     if (!authLoading && !user) {
       toast({
         title: "Authentication required",
-        description: "Please log in to create your giger profiles",
+        description: "Please log in to create your Gig Pro profiles",
         variant: "destructive",
       });
       setLocation("/auth/login");
@@ -71,7 +71,7 @@ export default function ProfileSetup() {
       queryClient.invalidateQueries({ queryKey: ["/api/profile/giger/mine"] });
       toast({
         title: "Success!",
-        description: "Your giger profiles have been created.",
+        description: "Your Gig Pro profiles have been created.",
       });
       setLocation("/dashboard");
     },
@@ -103,19 +103,10 @@ export default function ProfileSetup() {
       (service.category || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const maxProfiles = 3;
+  const maxProfiles = Infinity; // No limit on profiles
   const progressPercent = (step / 3) * 100;
 
   const handleSelectService = (service: ServiceInfo) => {
-    if (selectedServices.length >= maxProfiles) {
-      toast({
-        title: "Maximum reached",
-        description: `You can select up to ${maxProfiles} services`,
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (selectedServices.find((s) => s.serviceKey === service.serviceKey)) {
       toast({
         title: "Already selected",
@@ -182,7 +173,7 @@ export default function ProfileSetup() {
     if (step === 1 && !canGoToStep2) {
       toast({
         title: "Select at least one service",
-        description: "Choose 1-3 services to continue",
+        description: "Choose at least one service to continue",
       });
       return;
     }
@@ -238,10 +229,10 @@ export default function ProfileSetup() {
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2" data-testid="heading-profile-setup">
-            Set Up Your Giger Profiles
+            Set Up Your Gig Pro Profiles
           </h1>
           <p className="text-muted-foreground">
-            Create up to 3 specialized profiles to showcase your unique skills and services
+            Create specialized profiles to showcase your unique skills and services
           </p>
         </div>
 
@@ -258,7 +249,7 @@ export default function ProfileSetup() {
           <Card>
             <CardHeader>
               <CardTitle data-testid="heading-select-services">Select Your Services</CardTitle>
-              <CardDescription>Choose 1-3 services you want to offer as a giger</CardDescription>
+              <CardDescription>Choose services you want to offer as a Gig Pro</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
@@ -278,7 +269,7 @@ export default function ProfileSetup() {
 
               {selectedServices.length > 0 && (
                 <div className="space-y-2">
-                  <Label>Selected Services ({selectedServices.length}/{maxProfiles})</Label>
+                  <Label>Selected Services ({selectedServices.length})</Label>
                   <div className="flex flex-wrap gap-2">
                     {selectedServices.map((service) => (
                       <Badge

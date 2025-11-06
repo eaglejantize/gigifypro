@@ -92,7 +92,7 @@ export default function Profile() {
                 The profile you're looking for doesn't exist or has been removed.
               </p>
               <Button onClick={() => setLocation("/feed")}>
-                Browse Gigers
+                Browse Gig Pros
               </Button>
             </CardContent>
           </Card>
@@ -221,7 +221,7 @@ export default function Profile() {
                             GigScore Breakdown
                           </DialogTitle>
                           <DialogDescription>
-                            Understanding how this giger's performance score is calculated
+                            Understanding how this Gig Pro's performance score is calculated
                           </DialogDescription>
                         </DialogHeader>
 
