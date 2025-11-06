@@ -564,7 +564,7 @@ export default function HowItWorks() {
             Whether you need help or want to offer services, gigifypro makes it simple
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/explore">
+            <Link href="/feed">
               <Button size="lg" data-testid="button-find-gigers">
                 Find Gigers
               </Button>

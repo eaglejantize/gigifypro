@@ -26,7 +26,17 @@ export async function calculateGigScore(profileId: string): Promise<GigScoreComp
     .then((res: any) => res[0]);
 
   if (!profileData) {
-    throw new Error("Profile not found");
+    // Return default zero score for non-existent profiles
+    return {
+      reviewQuality: 0,
+      completedJobs: 0,
+      responseTime: 0,
+      cancellations: 0,
+      repeatClients: 0,
+      communityInvolvement: 0,
+      volunteerism: 0,
+      totalScore: 0,
+    };
   }
 
   // Get worker profile ID for this user (for reviews)

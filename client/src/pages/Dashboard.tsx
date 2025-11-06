@@ -168,7 +168,7 @@ export default function Dashboard() {
 
   const updateBookingMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) =>
-      apiRequest(`/api/bookings/${id}`, "PATCH", { status }),
+      apiRequest("PATCH", `/api/bookings/${id}`, { status }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users", user?.id, "bookings"] });
       toast({

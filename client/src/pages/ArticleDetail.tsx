@@ -33,7 +33,7 @@ export default function ArticleDetail() {
 
   const completeMutation = useMutation({
     mutationFn: async (articleId: string) => {
-      return await apiRequest(`/api/knowledge/complete/${articleId}`, "POST");
+      return await apiRequest("POST", `/api/knowledge/complete/${articleId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/knowledge/my-progress"] });

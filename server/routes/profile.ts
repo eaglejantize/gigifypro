@@ -62,17 +62,13 @@ router.get("/:id/gigscore", async (req, res) => {
   try {
     const profileId = req.params.id;
 
-    // Calculate GigScore components
+    // Calculate GigScore components (returns zero score if profile doesn't exist)
     const scoreComponents = await calculateGigScore(profileId);
 
     res.json(scoreComponents);
   } catch (error: any) {
     console.error("Error calculating GigScore:", error);
-    if (error.message === "Profile not found") {
-      res.status(404).json({ error: "Profile not found" });
-    } else {
-      res.status(500).json({ error: "Failed to calculate GigScore" });
-    }
+    res.status(500).json({ error: "Failed to calculate GigScore" });
   }
 });
 

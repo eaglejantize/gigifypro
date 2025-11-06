@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Award, BookOpen, Target } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/contexts/AuthContext";
 
 type ProgressData = {
   total: number;
@@ -18,14 +19,18 @@ type UserBadge = {
 };
 
 export function GigifiedProgress() {
+  const { user } = useAuth();
+
   const { data: progress, isLoading } = useQuery<ProgressData>({
     queryKey: ["/api/knowledge/my-progress"],
     retry: false,
+    enabled: !!user,
   });
 
   const { data: badges } = useQuery<UserBadge[]>({
     queryKey: ["/api/knowledge/my-badges"],
     retry: false,
+    enabled: !!user,
   });
 
   if (isLoading) {

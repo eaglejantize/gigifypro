@@ -49,7 +49,7 @@ export function BookingDialog({
   const quote = calculatePrice(duration, parseFloat(defaultRate) || 25);
 
   const createBookingMutation = useMutation({
-    mutationFn: async (data: any) => apiRequest("/api/bookings", "POST", data),
+    mutationFn: async (data: any) => apiRequest("POST", "/api/bookings", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users", user?.id, "bookings"] });
       toast({
