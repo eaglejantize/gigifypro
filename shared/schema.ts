@@ -291,7 +291,7 @@ export const posts = pgTable("posts", {
 });
 
 // Community: Comments
-export const comments: ReturnType<typeof pgTable<"comments", any>> = pgTable("comments", {
+export const comments = pgTable("comments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   postId: varchar("post_id").notNull().references(() => posts.id, { onDelete: "cascade" }),
   authorId: varchar("author_id").notNull().references(() => users.id, { onDelete: "cascade" }),
